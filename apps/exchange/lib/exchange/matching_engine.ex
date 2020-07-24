@@ -77,7 +77,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current Spread
   """
-  @spec ask_min(ticker) :: {atom, number}
+  @spec spread(ticker) :: {atom, number}
   def spread(ticker) do
     GenServer.call(via_tuple(ticker), :spread)
   end
@@ -171,9 +171,9 @@ defmodule Exchange.MatchingEngine do
     else
       order =
         if order.side == :buy do
-          order |> Map.put(:price, order_book.max_price)
+          order |> Map.put(:price, order_book.max_price-1)
         else
-          order |> Map.put(:price, order_book.min_price)
+          order |> Map.put(:price, order_book.min_price+1)
         end
 
       EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
@@ -188,17 +188,20 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_call({:place_limit_order, order}, _from, order_book) do
-    if OrderBook.order_exists?(order_book, order.order_id) do
-      {:reply, :error, order_book}
-    else
-      EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+    cond do
+      OrderBook.order_exists?(order_book, order.order_id) ->
+        {:reply, :error, order_book}
 
-      order_book =
-        order_book
-        |> OrderBook.price_time_match(order)
-        |> broadcast_trades!
+      order.price < order_book.max_price and order.price > order_book.min_price ->
+        EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+        order_book =
+          order_book
+          |> OrderBook.price_time_match(order)
+          |> broadcast_trades!
+        {:reply, :ok, order_book}
 
-      {:reply, :ok, order_book}
+        true ->
+          {:reply, :error, order_book}
     end
   end
 

@@ -5,7 +5,8 @@ defmodule Exchange.OrderBook do
   The Order Book is the Exchange main data structure. It holds the Order Book
   in Memory where the MatchingEngine realizes the matches and register the Trades.
 
-  Example of and Order Book with  ticker AUXLND with currency in Great British Pounds:
+  Example of and Order Book for Physical Gold (AUX) in London Market
+  Orders with currency in Great British Pounds:
 
   ```
       %Exchange.OrderBook{
@@ -75,8 +76,8 @@ defmodule Exchange.OrderBook do
             expired_orders: [],
             completed_trades: [],
             ask_min: 99_999,
-            bid_max: 0,
-            max_price: 99_999,
+            bid_max: 1,
+            max_price: 100_000,
             min_price: 0
 
   alias Exchange.{Order, OrderBook}
@@ -115,7 +116,7 @@ defmodule Exchange.OrderBook do
       :empty ->
         order_book
         |> increment_or_decrement(order)
-        |> price_time_match(order)
+        |> queue_order(order)
 
       {:ok, matched_order} ->
         cond do
@@ -150,15 +151,11 @@ defmodule Exchange.OrderBook do
     queue_order(order_book, order)
   end
 
-  def price_time_match(%OrderBook{} = order_book, %Order{} = order) do
-    queue_order(order_book, order)
-  end
-
   @doc """
   Register Trade on Order Book completed_trades
   """
 
-  @spec register_trade(order_book, Order.order(), Order.order()) :: atom()
+  @spec register_trade(order_book, Order.order(), Order.order()) :: order_book()
   def register_trade(order_book, order, matched_order) do
     type =
       if order.initial_size <= matched_order.size do
@@ -173,10 +170,12 @@ defmodule Exchange.OrderBook do
     %{order_book | completed_trades: trades}
   end
 
+  @spec completed_trades(order_book) :: list()
   def completed_trades(order_book) do
     order_book.completed_trades
   end
 
+  @spec flush_trades!(order_book) :: order_book()
   def flush_trades!(order_book) do
     %{order_book | completed_trades: []}
   end
@@ -184,6 +183,7 @@ defmodule Exchange.OrderBook do
   @doc """
   returns spread for this exchange
   """
+  @spec spread(order_book) :: number
   def spread(order_book) do
     order_book.ask_min - order_book.bid_max
   end
@@ -246,12 +246,12 @@ defmodule Exchange.OrderBook do
   Removes an %Order{} from the Order Book
   """
 
-  @spec dequeue_order(order_book, Order.order()) :: {order_book, Order.order()}
+  @spec dequeue_order(order_book, Order.order()) :: order_book()
   def dequeue_order(order_book, %Order{} = order) do
     dequeue_order_by_id(order_book, order.order_id)
   end
 
-  @spec dequeue_order_by_id(order_book, String.t()) :: {order_book, Order.order()}
+  @spec dequeue_order_by_id(order_book, String.t()) :: order_book()
   def dequeue_order_by_id(order_book, order_id) do
     {side, price_point} = Map.get(order_book.order_ids, order_id)
 
@@ -277,12 +277,22 @@ defmodule Exchange.OrderBook do
 
   @spec update_queue(order_book, atom, price_in_cents, queue_of_orders) :: order_book
   def update_queue(order_book, side, price_point, new_queue) do
-    updated_side_order_book =
-      order_book
-      |> Map.fetch!(side)
-      |> Map.put(price_point, new_queue)
+    len = Enum.count(new_queue)
+    case len do
+      0 ->
+        updated_side_order_book =
+          order_book
+          |> Map.fetch!(side)
+          |> Map.delete(price_point)
+        Map.put(order_book, side, updated_side_order_book)
+      _ ->
+        updated_side_order_book =
+          order_book
+          |> Map.fetch!(side)
+          |> Map.put(price_point, new_queue)
 
-    Map.put(order_book, side, updated_side_order_book)
+        Map.put(order_book, side, updated_side_order_book)
+    end
   end
 
   @spec insert_order_in_queue(order_book, Order.order()) :: order_book
@@ -347,6 +357,7 @@ defmodule Exchange.OrderBook do
 
   def set_ask_min(order_book, %Order{}), do: order_book
 
+  @spec calculate_min_max_prices(order_book, Order.order()) :: order_book
   def calculate_min_max_prices(order_book, %Order{side: :sell}) do
     new_ask_min =
       order_book.sell
@@ -356,7 +367,10 @@ defmodule Exchange.OrderBook do
         !Enum.empty?(Map.get(order_book.sell, pp))
       end)
       |> List.first()
-
+      new_ask_min = case new_ask_min do
+        nil -> 99_999
+        _ -> new_ask_min
+      end
     %{order_book | ask_min: new_ask_min}
   end
 
@@ -370,41 +384,49 @@ defmodule Exchange.OrderBook do
         !Enum.empty?(Map.get(order_book.buy, pp))
       end)
       |> List.first()
-
+    new_bid_max = case new_bid_max do
+      nil -> 1
+      _ -> new_bid_max
+    end
     %{order_book | bid_max: new_bid_max}
   end
 
   @doc """
   Updates the Order Book incrementing the ask_min by 1 or decrementing the bid_max by 1
-  taking into account the order's side
+  taking into account the order's side and price
   """
-  def increment_or_decrement(order_book, %Order{side: side}) do
+  @spec increment_or_decrement(order_book, Order.order()) :: order_book
+  def increment_or_decrement(order_book, %Order{side: side, price: price}) do
     case side do
-      :buy -> increment_ask_min(order_book)
-      :sell -> decrement_bid_max(order_book)
+      :buy -> increment_ask_min(order_book, price)
+      :sell -> decrement_bid_max(order_book, price)
     end
   end
-
 
   @doc """
   Updates the Order Book incrementing the ask_min by 1
   """
-
-  @spec increment_ask_min(order_book) :: order_book
-  def increment_ask_min(%OrderBook{ask_min: ask_min} = order_book) do
-    %{order_book | ask_min: ask_min + 1}
+  @spec increment_ask_min(order_book, number()) :: order_book
+  def increment_ask_min(order_book, price) do
+    new_ask_min = price + 1
+    if new_ask_min >= order_book.max_price do
+      %{order_book | ask_min: order_book.max_price - 1}
+    else
+      %{order_book | ask_min: new_ask_min}
+    end
   end
 
   @doc """
   Updates the Order Book decrementing the bid_max by 1
   """
 
-  @spec decrement_bid_max(order_book) :: order_book
-  def decrement_bid_max(%OrderBook{bid_max: bid_max} = order_book) do
-    if bid_max == nil or bid_max == 0 do
-      %{order_book | bid_max: 0}
+  @spec decrement_bid_max(order_book, number()) :: order_book
+  def decrement_bid_max(order_book, price) do
+    new_bid_max = price - 1
+    if new_bid_max <= order_book.min_price do
+      %{order_book | bid_max: order_book.min_price + 1}
     else
-      %{order_book | bid_max: bid_max - 1}
+      %{order_book | bid_max: new_bid_max}
     end
   end
 
@@ -437,6 +459,7 @@ defmodule Exchange.OrderBook do
     %{order_book | expired_orders: order_book.expired_orders ++ [order]}
   end
 
+  @spec flush_expired_orders!(order_book) :: order_book
   def flush_expired_orders!(order_book) do
     %{order_book | expired_orders: []}
   end
