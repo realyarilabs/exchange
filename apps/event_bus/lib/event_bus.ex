@@ -42,9 +42,6 @@ defmodule EventBus do
   def cast_event(:trade_processed, %EventBus.TradeProcessed{} = payload),
     do: dispatch_event(:trade_processed, payload)
 
-  def cast_event(:transaction_open, %EventBus.TransactionOpen{} = payload),
-    do: dispatch_event(:transaction_open, payload)
-
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do
       Registry.dispatch(EventBus.Registry, key, fn entries ->
