@@ -1,0 +1,3 @@
+FLUX_DB_HOST=localhost
+FLUX_DB_NAME=alchemist
+FLUX_DB_PORT=8086
