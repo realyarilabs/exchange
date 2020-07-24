@@ -23,7 +23,6 @@ defmodule EventBus do
     end
   end
 
-
   def cast_event(:order_cancelled, %EventBus.OrderCancelled{} = payload),
     do: dispatch_event(:order_cancelled, payload)
 

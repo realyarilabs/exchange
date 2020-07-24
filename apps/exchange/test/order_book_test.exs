@@ -17,7 +17,7 @@ defmodule OrderBookTest do
       assert ob.ask_min == 4010
       assert ob.bid_max == 4000
       assert ob.min_price == 0
-      assert ob.max_price == 99_999
+      assert ob.max_price == 100_000
     end
 
     test "spread", %{order_book: order_book} do
@@ -238,7 +238,6 @@ defmodule OrderBookTest do
       assert new_book.bid_max == 4000
     end
 
-    #sell order has lower size correted
     test "sell order has lower size", %{order_book: ob} do
       sell_order = sample_order(%{size: 200, price: 4000, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
@@ -429,6 +428,32 @@ defmodule OrderBookTest do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
 
+    test "increment_or_decrement", %{order_book: order_book} do
+      new_order_increment = sample_order(%{size: 2350, price: 99_999, side: :buy})
+      new_order_decrement = sample_order(%{size: 1850, price: 1, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
+      assert new_order_book.bid_max == 99_999
+      assert new_order_book.ask_min == 99_999
+      new_order_book = OrderBook.price_time_match(new_order_book, new_order_decrement)
+      assert new_order_book.bid_max == 1
+      assert new_order_book.ask_min == 1
+    end
+
+    test "only increment", %{order_book: order_book} do
+      new_order_increment = sample_order(%{size: 2350, price: 5000, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
+      assert new_order_book.bid_max == 5000
+      assert new_order_book.ask_min == 99_999
+    end
+
+    test "only decrement", %{order_book: order_book} do
+      new_order_decrement = sample_order(%{size: 1750, price: 1, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_decrement)
+      assert new_order_book.bid_max == 1
+      assert new_order_book.ask_min == 1
+      assert Enum.count(new_order_book.completed_trades) == 4
+    end
+
     test "flush_trades", %{order_book: order_book} do
       buy_order = sample_order(%{size: 2100, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(order_book, buy_order)
@@ -465,7 +490,8 @@ defmodule OrderBookTest do
   end
 
   defp sample_order_book(ticker) do
-    buy_book = [
+    buy_book =
+      [
         %Order{
           type: :limit,
           order_id: "4",
@@ -502,8 +528,7 @@ defmodule OrderBookTest do
           size: 150,
           price: 3960
         }
-      ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      ] |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
 
     sell_book =
       [
@@ -554,12 +579,11 @@ defmodule OrderBookTest do
       completed_trades: [],
       ask_min: 99_999,
       bid_max: 0,
-      max_price: 99_999,
+      max_price: 100_000,
       min_price: 0
     }
 
-    (buy_book ++ sell_book)
-    |> Enum.reduce(order_book, fn order, order_book ->
+    (buy_book ++ sell_book) |> Enum.reduce(order_book, fn order, order_book ->
       Exchange.OrderBook.price_time_match(order_book, order)
     end)
   end
