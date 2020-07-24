@@ -82,6 +82,22 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), :spread)
   end
 
+  @doc """
+  Returns highest bid volume
+  """
+  @spec highest_bid_volume(ticker) :: {atom, number}
+  def highest_bid_volume(ticker) do
+    GenServer.call(via_tuple(ticker), :highest_bid_volume)
+  end
+
+  @doc """
+  Returns the current highest asking volume
+  """
+  @spec highest_ask_volume(ticker) :: {atom, number}
+  def highest_ask_volume(ticker) do
+    GenServer.call(via_tuple(ticker), :highest_ask_volume)
+  end
+
   defp via_tuple(ticker) do
     {:via, Registry, {:matching_engine_registry, ticker}}
   end
