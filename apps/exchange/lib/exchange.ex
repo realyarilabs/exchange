@@ -78,7 +78,8 @@ defmodule Exchange do
     Exchange.MatchingEngine.bid_max(ticker)
   end
 
-  def highest_bid_volume do
+  def highest_bid_volume(ticker) do
+    Exchange.MatchingEngine.bid_volume(ticker)
   end
 
   def lowest_ask_price(ticker) do
