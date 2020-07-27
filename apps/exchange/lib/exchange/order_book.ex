@@ -490,4 +490,14 @@ defmodule Exchange.OrderBook do
       |> Enum.flat_map(fn{_k,v} -> v end)
       |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
   end
+
+  @spec highest_bid_volume(order_book) :: number()
+  def highest_bid_volume(order_book) do
+    order_book.buy
+    |> Enum.reduce(0, fn {_price_point, queue}, acc ->
+      acc + Enum.reduce(queue, 0, fn order, sub_acc ->
+        sub_acc + order.size
+      end)
+    end)
+  end
 end

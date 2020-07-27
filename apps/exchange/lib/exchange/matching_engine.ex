@@ -67,6 +67,15 @@ defmodule Exchange.MatchingEngine do
   end
 
   @doc """
+  Returns the current maximum biding price
+  """
+  @spec bid_volume(ticker) :: {atom, number}
+  def bid_volume(ticker) do
+    GenServer.call(via_tuple(ticker), :bid_volume)
+  end
+
+
+  @doc """
   Returns the current minimum asking price
   """
   @spec ask_min(ticker) :: {atom, number}
@@ -168,6 +177,13 @@ defmodule Exchange.MatchingEngine do
   def handle_call(:ask_volume, _from, order_book) do
     ask_volume = Exchange.OrderBook.highest_ask_volume(order_book)
     {:reply, {:ok, ask_volume}, order_book}
+  end
+
+  def handle_call(:bid_volume, _from, order_book) do
+    bid_volume =
+      Exchange.OrderBook.highest_bid_volume(order_book)
+
+    {:reply, {:ok, bid_volume}, order_book}
   end
 
   def handle_call(:spread, _from, order_book) do
