@@ -464,6 +464,60 @@ defmodule OrderBookTest do
     end
   end
 
+  describe "queries" do
+    setup _context do
+      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+    end
+
+    test "Bid volume default order_book", %{order_book: order_book} do
+      assert OrderBook.highest_bid_volume(order_book) == 1650
+    end
+
+    test "Ask volume default order_book", %{order_book: order_book} do
+      assert OrderBook.highest_ask_volume(order_book) == 2250
+    end
+
+    test "Bid volume order_book after adding one buy order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert OrderBook.highest_bid_volume(new_order_book) == 1800
+    end
+
+    test "Ask volume order_book after adding one sell order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 150, price: 4010, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert OrderBook.highest_ask_volume(new_order_book) == 2400
+    end
+
+    test "Bid volume order_book after removal of one buy order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 150, price: 4000, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert OrderBook.highest_bid_volume(new_order_book) == 1500
+    end
+
+    test "Ask volume order_book after removal of one sell order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert OrderBook.highest_ask_volume(new_order_book) == 1500
+    end
+
+    test "Bid volume order_book after removal and addition of orders", %{order_book: order_book} do
+      new_order_1 = sample_order(%{size: 500, price: 4000, side: :sell})
+      new_order_2 = sample_order(%{size: 1000, price: 3900, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_1)
+      new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
+      assert OrderBook.highest_bid_volume(new_order_book) == 2150
+    end
+
+    test "Ask volume order_book after removal and addition of orders", %{order_book: order_book} do
+      new_order_1 = sample_order(%{size: 250, price: 4000, side: :sell})
+      new_order_2 = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_1)
+      new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
+      assert OrderBook.highest_ask_volume(new_order_book) == 1500
+    end
+  end
+
   defp sample_order(%{size: z, price: p, side: s}) do
     %Order{
       type: :limit,
