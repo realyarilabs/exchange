@@ -439,21 +439,6 @@ defmodule OrderBookTest do
     end
   end
 
-   describe "ask orders total volume" do
-     setup _context do
-      {:ok, %{order_book: empty_order_book(:AUXLND),
-              full_order_book: sample_order_book(:AUXLND)}}
-     end
-
-     test "empty sell map", %{order_book: order_book} do
-      assert OrderBook.highest_ask_volume(order_book) == 0
-     end
-
-     test "order book with sell orders", %{full_order_book: fob} do
-      assert OrderBook.highest_ask_volume(fob) == 2250
-     end
-   end
-
   defp sample_order(%{size: z, price: p, side: s}) do
     %Order{
       type: :limit,
@@ -577,20 +562,5 @@ defmodule OrderBookTest do
     |> Enum.reduce(order_book, fn order, order_book ->
       Exchange.OrderBook.price_time_match(order_book, order)
     end)
-  end
-
-  defp empty_order_book(ticker) do
-    %Exchange.OrderBook{
-      name: ticker,
-      currency: :gbp,
-      buy: %{},
-      sell: %{},
-      order_ids: Map.new(),
-      completed_trades: [],
-      ask_min: 99_999,
-      bid_max: 0,
-      max_price: 99_999,
-      min_price: 0
-    }
   end
 end
