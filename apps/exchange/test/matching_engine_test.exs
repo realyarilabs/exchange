@@ -277,6 +277,56 @@ defmodule MatchingEngineTest do
     end
   end
 
+  describe "Volume queries" do
+    setup _context do
+      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+    end
+
+    test "sample order book", %{order_book: order_book} do
+        {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, order_book)
+        {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, order_book)
+        assert ask_volume == 2250
+        assert bid_volume == 1650
+    end
+
+
+    test "Volumes after sell order that consumes the buy side", %{order_book: order_book} do
+        order = sample_order(%{size: 1800, price: 1010, side: :sell})
+        {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+        {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
+        {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
+        assert ask_volume == 2400
+        assert bid_volume == 0
+    end
+
+    test "Volumes after sell order that partially consumes the buy side", %{order_book: order_book} do
+      order = sample_order(%{size: 1500, price: 1010, side: :sell})
+      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
+      {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
+      assert ask_volume == 2250
+      assert bid_volume == 150
+    end
+
+    test "Volumes after buy order that consumes the sell side", %{order_book: order_book} do
+      order = sample_order(%{size: 2500, price: 4050, side: :buy})
+      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
+      {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
+      assert ask_volume == 0
+      assert bid_volume == 1900
+  end
+
+    test "Volumes after buy order that partially consumes the sell side", %{order_book: order_book} do
+      order = sample_order(%{size: 2000, price: 4050, side: :buy})
+      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
+      {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
+      assert ask_volume == 250
+      assert bid_volume == 1650
+    end
+  end
+
   defp empty_order_book() do
     %Exchange.OrderBook{
       name: :AUXLND,

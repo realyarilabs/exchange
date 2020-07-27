@@ -182,7 +182,6 @@ defmodule Exchange.MatchingEngine do
   def handle_call(:bid_volume, _from, order_book) do
     bid_volume =
       Exchange.OrderBook.highest_bid_volume(order_book)
-
     {:reply, {:ok, bid_volume}, order_book}
   end
 

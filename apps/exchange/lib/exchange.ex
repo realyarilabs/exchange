@@ -86,9 +86,6 @@ defmodule Exchange do
     Exchange.MatchingEngine.ask_min(ticker)
   end
 
-  def highest_ask_volume do
-  end
-
   def highest_ask_volume(ticker) do
     Exchange.MatchingEngine.ask_volume(ticker)
   end
