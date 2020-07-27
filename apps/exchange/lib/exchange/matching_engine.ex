@@ -83,19 +83,11 @@ defmodule Exchange.MatchingEngine do
   end
 
   @doc """
-  Returns highest bid volume
-  """
-  @spec highest_bid_volume(ticker) :: {atom, number}
-  def highest_bid_volume(ticker) do
-    GenServer.call(via_tuple(ticker), :highest_bid_volume)
-  end
-
-  @doc """
   Returns the current highest asking volume
   """
-  @spec highest_ask_volume(ticker) :: {atom, number}
-  def highest_ask_volume(ticker) do
-    GenServer.call(via_tuple(ticker), :highest_ask_volume)
+  @spec ask_volume(ticker) :: {atom, number}
+  def ask_volume(ticker) do
+    GenServer.call(via_tuple(ticker), :ask_volume)
   end
 
   defp via_tuple(ticker) do
@@ -171,6 +163,11 @@ defmodule Exchange.MatchingEngine do
       |> Money.new(order_book.currency)
 
     {:reply, {:ok, bid_max}, order_book}
+  end
+
+  def handle_call(:ask_volume, _from, order_book) do
+    ask_volume = Exchange.OrderBook.highest_ask_volume(order_book)
+    {:reply, {:ok, ask_volume}, order_book}
   end
 
   def handle_call(:spread, _from, order_book) do

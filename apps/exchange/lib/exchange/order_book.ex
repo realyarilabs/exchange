@@ -189,28 +189,6 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  returns the highest bid volume
-  """
-  @spec highest_bid_volume(order_book) :: number()
-  def highest_bid_volume(order_book) do
-    order_book.buy
-      |> Map.to_list()
-      |> Enum.flat_map(fn(tuple) -> elem(tuple,1) end)
-      |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
-  end
-
-  @doc """
-  returns the highest asking volume
-  """
-  @spec highest_ask_volume(order_book) :: number()
-  def highest_ask_volume(order_book) do
-    order_book.sell
-      |> Map.to_list()
-      |> Enum.flat_map(fn(tuple) -> elem(tuple,1) end)
-      |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
-  end
-
-  @doc """
   Try to feth a matching buy/sell at the current bid_max/ask_min price
   """
 
@@ -496,5 +474,16 @@ defmodule Exchange.OrderBook do
       :order_ids,
       Map.delete(order_book.order_ids, order.order_id)
     )
+  end
+
+  @doc """
+  returns the highest asking volume
+  """
+  @spec highest_ask_volume(order_book) :: number()
+  def highest_ask_volume(order_book) do
+    order_book.sell
+      |> Map.to_list()
+      |> Enum.flat_map(fn(tuple) -> elem(tuple,1) end)
+      |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
   end
 end
