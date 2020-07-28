@@ -23,8 +23,7 @@ jobs:
         with:
           otp-version: '23.0'
           elixir-version: '1.10.4'
-      - run: |-
-          mix deps.get
-          mix credo --strict
-          mix format --check-formatted
-          mix test
+      - run: mix deps.get
+      - run: mix credo --strict
+      - run: mix format --check-formatted
+      - run: mix test

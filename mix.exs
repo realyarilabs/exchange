@@ -20,7 +20,7 @@ defmodule AlchemistExchange.MixProject do
       {:credo, "~> 1.3", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
       {:mox, "~> 0.5.1", only: :test},
-      {:money, "~> 1.7"},
+      {:money, "~> 1.7"}
     ]
   end
 end
