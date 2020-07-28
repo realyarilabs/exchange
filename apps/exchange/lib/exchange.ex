@@ -93,6 +93,10 @@ defmodule Exchange do
     Exchange.MatchingEngine.ask_volume(ticker)
   end
 
+  def open_orders(ticker) do
+    Exchange.MatchingEngine.open_orders(ticker)
+  end
+
   def last_price do
   end
 

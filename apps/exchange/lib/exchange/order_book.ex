@@ -535,4 +535,32 @@ defmodule Exchange.OrderBook do
   def total_ask_orders(order_book) do
     total_orders(order_book.sell)
   end
+
+  @doc """
+  Returns the list of open orders
+  """
+  @spec open_orders(Exchange.OrderBook) :: [Exchange.Order]
+  def open_orders(order_book) do
+    open_sell_orders = orders_to_list(order_book.sell)
+    open_buy_orders = orders_to_list(order_book.buy)
+
+    open_sell_orders ++ open_buy_orders
+  end
+
+  @spec orders_to_list(Map.t()) :: list()
+  def orders_to_list(orders) do
+    orders
+      |> Map.to_list()
+      |> Enum.flat_map(fn{_k, v} -> v end)
+  end
+
+  @doc """
+  Returns the list of open orders from a trader
+  """
+  @spec open_orders_by_trader(Exchange.OrderBook,  String) :: [Exchange.Order]
+  def open_orders_by_trader(order_book, trader_id) do
+    order_book
+      |> open_orders()
+      |> Enum.filter(fn(order) -> order.trader_id == trader_id end)
+  end
 end
