@@ -7,7 +7,8 @@ defmodule Exchange.Validations do
     validate(order_params)
   end
 
-  def cast_order(%{type: type} = order_params) when type == :market or type == :marketable_limit  do
+  def cast_order(%{type: type} = order_params)
+      when type == :market or type == :marketable_limit do
     order_params
     |> Map.put(:price, 0)
     |> validate

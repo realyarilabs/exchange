@@ -224,21 +224,18 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_call(:bid_volume, _from, order_book) do
-    bid_volume =
-      Exchange.OrderBook.highest_bid_volume(order_book)
+    bid_volume = Exchange.OrderBook.highest_bid_volume(order_book)
     {:reply, {:ok, bid_volume}, order_book}
   end
 
   def handle_call(:open_orders, _from, order_book) do
-    open_orders =
-      Exchange.OrderBook.open_orders(order_book)
+    open_orders = Exchange.OrderBook.open_orders(order_book)
 
     {:reply, {:ok, open_orders}, order_book}
   end
 
   def handle_call({:open_orders_by_trader, trader_id}, _from, order_book) do
-    open_orders_by_trader =
-      Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
+    open_orders_by_trader = Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
 
     {:reply, {:ok, open_orders_by_trader}, order_book}
   end
@@ -257,9 +254,9 @@ defmodule Exchange.MatchingEngine do
     else
       order =
         if order.side == :buy do
-          order |> Map.put(:price, order_book.max_price-1)
+          order |> Map.put(:price, order_book.max_price - 1)
         else
-          order |> Map.put(:price, order_book.min_price+1)
+          order |> Map.put(:price, order_book.min_price + 1)
         end
 
       EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
@@ -302,14 +299,16 @@ defmodule Exchange.MatchingEngine do
 
       order.price < order_book.max_price and order.price > order_book.min_price ->
         EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+
         order_book =
           order_book
           |> OrderBook.price_time_match(order)
           |> broadcast_trades!
+
         {:reply, :ok, order_book}
 
-        true ->
-          {:reply, :error, order_book}
+      true ->
+        {:reply, :error, order_book}
     end
   end
 
