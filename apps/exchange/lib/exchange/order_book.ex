@@ -550,7 +550,6 @@ defmodule Exchange.OrderBook do
   @spec orders_to_list(Map.t()) :: list()
   def orders_to_list(orders) do
     orders
-      |> Map.to_list()
       |> Enum.flat_map(fn{_k, v} -> v end)
   end
 

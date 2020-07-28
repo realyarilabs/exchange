@@ -97,6 +97,10 @@ defmodule Exchange do
     Exchange.MatchingEngine.open_orders(ticker)
   end
 
+  def open_orders_by_trader(ticker, trader_id) do
+    Exchange.MatchingEngine.open_orders_by_trader(ticker, trader_id)
+  end
+
   def last_price do
   end
 
