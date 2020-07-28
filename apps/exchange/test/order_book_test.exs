@@ -485,6 +485,15 @@ defmodule OrderBookTest do
       assert OrderBook.total_ask_orders(order_book) == 4
     end
 
+    test "All open orders in default order_book", %{order_book: order_book} do
+      assert Enum.count(OrderBook.open_orders(order_book)) == 8
+    end
+
+    test "All open orders by trader_id in default order_book", %{order_book: order_book} do
+      assert Enum.count(OrderBook.open_orders_by_trader(order_book, "alchemist")) == 8
+      assert OrderBook.open_orders_by_trader(order_book, "foo") == []
+    end
+
     test "Bid volume order_book after adding one buy order", %{order_book: order_book} do
       new_order = sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
@@ -509,6 +518,18 @@ defmodule OrderBookTest do
       assert OrderBook.total_ask_orders(new_order_book) == 5
     end
 
+      test "All open orders in order_book after adding one order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert Enum.count(OrderBook.open_orders(new_order_book)) == 9
+    end
+
+    test "All open orders by trader_id after adding one order (not belonging to trader)", %{order_book: order_book} do
+      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 8
+    end
+
     test "Bid volume order_book after removal of one buy order", %{order_book: order_book} do
       new_order = sample_order(%{size: 150, price: 4000, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
@@ -531,6 +552,18 @@ defmodule OrderBookTest do
       new_order = sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_ask_orders(new_order_book) == 3
+    end
+
+    test "All open orders in order_book after removal of one order", %{order_book: order_book} do
+      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert Enum.count(OrderBook.open_orders(new_order_book)) == 7
+    end
+
+    test "All open orders by trader_id after removal of one order (belonging to trader)", %{order_book: order_book} do
+      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order)
+      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 7
     end
 
     test "Bid volume order_book after removal and addition of orders", %{order_book: order_book} do

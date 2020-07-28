@@ -114,6 +114,22 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), :total_ask_orders)
   end
 
+  @doc """
+  Returns the list of open orders
+  """
+  @spec open_orders(ticker) :: {atom, list()}
+  def open_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :open_orders)
+  end
+
+  @doc """
+  Returns the list of open orders from a trader
+  """
+  @spec open_orders_by_trader(ticker, String.t()) :: {atom, list()}
+  def open_orders_by_trader(ticker, trader_id) do
+    GenServer.call(via_tuple(ticker), {:open_orders_by_trader, trader_id})
+  end
+
   defp via_tuple(ticker) do
     {:via, Registry, {:matching_engine_registry, ticker}}
   end
@@ -199,6 +215,20 @@ defmodule Exchange.MatchingEngine do
       Exchange.OrderBook.highest_bid_volume(order_book)
 
     {:reply, {:ok, bid_volume}, order_book}
+  end
+
+  def handle_call(:open_orders, _from, order_book) do
+    open_orders =
+      Exchange.OrderBook.open_orders(order_book)
+
+    {:reply, {:ok, open_orders}, order_book}
+  end
+
+  def handle_call({:open_orders_by_trader, trader_id}, _from, order_book) do
+    open_orders_by_trader =
+      Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
+
+    {:reply, {:ok, open_orders_by_trader}, order_book}
   end
 
   def handle_call(:spread, _from, order_book) do
