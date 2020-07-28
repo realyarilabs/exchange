@@ -61,6 +61,19 @@ defmodule Exchange do
   end
 
   @doc """
+  Places a marketable limit order on the Exchange
+  """
+  def place_order(%{type: :marketable_limit} = order_params, ticker) do
+    case Exchange.Validations.cast_order(order_params) do
+      {:ok, marketable_limit_order} ->
+        Exchange.MatchingEngine.place_marketable_limit_order(ticker, marketable_limit_order)
+
+      {:error, errors} ->
+        {:error, errors}
+    end
+  end
+
+  @doc """
   Cancels an order on the Exchange
 
   """
@@ -84,9 +97,6 @@ defmodule Exchange do
 
   def lowest_ask_price(ticker) do
     Exchange.MatchingEngine.ask_min(ticker)
-  end
-
-  def highest_ask_volume do
   end
 
   def highest_ask_volume(ticker) do

@@ -43,6 +43,19 @@ defmodule Exchange.MatchingEngine do
   end
 
   @doc """
+  Places a marketable limit order on the matching engine identified by the ticker.
+  The price of this order's price point is set with the min price (ask_min) if it
+  is a buy order or with the max price(bid_max) if it is a sell order.
+  If there is a match the order is fullfilled otherwise it enters
+  the orderbook queue at the chosen price point
+  """
+  @spec place_marketable_limit_order(ticker, Order.order()) :: atom
+  def place_marketable_limit_order(ticker, %Order{type: :marketable_limit, size: size} = order)
+      when size > 0 do
+    GenServer.call(via_tuple(ticker), {:place_marketable_limit_order, order})
+  end
+
+  @doc """
   Cancels an order and removes it from the Order Book
   """
   @spec cancel_order(ticker, String.t()) :: atom
@@ -55,7 +68,7 @@ defmodule Exchange.MatchingEngine do
   """
   @spec order_book_entries(ticker) :: {atom, OrderBook.order_book()}
   def order_book_entries(ticker) do
-    GenServer.call(via_tuple(ticker), {:order_book_entries})
+    GenServer.call(via_tuple(ticker), :order_book_entries)
   end
 
   @doc """
@@ -211,22 +224,18 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_call(:bid_volume, _from, order_book) do
-    bid_volume =
-      Exchange.OrderBook.highest_bid_volume(order_book)
-
+    bid_volume = Exchange.OrderBook.highest_bid_volume(order_book)
     {:reply, {:ok, bid_volume}, order_book}
   end
 
   def handle_call(:open_orders, _from, order_book) do
-    open_orders =
-      Exchange.OrderBook.open_orders(order_book)
+    open_orders = Exchange.OrderBook.open_orders(order_book)
 
     {:reply, {:ok, open_orders}, order_book}
   end
 
   def handle_call({:open_orders_by_trader, trader_id}, _from, order_book) do
-    open_orders_by_trader =
-      Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
+    open_orders_by_trader = Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
 
     {:reply, {:ok, open_orders_by_trader}, order_book}
   end
@@ -245,9 +254,31 @@ defmodule Exchange.MatchingEngine do
     else
       order =
         if order.side == :buy do
-          order |> Map.put(:price, order_book.max_price-1)
+          order |> Map.put(:price, order_book.max_price - 1)
         else
-          order |> Map.put(:price, order_book.min_price+1)
+          order |> Map.put(:price, order_book.min_price + 1)
+        end
+
+      EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+
+      order_book =
+        order_book
+        |> OrderBook.price_time_match(order)
+        |> broadcast_trades!
+
+      {:reply, :ok, order_book}
+    end
+  end
+
+  def handle_call({:place_marketable_limit_order, order}, _from, order_book) do
+    if OrderBook.order_exists?(order_book, order.order_id) do
+      {:reply, :error, order_book}
+    else
+      order =
+        if order.side == :buy do
+          order |> Map.put(:price, order_book.ask_min)
+        else
+          order |> Map.put(:price, order_book.bid_max)
         end
 
       EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
@@ -268,18 +299,20 @@ defmodule Exchange.MatchingEngine do
 
       order.price < order_book.max_price and order.price > order_book.min_price ->
         EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+
         order_book =
           order_book
           |> OrderBook.price_time_match(order)
           |> broadcast_trades!
+
         {:reply, :ok, order_book}
 
-        true ->
-          {:reply, :error, order_book}
+      true ->
+        {:reply, :error, order_book}
     end
   end
 
-  def handle_call({:order_book_entries}, _from, order_book) do
+  def handle_call(:order_book_entries, _from, order_book) do
     {:reply, {:ok, order_book}, order_book}
   end
 
@@ -295,12 +328,12 @@ defmodule Exchange.MatchingEngine do
     end
   end
 
-  def handle_call({:total_bid_orders}, _from, order_book) do
+  def handle_call(:total_bid_orders, _from, order_book) do
     total_bid_orders = Exchange.OrderBook.total_bid_orders(order_book)
     {:reply, {:ok, total_bid_orders}, order_book}
   end
 
-  def handle_call({:total_ask_orders}, _from, order_book) do
+  def handle_call(:total_ask_orders, _from, order_book) do
     total_ask_orders = Exchange.OrderBook.total_ask_orders(order_book)
     {:reply, {:ok, total_ask_orders}, order_book}
   end

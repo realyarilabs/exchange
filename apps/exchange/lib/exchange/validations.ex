@@ -2,11 +2,13 @@ defmodule Exchange.Validations do
   @moduledoc """
   Validations for Data Structures for the Exchange
   """
+
   def cast_order(%{type: :limit} = order_params) do
     validate(order_params)
   end
 
-  def cast_order(%{type: :market} = order_params) do
+  def cast_order(%{type: type} = order_params)
+      when type == :market or type == :marketable_limit do
     order_params
     |> Map.put(:price, 0)
     |> validate

@@ -111,7 +111,7 @@ defmodule Exchange.OrderBook do
         %{bid_max: bid_max, ask_min: ask_min} = order_book,
         %Order{side: side, price: price, size: size} = order
       )
-      when price <= bid_max and side == :sell or price >= ask_min and side == :buy do
+      when (price <= bid_max and side == :sell) or (price >= ask_min and side == :buy) do
     case fetch_matching_order(order_book, order) do
       :empty ->
         order_book
@@ -127,6 +127,7 @@ defmodule Exchange.OrderBook do
 
           matched_order.size < size ->
             downsized_order = %{order | size: size - matched_order.size}
+
             order_book
             |> register_trade(order, matched_order)
             |> dequeue_order(matched_order)
@@ -134,6 +135,7 @@ defmodule Exchange.OrderBook do
 
           matched_order.size > size ->
             downsized_matched_order = %{matched_order | size: matched_order.size - size}
+
             order_book
             |> register_trade(order, matched_order)
             |> update_order(downsized_matched_order)
@@ -145,9 +147,8 @@ defmodule Exchange.OrderBook do
         %{bid_max: bid_max, ask_min: ask_min} = order_book,
         %Order{side: side, price: price} = order
       )
-      when price > bid_max and side == :sell
-      or price < ask_min and side == :buy
-      do
+      when (price > bid_max and side == :sell) or
+             (price < ask_min and side == :buy) do
     queue_order(order_book, order)
   end
 
@@ -278,13 +279,16 @@ defmodule Exchange.OrderBook do
   @spec update_queue(order_book, atom, price_in_cents, queue_of_orders) :: order_book
   def update_queue(order_book, side, price_point, new_queue) do
     len = Enum.count(new_queue)
+
     case len do
       0 ->
         updated_side_order_book =
           order_book
           |> Map.fetch!(side)
           |> Map.delete(price_point)
+
         Map.put(order_book, side, updated_side_order_book)
+
       _ ->
         updated_side_order_book =
           order_book
@@ -367,10 +371,13 @@ defmodule Exchange.OrderBook do
         !Enum.empty?(Map.get(order_book.sell, pp))
       end)
       |> List.first()
-      new_ask_min = case new_ask_min do
+
+    new_ask_min =
+      case new_ask_min do
         nil -> 99_999
         _ -> new_ask_min
       end
+
     %{order_book | ask_min: new_ask_min}
   end
 
@@ -384,10 +391,13 @@ defmodule Exchange.OrderBook do
         !Enum.empty?(Map.get(order_book.buy, pp))
       end)
       |> List.first()
-    new_bid_max = case new_bid_max do
-      nil -> 1
-      _ -> new_bid_max
-    end
+
+    new_bid_max =
+      case new_bid_max do
+        nil -> 1
+        _ -> new_bid_max
+      end
+
     %{order_book | bid_max: new_bid_max}
   end
 
@@ -409,6 +419,7 @@ defmodule Exchange.OrderBook do
   @spec increment_ask_min(order_book, number()) :: order_book
   def increment_ask_min(order_book, price) do
     new_ask_min = price + 1
+
     if new_ask_min >= order_book.max_price do
       %{order_book | ask_min: order_book.max_price - 1}
     else
@@ -423,6 +434,7 @@ defmodule Exchange.OrderBook do
   @spec decrement_bid_max(order_book, number()) :: order_book
   def decrement_bid_max(order_book, price) do
     new_bid_max = price - 1
+
     if new_bid_max <= order_book.min_price do
       %{order_book | bid_max: order_book.min_price + 1}
     else
@@ -510,8 +522,8 @@ defmodule Exchange.OrderBook do
   @spec highest_volume(Map.t()) :: number()
   defp highest_volume(book) do
     book
-      |> Enum.flat_map(fn{_k, v} -> v end)
-      |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
+    |> Enum.flat_map(fn {_k, v} -> v end)
+    |> Enum.reduce(0, fn order, acc -> order.size + acc end)
   end
 
   @spec highest_bid_volume(order_book) :: number()
@@ -522,8 +534,8 @@ defmodule Exchange.OrderBook do
   @spec total_orders(Map.t()) :: number()
   defp total_orders(book) do
     book
-      |> Enum.flat_map(fn{_k, v} -> v end)
-      |> Enum.reduce(0, fn(_order, acc) -> 1 + acc end)
+    |> Enum.flat_map(fn {_k, v} -> v end)
+    |> Enum.reduce(0, fn _order, acc -> 1 + acc end)
   end
 
   @spec total_bid_orders(order_book) :: number()
@@ -550,16 +562,16 @@ defmodule Exchange.OrderBook do
   @spec orders_to_list(Map.t()) :: list()
   def orders_to_list(orders) do
     orders
-      |> Enum.flat_map(fn{_k, v} -> v end)
+    |> Enum.flat_map(fn {_k, v} -> v end)
   end
 
   @doc """
   Returns the list of open orders from a trader
   """
-  @spec open_orders_by_trader(Exchange.OrderBook,  String) :: [Exchange.Order]
+  @spec open_orders_by_trader(Exchange.OrderBook, String) :: [Exchange.Order]
   def open_orders_by_trader(order_book, trader_id) do
     order_book
-      |> open_orders()
-      |> Enum.filter(fn(order) -> order.trader_id == trader_id end)
+    |> open_orders()
+    |> Enum.filter(fn order -> order.trader_id == trader_id end)
   end
 end

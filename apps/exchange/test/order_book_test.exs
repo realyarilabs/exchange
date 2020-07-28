@@ -76,7 +76,7 @@ defmodule OrderBookTest do
       order_id_1 = buy_order.order_id
       order_id_2 = sell_order.order_id
 
-      assert [{t2, order_id_2}, {t1, order_id_1}] == new_book.expiration_list
+      assert new_book.expiration_list == [{t2, order_id_2}, {t1, order_id_1}]
     end
 
     test "orders fullfilled are not added to expiration_list", %{order_book: ob} do
@@ -86,7 +86,7 @@ defmodule OrderBookTest do
         sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
 
       new_book = OrderBook.price_time_match(ob, buy_order)
-      assert [] == new_book.expiration_list
+      assert new_book.expiration_list == []
     end
 
     test "order is automatically  cancelled on expiration time", %{order_book: ob} do
@@ -96,7 +96,7 @@ defmodule OrderBookTest do
       assert [{t, order.order_id}] == new_book.expiration_list
 
       new_book = OrderBook.check_expired_orders!(new_book)
-      assert [order] == new_book.expired_orders
+      assert new_book.expired_orders == [order]
     end
 
     test "flushing expired orders from order_book", %{order_book: ob} do
@@ -105,7 +105,7 @@ defmodule OrderBookTest do
       new_book = ob |> OrderBook.price_time_match(order) |> OrderBook.check_expired_orders!()
       assert [order] == new_book.expired_orders
       new_book_with_flushed_expired = OrderBook.flush_expired_orders!(new_book)
-      assert [] == new_book_with_flushed_expired.expired_orders
+      assert new_book_with_flushed_expired.expired_orders == []
     end
   end
 
@@ -218,6 +218,7 @@ defmodule OrderBookTest do
       buy_order = sample_order(%{size: 500, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       remaining_sell_order = OrderBook.fetch_order_by_id(new_book, "1")
+
       assert [
                %Exchange.Trade{
                  buy_init_size: 500,
@@ -518,13 +519,15 @@ defmodule OrderBookTest do
       assert OrderBook.total_ask_orders(new_order_book) == 5
     end
 
-      test "All open orders in order_book after adding one order", %{order_book: order_book} do
+    test "All open orders in order_book after adding one order", %{order_book: order_book} do
       new_order = sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert Enum.count(OrderBook.open_orders(new_order_book)) == 9
     end
 
-    test "All open orders by trader_id after adding one order (not belonging to trader)", %{order_book: order_book} do
+    test "All open orders by trader_id after adding one order (not belonging to trader)", %{
+      order_book: order_book
+    } do
       new_order = sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 8
@@ -542,13 +545,17 @@ defmodule OrderBookTest do
       assert OrderBook.highest_ask_volume(new_order_book) == 1500
     end
 
-    test "Total bid orders in order_book after removal of one buy order", %{order_book: order_book} do
+    test "Total bid orders in order_book after removal of one buy order", %{
+      order_book: order_book
+    } do
       new_order = sample_order(%{size: 500, price: 4000, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_bid_orders(new_order_book) == 3
     end
 
-    test "Total ask orders in order_book after removal of one buy order", %{order_book: order_book} do
+    test "Total ask orders in order_book after removal of one buy order", %{
+      order_book: order_book
+    } do
       new_order = sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_ask_orders(new_order_book) == 3
@@ -560,7 +567,9 @@ defmodule OrderBookTest do
       assert Enum.count(OrderBook.open_orders(new_order_book)) == 7
     end
 
-    test "All open orders by trader_id after removal of one order (belonging to trader)", %{order_book: order_book} do
+    test "All open orders by trader_id after removal of one order (belonging to trader)", %{
+      order_book: order_book
+    } do
       new_order = sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 7
@@ -582,7 +591,9 @@ defmodule OrderBookTest do
       assert OrderBook.highest_ask_volume(new_order_book) == 1500
     end
 
-    test "Total bid orders in order_book after removal and adittion of orders", %{order_book: order_book} do
+    test "Total bid orders in order_book after removal and adittion of orders", %{
+      order_book: order_book
+    } do
       new_order_1 = sample_order(%{size: 500, price: 4000, side: :sell})
       new_order_2 = sample_order(%{size: 1000, price: 3900, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
@@ -590,7 +601,9 @@ defmodule OrderBookTest do
       assert OrderBook.total_bid_orders(new_order_book) == 4
     end
 
-    test "Total ask orders in order_book after removal and addition of orders", %{order_book: order_book} do
+    test "Total ask orders in order_book after removal and addition of orders", %{
+      order_book: order_book
+    } do
       new_order_1 = sample_order(%{size: 250, price: 4000, side: :sell})
       new_order_2 = sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
@@ -663,7 +676,8 @@ defmodule OrderBookTest do
           size: 150,
           price: 3960
         }
-      ] |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      ]
+      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
 
     sell_book =
       [
@@ -703,7 +717,8 @@ defmodule OrderBookTest do
           size: 250,
           price: 4020
         }
-      ] |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      ]
+      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
 
     order_book = %Exchange.OrderBook{
       name: ticker,
@@ -718,7 +733,8 @@ defmodule OrderBookTest do
       min_price: 0
     }
 
-    (buy_book ++ sell_book) |> Enum.reduce(order_book, fn order, order_book ->
+    (buy_book ++ sell_book)
+    |> Enum.reduce(order_book, fn order, order_book ->
       Exchange.OrderBook.price_time_match(order_book, order)
     end)
   end
