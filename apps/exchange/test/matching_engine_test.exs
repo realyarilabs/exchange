@@ -3,7 +3,7 @@ defmodule MatchingEngineTest do
 
   alias Exchange.{MatchingEngine, Order, OrderBook}
 
-  describe "Spread, bid_max and ask_min queries unit tests" do
+  describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
       {:ok, %{order_book: empty_order_book()}}
     end
@@ -76,7 +76,7 @@ defmodule MatchingEngineTest do
     end
   end
 
-  describe "Expirations" do
+  describe "Expirations:" do
     setup _context do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
@@ -119,7 +119,7 @@ defmodule MatchingEngineTest do
     end
   end
 
-  describe "Placing and canceling orders" do
+  describe "Placing and canceling orders:" do
     setup _context do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
@@ -167,7 +167,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a market buy order that is partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10000, price: 0, side: :buy})
+      order = sample_order(%{size: 10_000, price: 0, side: :buy})
       order = %Order{order | type: :market}
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_market_order, order}, nil, order_book)
       partial_order = ob.buy[ob.bid_max] |> Enum.find(%Order{}, fn order -> order.order_id == "9" end)
@@ -175,7 +175,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a market sell order that partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10000, price: 0, side: :sell})
+      order = sample_order(%{size: 10_000, price: 0, side: :sell})
       order = %Order{order | type: :market}
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_market_order, order}, nil, order_book)
       partial_order = ob.sell[ob.ask_min] |> Enum.find(%Order{}, fn order -> order.order_id == "9" end)
@@ -221,22 +221,22 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a limit buy order that is partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10000, price: 4010, side: :buy})
+      order = sample_order(%{size: 10_000, price: 4010, side: :buy})
       order = %Order{order | type: :market}
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       partial_order = ob.buy[ob.bid_max] |> Enum.find(%Order{}, fn order -> order.order_id == "9" end)
       assert Map.get(partial_order, :size) == 8000
-      assert Map.get(partial_order, :initial_size) == 10000
+      assert Map.get(partial_order, :initial_size) == 10_000
       refute ob.sell[4010]
     end
 
     test "Place a limit sell order that partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10000, price: 4000, side: :sell})
+      order = sample_order(%{size: 10_000, price: 4000, side: :sell})
       order = %Order{order | type: :market}
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       partial_order = ob.sell[ob.ask_min] |> Enum.find(%Order{}, fn order -> order.order_id == "9" end)
       assert Map.get(partial_order, :size) == 9250
-      assert Map.get(partial_order, :initial_size) == 10000
+      assert Map.get(partial_order, :initial_size) == 10_000
       refute ob.buy[4000]
     end
 
@@ -277,7 +277,7 @@ defmodule MatchingEngineTest do
     end
   end
 
-  describe "Volume queries" do
+  describe "Volume queries:" do
     setup _context do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
@@ -289,10 +289,9 @@ defmodule MatchingEngineTest do
         assert bid_volume == 1650
     end
 
-
     test "Volumes after sell order that consumes the buy side", %{order_book: order_book} do
         order = sample_order(%{size: 1800, price: 1010, side: :sell})
-        {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+        {_reply, _response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
         {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
         {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
         assert ask_volume == 2400
@@ -301,7 +300,7 @@ defmodule MatchingEngineTest do
 
     test "Volumes after sell order that partially consumes the buy side", %{order_book: order_book} do
       order = sample_order(%{size: 1500, price: 1010, side: :sell})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, _response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
       {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
       assert ask_volume == 2250
@@ -310,7 +309,7 @@ defmodule MatchingEngineTest do
 
     test "Volumes after buy order that consumes the sell side", %{order_book: order_book} do
       order = sample_order(%{size: 2500, price: 4050, side: :buy})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, _response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
       {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
       assert ask_volume == 0
@@ -319,7 +318,7 @@ defmodule MatchingEngineTest do
 
     test "Volumes after buy order that partially consumes the sell side", %{order_book: order_book} do
       order = sample_order(%{size: 2000, price: 4050, side: :buy})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, _response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       {_reply, {:ok, ask_volume}, _order_book} = MatchingEngine.handle_call(:ask_volume, nil, ob)
       {_reply, {:ok, bid_volume}, _order_book} = MatchingEngine.handle_call(:bid_volume, nil, ob)
       assert ask_volume == 250
@@ -327,83 +326,84 @@ defmodule MatchingEngineTest do
     end
   end
 
-  describe "Total orders queries" do
+  describe "Total orders queries:" do
     setup _context do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
 
     test "After adding buy order that consumes 1 or more sell orders", %{order_book: order_book} do
       order = sample_order(%{size: 2000, price: 4010, side: :buy})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
-      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call({:total_bid_orders, order}, nil, order_book)
-      {:reply, {:ok, total_ask_orders}, order_book} = MatchingEngine.handle_call({:total_ask_orders, order}, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call(:total_bid_orders, nil, order_book)
+      {:reply, {:ok, total_ask_orders}, _order_book} = MatchingEngine.handle_call(:total_ask_orders, nil, order_book)
       assert total_bid_orders == 4
       assert total_ask_orders == 1
     end
+
     test "After adding sell order that consumes 1 or more buy orders", %{order_book: order_book} do
       order = sample_order(%{size: 2000, price: 4000, side: :sell})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
-      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call({:total_bid_orders, order}, nil, order_book)
-      {:reply, {:ok, total_ask_orders}, order_book} = MatchingEngine.handle_call({:total_ask_orders, order}, nil, order_book)
-      assert total_bid_orders == 4
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call(:total_bid_orders, nil, order_book)
+      {:reply, {:ok, total_ask_orders}, _order_book} = MatchingEngine.handle_call(:total_ask_orders, nil, order_book)
+      assert total_bid_orders == 2
       assert total_ask_orders == 5
     end
     test "After adding buy order", %{order_book: order_book} do
       order = sample_order(%{size: 2000, price: 3000, side: :buy})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
-      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call({:total_bid_orders, order}, nil, order_book)
-      {:reply, {:ok, total_ask_orders}, order_book} = MatchingEngine.handle_call({:total_ask_orders, order}, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call(:total_bid_orders, nil, order_book)
+      {:reply, {:ok, total_ask_orders}, _order_book} = MatchingEngine.handle_call(:total_ask_orders, nil, order_book)
       assert total_bid_orders == 5
       assert total_ask_orders == 4
     end
     test "After adding sell order", %{order_book: order_book} do
       order = sample_order(%{size: 1000, price: 5000, side: :sell})
-      {_reply,_response, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
-      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call({:total_bid_orders, order}, nil, order_book)
-      {:reply, {:ok, total_ask_orders}, order_book} = MatchingEngine.handle_call({:total_ask_orders, order}, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call(:total_bid_orders, nil, order_book)
+      {:reply, {:ok, total_ask_orders}, _order_book} = MatchingEngine.handle_call(:total_ask_orders, nil, order_book)
       assert total_bid_orders == 4
       assert total_ask_orders == 5
     end
     test "Sample order book", %{order_book: order_book} do
-      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call({:total_bid_orders, order}, nil, order_book)
-      {:reply, {:ok, total_ask_orders}, order_book} = MatchingEngine.handle_call({:total_ask_orders, order}, nil, order_book)
+      {:reply, {:ok, total_bid_orders}, order_book} = MatchingEngine.handle_call(:total_bid_orders, nil, order_book)
+      {:reply, {:ok, total_ask_orders}, _order_book} = MatchingEngine.handle_call(:total_ask_orders, nil, order_book)
       assert total_bid_orders == 4
       assert total_ask_orders == 4
     end
   end
 
-  describe "Open orders queries" do
+  describe "Open orders queries:" do
     setup _context do
       {:ok, %{order_book: sample_order_book(:AUXLND)}}
     end
 
     test "Sample order book", %{order_book: order_book} do
       ids = ~w(alchemist1 alchemist2 alchemist3 alchemist4 alchemist5 alchemist6 alchemist7 alchemist8)
-      {:reply, {:ok, orders}, order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
+      {:reply, {:ok, orders}, _order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
       active = orders |> Enum.map(&(&1.trader_id)) |> Enum.sort()
       assert ids == active
     end
 
     test "Get orders from specific trader_id", %{order_book: order_book} do
-      {:reply, {:ok, orders}, order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist1"}, nil, order_book)
-      active = orders |> Enum.map(&(&1.trader_id))
+      {:reply, {:ok, orders}, _order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist1"}, nil, order_book)
+      active = orders |> Enum.map(&(Map.get(&1, :trader_id, nil)))
       assert Enum.count(active) == 1
-      assert hd(active) == trader_id
+      assert hd(active) == "alchemist1"
     end
 
     test "Get orders from non existing trader_id", %{order_book: order_book} do
-      {:reply, {:ok, orders}, order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist0"}, nil, order_book)
+      {:reply, {:ok, orders}, _order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist0"}, nil, order_book)
       active = orders |> Enum.map(&(&1.trader_id))
-      assert Enum.count(active) == 0
+      assert active == []
     end
 
     test "Sell order that consumes the top buy side", %{order_book: order_book} do
-      ids = ~w(alchemist0 alchemist1 alchemist2 alchemist3 alchemist5 alchemist7 alchemist8)
+      ids = ~w(alchemist0 alchemist3 alchemist4 alchemist5 alchemist6 alchemist7 alchemist8)
       order = sample_order(%{size: 2000, price: 4000, side: :sell})
       order = %Order{order | trader_id: "alchemist0"}
-      {_reply,_response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
       {:reply, {:ok, orders}, order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist0"}, nil, order_book)
-      {:reply, {:ok, total_orders}, order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
+      {:reply, {:ok, total_orders}, _order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
       active = orders |> Enum.map(&(&1.trader_id))
       total_active = total_orders |> Enum.map(&(&1.trader_id)) |> Enum.sort()
       assert Enum.count(active) == 1
@@ -411,25 +411,24 @@ defmodule MatchingEngineTest do
     end
 
     test "Multiple order placing", %{order_book: order_book} do
-      ids = ~w(alchemist1 alchemist2 alchemist3 alchemist4 alchemist5 alchemist6 alchemist7 alchemist8)
+      ids = ~w(alchemist0 alchemist0 alchemist1 alchemist2 alchemist3 alchemist4
+                alchemist5 alchemist6 alchemist7 alchemist8)
       order_1 = sample_order(%{size: 2000, price: 3200, side: :buy})
       order_2 = sample_order(%{size: 2100, price: 3000, side: :buy})
-      order_1 = %Order{order_1 | trader_id: "alchemist0"}
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
       order_2 = %Order{order_2 | trader_id: "alchemist0"}
-      {_reply,_response, order_book} = MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
-      {_reply,_response, order_book} = MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
-      {:reply, {:ok, orders}, order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist0"}, nil, order_book)
-      {:reply, {:ok, total_orders}, order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
+      {_reply, _response, order_book} = MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
+      {:reply, {:ok, orders}, _order_book} = MatchingEngine.handle_call({:open_orders_by_trader, "alchemist0"}, nil, order_book)
+      {:reply, {:ok, total_orders}, _order_book} = MatchingEngine.handle_call(:open_orders, nil, order_book)
       active = orders |> Enum.map(&(&1.trader_id))
       total_active = total_orders |> Enum.map(&(&1.trader_id)) |> Enum.sort()
       assert Enum.count(active) == 2
       assert total_active == ids
     end
-
-
   end
 
-  defp empty_order_book() do
+  defp empty_order_book do
     %Exchange.OrderBook{
       name: :AUXLND,
       currency: :GBP,

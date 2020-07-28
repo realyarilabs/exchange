@@ -43,6 +43,19 @@ defmodule Exchange.MatchingEngine do
   end
 
   @doc """
+  Places a marketable limit order on the matching engine identified by the ticker.
+  The price of this order's price point is set with the min price (ask_min) if it
+  is a buy order or with the max price(bid_max) if it is a sell order.
+  If there is a match the order is fullfilled otherwise it enters
+  the orderbook queue at the chosen price point
+  """
+  @spec place_marketable_limit_order(ticker, Order.order()) :: atom
+  def place_marketable_limit_order(ticker, %Order{type: :marketable_limit, size: size} = order)
+      when size > 0 do
+    GenServer.call(via_tuple(ticker), {:place_marketable_limit_order, order})
+  end
+
+  @doc """
   Cancels an order and removes it from the Order Book
   """
   @spec cancel_order(ticker, String.t()) :: atom
@@ -55,7 +68,7 @@ defmodule Exchange.MatchingEngine do
   """
   @spec order_book_entries(ticker) :: {atom, OrderBook.order_book()}
   def order_book_entries(ticker) do
-    GenServer.call(via_tuple(ticker), {:order_book_entries})
+    GenServer.call(via_tuple(ticker), :order_book_entries)
   end
 
   @doc """
@@ -73,7 +86,6 @@ defmodule Exchange.MatchingEngine do
   def bid_volume(ticker) do
     GenServer.call(via_tuple(ticker), :bid_volume)
   end
-
 
   @doc """
   Returns the current minimum asking price
@@ -97,6 +109,38 @@ defmodule Exchange.MatchingEngine do
   @spec ask_volume(ticker) :: {atom, number}
   def ask_volume(ticker) do
     GenServer.call(via_tuple(ticker), :ask_volume)
+  end
+
+  @doc """
+  Returns the number of open buy orders
+  """
+  @spec total_bid_orders(ticker) :: {atom, number}
+  def total_bid_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :total_bid_orders)
+  end
+
+  @doc """
+  Returns the number of open sell orders
+  """
+  @spec total_ask_orders(ticker) :: {atom, number}
+  def total_ask_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :total_ask_orders)
+  end
+
+  @doc """
+  Returns the list of open orders
+  """
+  @spec open_orders(ticker) :: {atom, list()}
+  def open_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :open_orders)
+  end
+
+  @doc """
+  Returns the list of open orders from a trader
+  """
+  @spec open_orders_by_trader(ticker, String.t()) :: {atom, list()}
+  def open_orders_by_trader(ticker, trader_id) do
+    GenServer.call(via_tuple(ticker), {:open_orders_by_trader, trader_id})
   end
 
   defp via_tuple(ticker) do
@@ -185,6 +229,20 @@ defmodule Exchange.MatchingEngine do
     {:reply, {:ok, bid_volume}, order_book}
   end
 
+  def handle_call(:open_orders, _from, order_book) do
+    open_orders =
+      Exchange.OrderBook.open_orders(order_book)
+
+    {:reply, {:ok, open_orders}, order_book}
+  end
+
+  def handle_call({:open_orders_by_trader, trader_id}, _from, order_book) do
+    open_orders_by_trader =
+      Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
+
+    {:reply, {:ok, open_orders_by_trader}, order_book}
+  end
+
   def handle_call(:spread, _from, order_book) do
     spread =
       OrderBook.spread(order_book)
@@ -202,6 +260,28 @@ defmodule Exchange.MatchingEngine do
           order |> Map.put(:price, order_book.max_price-1)
         else
           order |> Map.put(:price, order_book.min_price+1)
+        end
+
+      EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+
+      order_book =
+        order_book
+        |> OrderBook.price_time_match(order)
+        |> broadcast_trades!
+
+      {:reply, :ok, order_book}
+    end
+  end
+
+  def handle_call({:place_marketable_limit_order, order}, _from, order_book) do
+    if OrderBook.order_exists?(order_book, order.order_id) do
+      {:reply, :error, order_book}
+    else
+      order =
+        if order.side == :buy do
+          order |> Map.put(:price, order_book.ask_min)
+        else
+          order |> Map.put(:price, order_book.bid_max)
         end
 
       EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
@@ -233,7 +313,7 @@ defmodule Exchange.MatchingEngine do
     end
   end
 
-  def handle_call({:order_book_entries}, _from, order_book) do
+  def handle_call(:order_book_entries, _from, order_book) do
     {:reply, {:ok, order_book}, order_book}
   end
 
@@ -247,6 +327,16 @@ defmodule Exchange.MatchingEngine do
     else
       {:reply, :error, order_book}
     end
+  end
+
+  def handle_call(:total_bid_orders, _from, order_book) do
+    total_bid_orders = Exchange.OrderBook.total_bid_orders(order_book)
+    {:reply, {:ok, total_bid_orders}, order_book}
+  end
+
+  def handle_call(:total_ask_orders, _from, order_book) do
+    total_ask_orders = Exchange.OrderBook.total_ask_orders(order_book)
+    {:reply, {:ok, total_ask_orders}, order_book}
   end
 
   defp broadcast_trades!(order_book) do
