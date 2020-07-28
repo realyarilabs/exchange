@@ -43,6 +43,19 @@ defmodule Exchange.MatchingEngine do
   end
 
   @doc """
+  Places a marketable limit order on the matching engine identified by the ticker.
+  The price of this order's price point is set with the min price (ask_min) if it
+  is a buy order or with the max price(bid_max) if it is a sell order.
+  If there is a match the order is fullfilled otherwise it enters
+  the orderbook queue at the chosen price point
+  """
+  @spec place_marketable_limit_order(ticker, Order.order()) :: atom
+  def place_marketable_limit_order(ticker, %Order{type: :marketable_limit, size: size} = order)
+      when size > 0 do
+    GenServer.call(via_tuple(ticker), {:place_marketable_limit_order, order})
+  end
+
+  @doc """
   Cancels an order and removes it from the Order Book
   """
   @spec cancel_order(ticker, String.t()) :: atom
@@ -73,7 +86,6 @@ defmodule Exchange.MatchingEngine do
   def bid_volume(ticker) do
     GenServer.call(via_tuple(ticker), :bid_volume)
   end
-
 
   @doc """
   Returns the current minimum asking price
@@ -203,6 +215,28 @@ defmodule Exchange.MatchingEngine do
           order |> Map.put(:price, order_book.max_price-1)
         else
           order |> Map.put(:price, order_book.min_price+1)
+        end
+
+      EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
+
+      order_book =
+        order_book
+        |> OrderBook.price_time_match(order)
+        |> broadcast_trades!
+
+      {:reply, :ok, order_book}
+    end
+  end
+
+  def handle_call({:place_marketable_limit_order, order}, _from, order_book) do
+    if OrderBook.order_exists?(order_book, order.order_id) do
+      {:reply, :error, order_book}
+    else
+      order =
+        if order.side == :buy do
+          order |> Map.put(:price, order_book.ask_min)
+        else
+          order |> Map.put(:price, order_book.bid_max)
         end
 
       EventBus.cast_event(:order_queued, %EventBus.OrderQueued{order: order})
