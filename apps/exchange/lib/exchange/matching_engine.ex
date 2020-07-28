@@ -74,7 +74,6 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), :bid_volume)
   end
 
-
   @doc """
   Returns the current minimum asking price
   """
@@ -97,6 +96,22 @@ defmodule Exchange.MatchingEngine do
   @spec ask_volume(ticker) :: {atom, number}
   def ask_volume(ticker) do
     GenServer.call(via_tuple(ticker), :ask_volume)
+  end
+
+  @doc """
+  Returns the number of open buy orders
+  """
+  @spec total_bid_orders(ticker) :: {atom, number}
+  def total_bid_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :total_bid_orders)
+  end
+
+  @doc """
+  Returns the number of open sell orders
+  """
+  @spec total_ask_orders(ticker) :: {atom, number}
+  def total_ask_orders(ticker) do
+    GenServer.call(via_tuple(ticker), :total_ask_orders)
   end
 
   defp via_tuple(ticker) do
@@ -248,6 +263,16 @@ defmodule Exchange.MatchingEngine do
     else
       {:reply, :error, order_book}
     end
+  end
+
+  def handle_call({:total_bid_orders}, _from, order_book) do
+    total_bid_orders = Exchange.OrderBook.total_bid_orders(order_book)
+    {:reply, {:ok, total_bid_orders}, order_book}
+  end
+
+  def handle_call({:total_ask_orders}, _from, order_book) do
+    total_ask_orders = Exchange.OrderBook.total_ask_orders(order_book)
+    {:reply, {:ok, total_ask_orders}, order_book}
   end
 
   defp broadcast_trades!(order_book) do

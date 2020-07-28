@@ -98,4 +98,12 @@ defmodule Exchange do
 
   def last_size do
   end
+
+  def total_buy_orders(ticker) do
+    Exchange.MatchingEngine.total_bid_orders(ticker)
+  end
+
+  def total_sell_orders(ticker) do
+   Exchange.MatchingEngine.total_ask_orders(ticker)
+  end
 end
