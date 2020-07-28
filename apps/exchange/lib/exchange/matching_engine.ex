@@ -125,7 +125,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the list of open orders from a trader
   """
-  @spec open_orders_by_trader(ticker, String) :: {atom, list()}
+  @spec open_orders_by_trader(ticker, String.t()) :: {atom, list()}
   def open_orders_by_trader(ticker, trader_id) do
     GenServer.call(via_tuple(ticker), {:open_orders_by_trader, trader_id})
   end
