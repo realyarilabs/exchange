@@ -510,7 +510,7 @@ defmodule Exchange.OrderBook do
   @spec highest_volume(Map.t()) :: number()
   defp highest_volume(book) do
     book
-      |> Enum.flat_map(fn{_k,v} -> v end)
+      |> Enum.flat_map(fn{_k, v} -> v end)
       |> Enum.reduce(0, fn(order, acc) -> order.size + acc end)
   end
 

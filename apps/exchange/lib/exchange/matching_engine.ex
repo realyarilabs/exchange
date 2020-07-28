@@ -74,7 +74,6 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), :bid_volume)
   end
 
-
   @doc """
   Returns the current minimum asking price
   """
