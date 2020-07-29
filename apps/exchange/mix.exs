@@ -30,7 +30,8 @@ defmodule Exchange.MixProject do
       {:elixir_uuid, "~> 1.2"},
       {:event_bus, in_umbrella: true},
       {:flux, in_umbrella: true},
-      {:benchee, "~> 1.0", only: :dev}
+      {:benchee, "~> 1.0", only: :dev},
+      {:benchee_html, "~> 1.0", only: :dev}
     ]
   end
 end

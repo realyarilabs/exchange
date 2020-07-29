@@ -117,6 +117,10 @@ defmodule Exchange do
   def last_size do
   end
 
+  def completed_trades_by_id(ticker, trader_id) do
+    Flux.Trades.completed_trades_by_id(ticker, trader_id)
+  end
+
   def total_buy_orders(ticker) do
     Exchange.MatchingEngine.total_bid_orders(ticker)
   end

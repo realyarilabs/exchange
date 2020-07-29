@@ -1,11 +1,11 @@
 defmodule MatchingEngineTest do
   use ExUnit.Case
 
-  alias Exchange.{MatchingEngine, Order, OrderBook}
+  alias Exchange.{MatchingEngine, Order, OrderBook, Utils}
 
   describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
-      {:ok, %{order_book: empty_order_book()}}
+      {:ok, %{order_book: Utils.empty_order_book()}}
     end
 
     test "empty order book", %{order_book: order_book} do
@@ -27,7 +27,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 1000, price: 4000, side: :buy})
+          Utils.sample_order(%{size: 1000, price: 4000, side: :buy})
         )
 
       {_response_code, {:ok, spread}, _state} =
@@ -48,7 +48,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 500, price: 3900, side: :sell})
+          Utils.sample_order(%{size: 500, price: 3900, side: :sell})
         )
 
       {_response_code, {:ok, spread}, _state} =
@@ -78,7 +78,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 1000, price: 4000, side: :buy})
+          Utils.sample_order(%{size: 1000, price: 4000, side: :buy})
         )
 
       {_response_code, {:ok, spread_2}, _state} =
@@ -93,7 +93,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 500, price: 3900, side: :sell})
+          Utils.sample_order(%{size: 500, price: 3900, side: :sell})
         )
 
       {_response_code, {:ok, spread_3}, _state} =
@@ -108,7 +108,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 1000, price: 3900, side: :sell})
+          Utils.sample_order(%{size: 1000, price: 3900, side: :sell})
         )
 
       {_response_code, {:ok, spread_4}, _state} =
@@ -123,7 +123,7 @@ defmodule MatchingEngineTest do
       order_book =
         OrderBook.price_time_match(
           order_book,
-          sample_order(%{size: 250, price: 3800, side: :buy})
+          Utils.sample_order(%{size: 250, price: 3800, side: :buy})
         )
 
       {_response_code, {:ok, spread_5}, _state} =
@@ -155,7 +155,7 @@ defmodule MatchingEngineTest do
 
   describe "Expirations:" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "orders with expiration are added to expiration_list", %{order_book: ob} do
@@ -163,10 +163,10 @@ defmodule MatchingEngineTest do
       t2 = :os.system_time(:millisecond) - 1000
 
       buy_order =
-        sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
+        Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
 
       sell_order =
-        sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
+        Utils.sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
 
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, buy_order}, nil, ob)
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, sell_order}, nil, ob)
@@ -180,7 +180,7 @@ defmodule MatchingEngineTest do
       t1 = :os.system_time(:millisecond)
 
       buy_order =
-        sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
+        Utils.sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
 
       new_book = OrderBook.price_time_match(ob, buy_order)
       assert new_book.expiration_list == []
@@ -188,7 +188,7 @@ defmodule MatchingEngineTest do
 
     test "order is automatically cancelled on expiration time", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, ob)
       assert [{t, order.order_id}] == ob.expiration_list
       {:noreply, ob} = MatchingEngine.handle_info(:check_expiration, ob)
@@ -198,13 +198,13 @@ defmodule MatchingEngineTest do
 
   describe "Placing and canceling orders:" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "Place a market buy order that consumes the top of the sell side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 2000, price: 0, side: :buy})
+      order = Utils.sample_order(%{size: 2000, price: 0, side: :buy})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -222,7 +222,7 @@ defmodule MatchingEngineTest do
     test "Place a market sell order that consumes the top of the buy side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 750, price: 0, side: :sell})
+      order = Utils.sample_order(%{size: 750, price: 0, side: :sell})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -240,7 +240,7 @@ defmodule MatchingEngineTest do
     test "Place a market buy order that partially consumes the top order of the sell side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 100, price: 0, side: :buy})
+      order = Utils.sample_order(%{size: 100, price: 0, side: :buy})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -253,7 +253,7 @@ defmodule MatchingEngineTest do
     test "Place a market sell order that partially consumes the top order of the buy side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 100, price: 0, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 0, side: :sell})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -264,7 +264,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a market buy order that is partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10_000, price: 0, side: :buy})
+      order = Utils.sample_order(%{size: 10_000, price: 0, side: :buy})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -277,7 +277,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a market sell order that partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10_000, price: 0, side: :sell})
+      order = Utils.sample_order(%{size: 10_000, price: 0, side: :sell})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -292,7 +292,7 @@ defmodule MatchingEngineTest do
     test "Place a limit buy order that consumes the top of the sell side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 2000, price: 4010, side: :buy})
+      order = Utils.sample_order(%{size: 2000, price: 4010, side: :buy})
 
       {:reply, _code, ob} =
         MatchingEngine.handle_call({:place_market_order, order}, nil, order_book)
@@ -309,7 +309,7 @@ defmodule MatchingEngineTest do
     test "Place a limit sell order that consumes the top of the buy side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 750, price: 4000, side: :sell})
+      order = Utils.sample_order(%{size: 750, price: 4000, side: :sell})
 
       {:reply, _code, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -326,7 +326,7 @@ defmodule MatchingEngineTest do
     test "Place a limit buy order that partially consumes the top order of the sell side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 100, price: 4010, side: :buy})
+      order = Utils.sample_order(%{size: 100, price: 4010, side: :buy})
 
       {:reply, _code, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -338,7 +338,7 @@ defmodule MatchingEngineTest do
     test "Place a limit sell order that partially consumes the top order of the buy side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 100, price: 4000, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 4000, side: :sell})
 
       {:reply, _code, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -348,7 +348,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a limit buy order that is partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10_000, price: 4010, side: :buy})
+      order = Utils.sample_order(%{size: 10_000, price: 4010, side: :buy})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -363,7 +363,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place a limit sell order that partially filled", %{order_book: order_book} do
-      order = sample_order(%{size: 10_000, price: 4000, side: :sell})
+      order = Utils.sample_order(%{size: 10_000, price: 4000, side: :sell})
       order = %Order{order | type: :market}
 
       {:reply, _code, ob} =
@@ -378,7 +378,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place limit order with price higher than max_price", %{order_book: order_book} do
-      order = sample_order(%{size: 100, price: 190_000, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 190_000, side: :sell})
 
       {:reply, code, _ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -387,7 +387,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place limit order with price lower than min_price", %{order_book: order_book} do
-      order = sample_order(%{size: 100, price: 900, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 900, side: :sell})
 
       {:reply, code, _ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -396,7 +396,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place limit order with existing id", %{order_book: order_book} do
-      order = sample_order(%{size: 100, price: 10_000, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 10_000, side: :sell})
       order = %Order{order | order_id: "4"}
 
       {:reply, code, _ob} =
@@ -406,7 +406,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Place market order with existing id", %{order_book: order_book} do
-      order = sample_order(%{size: 100, price: 10_000, side: :sell})
+      order = Utils.sample_order(%{size: 100, price: 10_000, side: :sell})
       order = %Order{order | type: :market, order_id: "4"}
 
       {:reply, code, _ob} =
@@ -429,7 +429,7 @@ defmodule MatchingEngineTest do
 
   describe "Volume queries:" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "sample order book", %{order_book: order_book} do
@@ -444,7 +444,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Volumes after sell order that consumes the buy side", %{order_book: order_book} do
-      order = sample_order(%{size: 1800, price: 1010, side: :sell})
+      order = Utils.sample_order(%{size: 1800, price: 1010, side: :sell})
 
       {_reply, _response, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -458,7 +458,7 @@ defmodule MatchingEngineTest do
     test "Volumes after sell order that partially consumes the buy side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 1500, price: 1010, side: :sell})
+      order = Utils.sample_order(%{size: 1500, price: 1010, side: :sell})
 
       {_reply, _response, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -470,7 +470,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Volumes after buy order that consumes the sell side", %{order_book: order_book} do
-      order = sample_order(%{size: 2500, price: 4050, side: :buy})
+      order = Utils.sample_order(%{size: 2500, price: 4050, side: :buy})
 
       {_reply, _response, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -484,7 +484,7 @@ defmodule MatchingEngineTest do
     test "Volumes after buy order that partially consumes the sell side", %{
       order_book: order_book
     } do
-      order = sample_order(%{size: 2000, price: 4050, side: :buy})
+      order = Utils.sample_order(%{size: 2000, price: 4050, side: :buy})
 
       {_reply, _response, ob} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -498,11 +498,11 @@ defmodule MatchingEngineTest do
 
   describe "Total orders queries:" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "After adding buy order that consumes 1 or more sell orders", %{order_book: order_book} do
-      order = sample_order(%{size: 2000, price: 4010, side: :buy})
+      order = Utils.sample_order(%{size: 2000, price: 4010, side: :buy})
 
       {_reply, _response, order_book} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -518,7 +518,7 @@ defmodule MatchingEngineTest do
     end
 
     test "After adding sell order that consumes 1 or more buy orders", %{order_book: order_book} do
-      order = sample_order(%{size: 2000, price: 4000, side: :sell})
+      order = Utils.sample_order(%{size: 2000, price: 4000, side: :sell})
 
       {_reply, _response, order_book} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -534,7 +534,7 @@ defmodule MatchingEngineTest do
     end
 
     test "After adding buy order", %{order_book: order_book} do
-      order = sample_order(%{size: 2000, price: 3000, side: :buy})
+      order = Utils.sample_order(%{size: 2000, price: 3000, side: :buy})
 
       {_reply, _response, order_book} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -550,7 +550,7 @@ defmodule MatchingEngineTest do
     end
 
     test "After adding sell order", %{order_book: order_book} do
-      order = sample_order(%{size: 1000, price: 5000, side: :sell})
+      order = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
 
       {_reply, _response, order_book} =
         MatchingEngine.handle_call({:place_limit_order, order}, nil, order_book)
@@ -579,7 +579,7 @@ defmodule MatchingEngineTest do
 
   describe "Open orders queries:" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "Sample order book", %{order_book: order_book} do
@@ -612,7 +612,7 @@ defmodule MatchingEngineTest do
 
     test "Sell order that consumes the top buy side", %{order_book: order_book} do
       ids = ~w(alchemist0 alchemist3 alchemist4 alchemist5 alchemist6 alchemist7 alchemist8)
-      order = sample_order(%{size: 2000, price: 4000, side: :sell})
+      order = Utils.sample_order(%{size: 2000, price: 4000, side: :sell})
       order = %Order{order | trader_id: "alchemist0"}
 
       {_reply, _response, order_book} =
@@ -633,8 +633,8 @@ defmodule MatchingEngineTest do
     test "Multiple order placing", %{order_book: order_book} do
       ids = ~w(alchemist0 alchemist0 alchemist1 alchemist2 alchemist3 alchemist4
                 alchemist5 alchemist6 alchemist7 alchemist8)
-      order_1 = sample_order(%{size: 2000, price: 3200, side: :buy})
-      order_2 = sample_order(%{size: 2100, price: 3000, side: :buy})
+      order_1 = Utils.sample_order(%{size: 2000, price: 3200, side: :buy})
+      order_2 = Utils.sample_order(%{size: 2100, price: 3000, side: :buy})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
       order_2 = %Order{order_2 | trader_id: "alchemist0"}
 
@@ -655,147 +655,5 @@ defmodule MatchingEngineTest do
       assert Enum.count(active) == 2
       assert total_active == ids
     end
-  end
-
-  defp empty_order_book do
-    %Exchange.OrderBook{
-      name: :AUXLND,
-      currency: :GBP,
-      buy: %{},
-      sell: %{},
-      order_ids: Map.new(),
-      completed_trades: [],
-      ask_min: 99_999,
-      bid_max: 1,
-      max_price: 100_000,
-      min_price: 0
-    }
-  end
-
-  defp sample_order(%{size: z, price: p, side: s}) do
-    %Order{
-      type: :limit,
-      order_id: "9",
-      trader_id: "test_user_1",
-      side: s,
-      initial_size: z,
-      size: z,
-      price: p
-    }
-  end
-
-  defp sample_expiring_order(%{size: z, price: p, side: s, id: id, exp_time: t}) do
-    %Order{
-      type: :limit,
-      order_id: id,
-      trader_id: "test_user_1",
-      side: s,
-      initial_size: z,
-      size: z,
-      price: p,
-      exp_time: t
-    }
-  end
-
-  defp sample_order_book(ticker) do
-    buy_book =
-      [
-        %Order{
-          type: :limit,
-          order_id: "4",
-          trader_id: "alchemist1",
-          side: :buy,
-          initial_size: 250,
-          size: 250,
-          price: 4000
-        },
-        %Order{
-          type: :limit,
-          order_id: "6",
-          trader_id: "alchemist2",
-          side: :buy,
-          initial_size: 500,
-          size: 500,
-          price: 4000
-        },
-        %Order{
-          type: :limit,
-          order_id: "2",
-          trader_id: "alchemist3",
-          side: :buy,
-          initial_size: 750,
-          size: 750,
-          price: 3970
-        },
-        %Order{
-          type: :limit,
-          order_id: "7",
-          trader_id: "alchemist4",
-          side: :buy,
-          initial_size: 150,
-          size: 150,
-          price: 3960
-        }
-      ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
-
-    sell_book =
-      [
-        %Order{
-          type: :limit,
-          order_id: "1",
-          trader_id: "alchemist5",
-          side: :sell,
-          initial_size: 750,
-          size: 750,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "5",
-          trader_id: "alchemist6",
-          side: :sell,
-          initial_size: 500,
-          size: 500,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "8",
-          trader_id: "alchemist7",
-          side: :sell,
-          initial_size: 750,
-          size: 750,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "3",
-          trader_id: "alchemist8",
-          side: :sell,
-          initial_size: 250,
-          size: 250,
-          price: 4020
-        }
-      ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
-
-    order_book = %Exchange.OrderBook{
-      name: ticker,
-      currency: :GBP,
-      buy: %{},
-      sell: %{},
-      order_ids: Map.new(),
-      completed_trades: [],
-      ask_min: 99_999,
-      bid_max: 1000,
-      max_price: 100_000,
-      min_price: 1000
-    }
-
-    (buy_book ++ sell_book)
-    |> Enum.reduce(order_book, fn order, order_book ->
-      Exchange.OrderBook.price_time_match(order_book, order)
-    end)
   end
 end
