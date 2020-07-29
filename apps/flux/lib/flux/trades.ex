@@ -32,25 +32,6 @@ defmodule Flux.Trades do
       []
     else
       Flux.Trades.from_result(response)
-      |> Enum.map(fn flux_trade ->
-        trade = %Exchange.Trade{}
-        %{
-          trade
-          | trade_id: flux_trade.fields.trade_id,
-            ticker: String.to_atom(flux_trade.tags.ticker),
-            currency: flux_trade.tags.currency,
-            buyer_id: flux_trade.tags.buyer_id,
-            seller_id: flux_trade.tags.seller_id,
-            buy_order_id: flux_trade.fields.buy_order_id,
-            sell_order_id: flux_trade.fields.sell_order_id,
-            price: flux_trade.fields.price,
-            size: flux_trade.fields.size,
-            buy_init_size: flux_trade.fields.buy_init_size,
-            sell_init_size: flux_trade.fields.sell_init_size,
-            type: flux_trade.fields.type,
-            acknowledged_at: flux_trade.fields.acknowledged_at
-        }
-      end)
     end
   end
 

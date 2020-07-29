@@ -572,7 +572,7 @@ defmodule OrderBookTest do
     } do
       new_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
-      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist5")) == []
+      assert OrderBook.open_orders_by_trader(new_order_book, "alchemist5") == []
     end
 
     test "Bid volume order_book after removal and addition of orders", %{order_book: order_book} do

@@ -117,8 +117,13 @@ defmodule Exchange do
   def last_size do
   end
 
+  @spec completed_trades_by_id(atom, String.t() | atom()) :: [Exchange.Trade]
+
+  def completed_trades_by_id(ticker, trader_id) when is_atom(trader_id) do
+    completed_trades_by_id(ticker, Atom.to_string(trader_id))
+  end
   def completed_trades_by_id(ticker, trader_id) do
-    Flux.Trades.completed_trades_by_id(ticker, trader_id)
+    Exchange.Utils.fetch_completed_trades(ticker, trader_id)
   end
 
   def total_buy_orders(ticker) do
