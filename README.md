@@ -1,5 +1,7 @@
 # AlchemistExchange
 
+[![Coverage Status](https://coveralls.io/repos/github/realyarilabs/alchemist_exchange/badge.svg)](https://coveralls.io/github/realyarilabs/alchemist_exchange)
+
 # Environment Variables
 
 There are some required environment variables to run the umbrella application.

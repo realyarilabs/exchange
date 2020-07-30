@@ -16,6 +16,8 @@ jobs:
       FLUX_DB_HOST: localhost
       FLUX_DB_NAME: alchemist
       FLUX_DB_PORT: 8086
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v2
@@ -27,3 +29,4 @@ jobs:
       - run: mix credo --strict
       - run: mix format --check-formatted
       - run: mix test
+      - run: mix coveralls.github
