@@ -17,6 +17,7 @@ jobs:
       FLUX_DB_NAME: alchemist
       FLUX_DB_PORT: 8086
       MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v2
