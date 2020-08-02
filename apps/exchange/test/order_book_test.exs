@@ -1,22 +1,22 @@
 defmodule OrderBookTest do
   use ExUnit.Case
-  alias Exchange.{Order, OrderBook}
+  alias Exchange.{OrderBook, Utils}
 
   describe "sample order book created with price time match" do
     setup _context do
       ticker = :AUXLND
-      {:ok, %{order_book: sample_order_book(ticker), ticker: ticker}}
+      {:ok, %{order_book: Utils.sample_order_book(ticker), ticker: ticker}}
     end
 
     test "has defaults name and currency", %{order_book: ob, ticker: ticker} do
       assert ob.name == ticker
-      assert ob.currency == :gbp
+      assert ob.currency == :GBP
     end
 
     test "has expected minimum ask and highest bid", %{order_book: ob} do
       assert ob.ask_min == 4010
       assert ob.bid_max == 4000
-      assert ob.min_price == 0
+      assert ob.min_price == 1000
       assert ob.max_price == 100_000
     end
 
@@ -58,7 +58,7 @@ defmodule OrderBookTest do
 
   describe "expirations" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "orders with expiration are added to expiration_list", %{order_book: ob} do
@@ -66,10 +66,10 @@ defmodule OrderBookTest do
       t2 = :os.system_time(:millisecond) - 1000
 
       buy_order =
-        sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
+        Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
 
       sell_order =
-        sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
+        Utils.sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
 
       new_book = OrderBook.price_time_match(ob, buy_order)
       new_book = OrderBook.price_time_match(new_book, sell_order)
@@ -83,7 +83,7 @@ defmodule OrderBookTest do
       t1 = :os.system_time(:millisecond)
 
       buy_order =
-        sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
+        Utils.sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
 
       new_book = OrderBook.price_time_match(ob, buy_order)
       assert new_book.expiration_list == []
@@ -91,7 +91,7 @@ defmodule OrderBookTest do
 
     test "order is automatically  cancelled on expiration time", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
       new_book = OrderBook.price_time_match(ob, order)
       assert [{t, order.order_id}] == new_book.expiration_list
 
@@ -101,7 +101,7 @@ defmodule OrderBookTest do
 
     test "flushing expired orders from order_book", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
       new_book = ob |> OrderBook.price_time_match(order) |> OrderBook.check_expired_orders!()
       assert [order] == new_book.expired_orders
       new_book_with_flushed_expired = OrderBook.flush_expired_orders!(new_book)
@@ -111,11 +111,11 @@ defmodule OrderBookTest do
 
   describe "new entry on OrderBook without match" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "buy order at top of the order book", %{order_book: ob} do
-      top_buy_order = sample_order(%{size: 1000, price: 4005, side: :buy})
+      top_buy_order = Utils.sample_order(%{size: 1000, price: 4005, side: :buy})
       new_book = OrderBook.price_time_match(ob, top_buy_order)
       assert new_book.completed_trades == []
       assert new_book.order_ids["9"] == {:buy, 4005}
@@ -124,7 +124,7 @@ defmodule OrderBookTest do
     end
 
     test "buy order at middle of the order book", %{order_book: ob} do
-      buy_order = sample_order(%{size: 1000, price: 3970, side: :buy})
+      buy_order = Utils.sample_order(%{size: 1000, price: 3970, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       new_price_level_queue = new_book.buy[3970]
 
@@ -137,7 +137,7 @@ defmodule OrderBookTest do
     end
 
     test "sell order at top of the order book", %{order_book: ob} do
-      top_sell_order = sample_order(%{size: 1000, price: 4007, side: :sell})
+      top_sell_order = Utils.sample_order(%{size: 1000, price: 4007, side: :sell})
       new_book = OrderBook.price_time_match(ob, top_sell_order)
       assert new_book.completed_trades == []
       assert new_book.order_ids["9"] == {:sell, 4007}
@@ -146,7 +146,7 @@ defmodule OrderBookTest do
     end
 
     test "sell order at middle of the order book", %{order_book: ob} do
-      sell_order = sample_order(%{size: 1000, price: 4020, side: :sell})
+      sell_order = Utils.sample_order(%{size: 1000, price: 4020, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
       new_price_level_queue = new_book.sell[4020]
 
@@ -161,11 +161,11 @@ defmodule OrderBookTest do
 
   describe "single trade against oposite order at top of the order book" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "buy order has the exact same size", %{order_book: ob} do
-      buy_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      buy_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       [trade] = new_book.completed_trades
 
@@ -176,8 +176,8 @@ defmodule OrderBookTest do
                price: 4010,
                type: :full_fill,
                buy_order_id: "9",
-               buyer_id: "test_user_1",
-               seller_id: "alchemist",
+               buyer_id: "alchemist9",
+               seller_id: "alchemist5",
                sell_order_id: "1",
                ticker: :AUXLND,
                currency: :gbp
@@ -190,7 +190,7 @@ defmodule OrderBookTest do
     end
 
     test "sell order has exact same size", %{order_book: ob} do
-      sell_order = sample_order(%{size: 250, price: 4000, side: :sell})
+      sell_order = Utils.sample_order(%{size: 250, price: 4000, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
       [trade] = new_book.completed_trades
 
@@ -201,8 +201,8 @@ defmodule OrderBookTest do
                price: 4000,
                type: :full_fill,
                buy_order_id: "4",
-               seller_id: "test_user_1",
-               buyer_id: "alchemist",
+               seller_id: "alchemist9",
+               buyer_id: "alchemist1",
                sell_order_id: "9",
                ticker: :AUXLND,
                currency: :gbp
@@ -215,7 +215,7 @@ defmodule OrderBookTest do
     end
 
     test "buy order has lower size", %{order_book: ob} do
-      buy_order = sample_order(%{size: 500, price: 4010, side: :buy})
+      buy_order = Utils.sample_order(%{size: 500, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       remaining_sell_order = OrderBook.fetch_order_by_id(new_book, "1")
 
@@ -227,8 +227,8 @@ defmodule OrderBookTest do
                  price: 4010,
                  type: :full_fill,
                  buy_order_id: "9",
-                 buyer_id: "test_user_1",
-                 seller_id: "alchemist",
+                 buyer_id: "alchemist9",
+                 seller_id: "alchemist5",
                  sell_order_id: "1"
                }
              ] = new_book.completed_trades
@@ -240,7 +240,7 @@ defmodule OrderBookTest do
     end
 
     test "sell order has lower size", %{order_book: ob} do
-      sell_order = sample_order(%{size: 200, price: 4000, side: :sell})
+      sell_order = Utils.sample_order(%{size: 200, price: 4000, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
       remaining_buy_order = OrderBook.fetch_order_by_id(new_book, "4")
 
@@ -252,8 +252,8 @@ defmodule OrderBookTest do
                  price: 4000,
                  type: :full_fill,
                  buy_order_id: "4",
-                 seller_id: "test_user_1",
-                 buyer_id: "alchemist",
+                 seller_id: "alchemist9",
+                 buyer_id: "alchemist1",
                  sell_order_id: "9"
                }
              ] = new_book.completed_trades
@@ -267,11 +267,11 @@ defmodule OrderBookTest do
 
   describe "multiple trades with order of exact size of more then 2 orders" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND), ticker: :AUXLND}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND), ticker: :AUXLND}}
     end
 
     test "buy order size is equal to all orders at top of orderbook", %{order_book: ob} do
-      buy_order = sample_order(%{size: 2000, price: 4010, side: :buy})
+      buy_order = Utils.sample_order(%{size: 2000, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       trades = new_book.completed_trades
       total_size = trades |> Enum.reduce(0, fn t, acc -> t.size + acc end)
@@ -287,14 +287,14 @@ defmodule OrderBookTest do
       refute OrderBook.fetch_order_by_id(new_book, "5")
       refute OrderBook.fetch_order_by_id(new_book, "8")
       assert Enum.count(new_book.completed_trades) == 3
-      assert [{"test_user_1", 2000, "9", :gbp, 4010}] == buyer_details
+      assert [{"alchemist9", 2000, "9", :gbp, 4010}] == buyer_details
       assert total_size == buy_order.initial_size
       assert new_book.ask_min == 4020
       assert new_book.bid_max == 4000
     end
 
     test "sell order size is equal to all orders at top of orderbook", %{order_book: ob} do
-      sell_order = sample_order(%{size: 750, price: 4000, side: :sell})
+      sell_order = Utils.sample_order(%{size: 750, price: 4000, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
       trades = new_book.completed_trades
       total_size = trades |> Enum.reduce(0, fn t, acc -> t.size + acc end)
@@ -309,14 +309,14 @@ defmodule OrderBookTest do
       refute OrderBook.fetch_order_by_id(new_book, "4")
       refute OrderBook.fetch_order_by_id(new_book, "6")
       assert Enum.count(new_book.completed_trades) == 2
-      assert [{"test_user_1", 750, "9", :gbp, 4000}] == seller_details
+      assert [{"alchemist9", 750, "9", :gbp, 4000}] == seller_details
       assert total_size == sell_order.initial_size
       assert new_book.ask_min == 4010
       assert new_book.bid_max == 3970
     end
 
     test "if more then one trade they're all type: partial_fill", %{order_book: ob} do
-      new_order = sample_order(%{size: 2000, price: 4010, side: :buy})
+      new_order = Utils.sample_order(%{size: 2000, price: 4010, side: :buy})
 
       trades =
         ob
@@ -329,11 +329,11 @@ defmodule OrderBookTest do
 
   describe "multiple trades with order of HIGHER size then top of orderbook" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND), ticker: :AUXLND}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND), ticker: :AUXLND}}
     end
 
     test "buy order size is HIGHER then all orders at price level", %{order_book: ob} do
-      buy_order = sample_order(%{size: 2100, price: 4010, side: :buy})
+      buy_order = Utils.sample_order(%{size: 2100, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(ob, buy_order)
       trades = new_book.completed_trades
       total_size = trades |> Enum.reduce(0, fn t, acc -> t.size + acc end)
@@ -351,7 +351,7 @@ defmodule OrderBookTest do
     end
 
     test "sell order size is HIGHER then all orders at price level", %{order_book: ob} do
-      sell_order = sample_order(%{size: 800, price: 4000, side: :sell})
+      sell_order = Utils.sample_order(%{size: 800, price: 4000, side: :sell})
       new_book = OrderBook.price_time_match(ob, sell_order)
       trades = new_book.completed_trades
       total_size = trades |> Enum.reduce(0, fn t, acc -> t.size + acc end)
@@ -370,7 +370,7 @@ defmodule OrderBookTest do
 
   describe "cancelation" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "canceling a middle order book buy order", %{order_book: order_book} do
@@ -426,37 +426,37 @@ defmodule OrderBookTest do
 
   describe "helper functions" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "increment_or_decrement", %{order_book: order_book} do
-      new_order_increment = sample_order(%{size: 2350, price: 99_999, side: :buy})
-      new_order_decrement = sample_order(%{size: 1850, price: 1, side: :sell})
+      new_order_increment = Utils.sample_order(%{size: 2350, price: 99_999, side: :buy})
+      new_order_decrement = Utils.sample_order(%{size: 1850, price: 1, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
       assert new_order_book.bid_max == 99_999
       assert new_order_book.ask_min == 99_999
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_decrement)
-      assert new_order_book.bid_max == 1
+      assert new_order_book.bid_max == 1001
       assert new_order_book.ask_min == 1
     end
 
     test "only increment", %{order_book: order_book} do
-      new_order_increment = sample_order(%{size: 2350, price: 5000, side: :buy})
+      new_order_increment = Utils.sample_order(%{size: 2350, price: 5000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
       assert new_order_book.bid_max == 5000
       assert new_order_book.ask_min == 99_999
     end
 
     test "only decrement", %{order_book: order_book} do
-      new_order_decrement = sample_order(%{size: 1750, price: 1, side: :sell})
+      new_order_decrement = Utils.sample_order(%{size: 1750, price: 1, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order_decrement)
-      assert new_order_book.bid_max == 1
+      assert new_order_book.bid_max == 1001
       assert new_order_book.ask_min == 1
       assert Enum.count(new_order_book.completed_trades) == 4
     end
 
     test "flush_trades", %{order_book: order_book} do
-      buy_order = sample_order(%{size: 2100, price: 4010, side: :buy})
+      buy_order = Utils.sample_order(%{size: 2100, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(order_book, buy_order)
       book_with_flushed_trades = OrderBook.flush_trades!(new_book)
 
@@ -467,7 +467,7 @@ defmodule OrderBookTest do
 
   describe "queries" do
     setup _context do
-      {:ok, %{order_book: sample_order_book(:AUXLND)}}
+      {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
     test "Bid volume default order_book", %{order_book: order_book} do
@@ -491,36 +491,36 @@ defmodule OrderBookTest do
     end
 
     test "All open orders by trader_id in default order_book", %{order_book: order_book} do
-      assert Enum.count(OrderBook.open_orders_by_trader(order_book, "alchemist")) == 8
+      assert Enum.count(OrderBook.open_orders_by_trader(order_book, "alchemist1")) == 1
       assert OrderBook.open_orders_by_trader(order_book, "foo") == []
     end
 
     test "Bid volume order_book after adding one buy order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order = Utils.sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.highest_bid_volume(new_order_book) == 1800
     end
 
     test "Ask volume order_book after adding one sell order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 4010, side: :sell})
+      new_order = Utils.sample_order(%{size: 150, price: 4010, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.highest_ask_volume(new_order_book) == 2400
     end
 
     test "Total bid orders in order_book after adding one buy order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order = Utils.sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_bid_orders(new_order_book) == 5
     end
 
     test "Total ask orders in order_book after adding one sell order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 4010, side: :sell})
+      new_order = Utils.sample_order(%{size: 150, price: 4010, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_ask_orders(new_order_book) == 5
     end
 
     test "All open orders in order_book after adding one order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order = Utils.sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert Enum.count(OrderBook.open_orders(new_order_book)) == 9
     end
@@ -528,19 +528,19 @@ defmodule OrderBookTest do
     test "All open orders by trader_id after adding one order (not belonging to trader)", %{
       order_book: order_book
     } do
-      new_order = sample_order(%{size: 150, price: 3000, side: :buy})
+      new_order = Utils.sample_order(%{size: 150, price: 3000, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
-      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 8
+      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist1")) == 1
     end
 
     test "Bid volume order_book after removal of one buy order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 150, price: 4000, side: :sell})
+      new_order = Utils.sample_order(%{size: 150, price: 4000, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.highest_bid_volume(new_order_book) == 1500
     end
 
     test "Ask volume order_book after removal of one sell order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.highest_ask_volume(new_order_book) == 1500
     end
@@ -548,7 +548,7 @@ defmodule OrderBookTest do
     test "Total bid orders in order_book after removal of one buy order", %{
       order_book: order_book
     } do
-      new_order = sample_order(%{size: 500, price: 4000, side: :sell})
+      new_order = Utils.sample_order(%{size: 500, price: 4000, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_bid_orders(new_order_book) == 3
     end
@@ -556,13 +556,13 @@ defmodule OrderBookTest do
     test "Total ask orders in order_book after removal of one buy order", %{
       order_book: order_book
     } do
-      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert OrderBook.total_ask_orders(new_order_book) == 3
     end
 
     test "All open orders in order_book after removal of one order", %{order_book: order_book} do
-      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
       assert Enum.count(OrderBook.open_orders(new_order_book)) == 7
     end
@@ -570,22 +570,22 @@ defmodule OrderBookTest do
     test "All open orders by trader_id after removal of one order (belonging to trader)", %{
       order_book: order_book
     } do
-      new_order = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order)
-      assert Enum.count(OrderBook.open_orders_by_trader(new_order_book, "alchemist")) == 7
+      assert OrderBook.open_orders_by_trader(new_order_book, "alchemist5") == []
     end
 
     test "Bid volume order_book after removal and addition of orders", %{order_book: order_book} do
-      new_order_1 = sample_order(%{size: 500, price: 4000, side: :sell})
-      new_order_2 = sample_order(%{size: 1000, price: 3900, side: :buy})
+      new_order_1 = Utils.sample_order(%{size: 500, price: 4000, side: :sell})
+      new_order_2 = Utils.sample_order(%{size: 1000, price: 3900, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.highest_bid_volume(new_order_book) == 2150
     end
 
     test "Ask volume order_book after removal and addition of orders", %{order_book: order_book} do
-      new_order_1 = sample_order(%{size: 250, price: 4000, side: :sell})
-      new_order_2 = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_1 = Utils.sample_order(%{size: 250, price: 4000, side: :sell})
+      new_order_2 = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.highest_ask_volume(new_order_book) == 1500
@@ -594,8 +594,8 @@ defmodule OrderBookTest do
     test "Total bid orders in order_book after removal and adittion of orders", %{
       order_book: order_book
     } do
-      new_order_1 = sample_order(%{size: 500, price: 4000, side: :sell})
-      new_order_2 = sample_order(%{size: 1000, price: 3900, side: :buy})
+      new_order_1 = Utils.sample_order(%{size: 500, price: 4000, side: :sell})
+      new_order_2 = Utils.sample_order(%{size: 1000, price: 3900, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.total_bid_orders(new_order_book) == 4
@@ -604,138 +604,11 @@ defmodule OrderBookTest do
     test "Total ask orders in order_book after removal and addition of orders", %{
       order_book: order_book
     } do
-      new_order_1 = sample_order(%{size: 250, price: 4000, side: :sell})
-      new_order_2 = sample_order(%{size: 750, price: 4010, side: :buy})
+      new_order_1 = Utils.sample_order(%{size: 250, price: 4000, side: :sell})
+      new_order_2 = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.total_ask_orders(new_order_book) == 3
     end
-  end
-
-  defp sample_order(%{size: z, price: p, side: s}) do
-    %Order{
-      type: :limit,
-      order_id: "9",
-      trader_id: "test_user_1",
-      side: s,
-      initial_size: z,
-      size: z,
-      price: p
-    }
-  end
-
-  defp sample_expiring_order(%{size: z, price: p, side: s, id: id, exp_time: t}) do
-    %Order{
-      type: :limit,
-      order_id: id,
-      trader_id: "test_user_1",
-      side: s,
-      initial_size: z,
-      size: z,
-      price: p,
-      exp_time: t
-    }
-  end
-
-  defp sample_order_book(ticker) do
-    buy_book =
-      [
-        %Order{
-          type: :limit,
-          order_id: "4",
-          trader_id: "alchemist",
-          side: :buy,
-          initial_size: 250,
-          size: 250,
-          price: 4000
-        },
-        %Order{
-          type: :limit,
-          order_id: "6",
-          trader_id: "alchemist",
-          side: :buy,
-          initial_size: 500,
-          size: 500,
-          price: 4000
-        },
-        %Order{
-          type: :limit,
-          order_id: "2",
-          trader_id: "alchemist",
-          side: :buy,
-          initial_size: 750,
-          size: 750,
-          price: 3970
-        },
-        %Order{
-          type: :limit,
-          order_id: "7",
-          trader_id: "alchemist",
-          side: :buy,
-          initial_size: 150,
-          size: 150,
-          price: 3960
-        }
-      ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
-
-    sell_book =
-      [
-        %Order{
-          type: :limit,
-          order_id: "1",
-          trader_id: "alchemist",
-          side: :sell,
-          initial_size: 750,
-          size: 750,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "5",
-          trader_id: "alchemist",
-          side: :sell,
-          initial_size: 500,
-          size: 500,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "8",
-          trader_id: "alchemist",
-          side: :sell,
-          initial_size: 750,
-          size: 750,
-          price: 4010
-        },
-        %Order{
-          type: :limit,
-          order_id: "3",
-          trader_id: "alchemist",
-          side: :sell,
-          initial_size: 250,
-          size: 250,
-          price: 4020
-        }
-      ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
-
-    order_book = %Exchange.OrderBook{
-      name: ticker,
-      currency: :gbp,
-      buy: %{},
-      sell: %{},
-      order_ids: Map.new(),
-      completed_trades: [],
-      ask_min: 99_999,
-      bid_max: 0,
-      max_price: 100_000,
-      min_price: 0
-    }
-
-    (buy_book ++ sell_book)
-    |> Enum.reduce(order_book, fn order, order_book ->
-      Exchange.OrderBook.price_time_match(order_book, order)
-    end)
   end
 end

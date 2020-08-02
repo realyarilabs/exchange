@@ -33,3 +33,9 @@ defmodule Exchange.Order do
           exp_time: integer
         }
 end
+
+defimpl Jason.Encoder, for: Exchange.Order do
+  def encode(value, opts) do
+    Jason.Encode.map(Map.take(value, [:order_id, :trader_id, :side, :price, :size, :initial_size, :type, :exp_time, :acknowledged_at, :modified_at]), opts)
+  end
+end
