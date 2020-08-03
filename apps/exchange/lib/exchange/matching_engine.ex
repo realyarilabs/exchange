@@ -4,7 +4,6 @@ defmodule Exchange.MatchingEngine do
   The matching engine is responsible for matching the orders on the order book
   """
   use GenServer
-  # use Exchange.MessageBus, otp_app: :exchange
   alias Exchange.{Order, OrderBook}
 
   @type ticker :: atom
@@ -191,7 +190,7 @@ defmodule Exchange.MatchingEngine do
       Enum.each(
         order_book.expired_orders,
         fn order ->
-          message_bus_adapter().cast_event(:order_expired, order)
+          message_bus().cast_event(:order_expired, order)
         end
       )
     end
@@ -259,7 +258,7 @@ defmodule Exchange.MatchingEngine do
           order |> Map.put(:price, order_book.min_price + 1)
         end
 
-      message_bus_adapter().cast_event(:order_queued, order)
+      message_bus().cast_event(:order_queued, order)
 
       order_book =
         order_book
@@ -281,7 +280,7 @@ defmodule Exchange.MatchingEngine do
           order |> Map.put(:price, order_book.bid_max)
         end
 
-      message_bus_adapter().cast_event(:order_queued, order)
+      message_bus().cast_event(:order_queued, order)
 
       order_book =
         order_book
@@ -298,7 +297,7 @@ defmodule Exchange.MatchingEngine do
         {:reply, :error, order_book}
 
       order.price < order_book.max_price and order.price > order_book.min_price ->
-        message_bus_adapter().cast_event(:order_queued, order)
+        message_bus().cast_event(:order_queued, order)
 
         order_book =
           order_book
@@ -320,7 +319,7 @@ defmodule Exchange.MatchingEngine do
     if OrderBook.order_exists?(order_book, order_id) do
       cancelled_order = OrderBook.fetch_order_by_id(order_book, order_id)
       order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
-      message_bus_adapter().cast_event(:order_cancelled, cancelled_order)
+      message_bus().cast_event(:order_cancelled, cancelled_order)
 
       {:reply, :ok, order_book}
     else
@@ -344,7 +343,7 @@ defmodule Exchange.MatchingEngine do
     if Enum.count(trades) > 0 do
       trades
       |> Enum.each(fn t ->
-        message_bus_adapter().cast_event(:trade_executed, t)
+        message_bus().cast_event(:trade_executed, t)
       end)
 
       OrderBook.flush_trades!(order_book)
@@ -353,7 +352,7 @@ defmodule Exchange.MatchingEngine do
     end
   end
 
-  defp message_bus_adapter do
-    Application.get_env(:exchange, :message_bus)
+  defp message_bus do
+    Application.get_env(:exchange, :message_bus_adapter)
   end
 end

@@ -11,7 +11,7 @@ config :flux, Flux.Connection,
 
 
 config :flux, Flux.EventListener,
-  message_bus: EventBus
+  message_bus_adapter: EventBus
 
 config :logger, :console,
   format: "\n$time $metadata[$level] $levelpad$message\n",

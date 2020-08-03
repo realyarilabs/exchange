@@ -11,10 +11,10 @@ defmodule Flux.EventListener do
   end
 
   def init(state) do
-    message_bus_adapter().add_listener(:trade_executed)
-    message_bus_adapter().add_listener(:order_queued)
-    message_bus_adapter().add_listener(:order_cancelled)
-    message_bus_adapter().add_listener(:order_expired)
+    message_bus().add_listener(:trade_executed)
+    message_bus().add_listener(:order_queued)
+    message_bus().add_listener(:order_cancelled)
+    message_bus().add_listener(:order_expired)
 
     {:ok, state}
   end
@@ -49,8 +49,8 @@ defmodule Flux.EventListener do
     {:noreply, state}
   end
 
-  defp message_bus_adapter do
-    Application.get_env(:flux, Flux.EventListener)[:message_bus]
+  defp message_bus do
+    Application.get_env(:flux, Flux.EventListener)[:message_bus_adapter]
 
   end
 
