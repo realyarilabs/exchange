@@ -1,2 +1,3 @@
 use Mix.Config
-config :exchange, message_bus_adapter: EventBus
+
+# config :mnesia, dir: '.mnesia/#{Mix.env()}/#{node()}'

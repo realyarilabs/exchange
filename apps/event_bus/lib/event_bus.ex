@@ -3,8 +3,6 @@ defmodule EventBus do
   Public API to use the Event Bus.
   """
 
-  @behaviour Exchange.MessageBus
-
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed)a
 
@@ -25,23 +23,23 @@ defmodule EventBus do
     end
   end
 
-  def cast_event(:order_cancelled, payload),
-    do: dispatch_event(:order_cancelled, %EventBus.OrderCancelled{order: payload})
+  def cast_event(:order_cancelled, %EventBus.OrderCancelled{} = payload),
+    do: dispatch_event(:order_cancelled, payload)
 
-  def cast_event(:trade_executed, payload),
-    do: dispatch_event(:trade_executed, %EventBus.TradeExecuted{trade: payload})
+  def cast_event(:trade_executed, %EventBus.TradeExecuted{} = payload),
+    do: dispatch_event(:trade_executed, payload)
 
-  def cast_event(:order_expired, payload),
-    do: dispatch_event(:order_expired, %EventBus.OrderExpired{order: payload})
+  def cast_event(:order_expired, %EventBus.OrderExpired{} = payload),
+    do: dispatch_event(:order_expired, payload)
 
-  def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed, %EventBus.OrderPlaced{} = payload)
+  def cast_event(:order_placed, %EventBus.OrderPlaced{} = payload),
+    do: dispatch_event(:order_placed, payload)
 
-  def cast_event(:order_queued, payload),
-    do: dispatch_event(:order_queued, %EventBus.OrderQueued{order: payload})
+  def cast_event(:order_queued, %EventBus.OrderQueued{} = payload),
+    do: dispatch_event(:order_queued, payload)
 
-  def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed, %EventBus.TradeProcessed{} = payload)
+  def cast_event(:trade_processed, %EventBus.TradeProcessed{} = payload),
+    do: dispatch_event(:trade_processed, payload)
 
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do
