@@ -115,7 +115,6 @@ defmodule Exchange.OrderBook do
     case fetch_matching_order(order_book, order) do
       :empty ->
         order_book
-        |> increment_or_decrement(order)
         |> queue_order(order)
 
       {:ok, matched_order} ->
@@ -367,14 +366,11 @@ defmodule Exchange.OrderBook do
       order_book.sell
       |> Map.keys()
       |> Enum.sort()
-      |> Enum.filter(fn pp ->
-        !Enum.empty?(Map.get(order_book.sell, pp))
-      end)
       |> List.first()
 
     new_ask_min =
       case new_ask_min do
-        nil -> 99_999
+        nil -> order_book.max_price - 1
         _ -> new_ask_min
       end
 
@@ -387,14 +383,11 @@ defmodule Exchange.OrderBook do
       |> Map.keys()
       |> Enum.sort()
       |> Enum.reverse()
-      |> Enum.filter(fn pp ->
-        !Enum.empty?(Map.get(order_book.buy, pp))
-      end)
       |> List.first()
 
     new_bid_max =
       case new_bid_max do
-        nil -> 1
+        nil -> order_book.min_price + 1
         _ -> new_bid_max
       end
 
