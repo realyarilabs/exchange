@@ -283,10 +283,10 @@ defmodule OrderBookTest do
     end
 
     test "consume buy side with one order", %{order_book: order_book} do
-      new_order_decrement = Utils.sample_order(%{size: 1750, price: 1, side: :sell})
+      new_order_decrement = Utils.sample_order(%{size: 1750, price: 1001, side: :sell})
       new_order_book = OrderBook.price_time_match(order_book, new_order_decrement)
       assert new_order_book.bid_max == 1001
-      assert new_order_book.ask_min == 1
+      assert new_order_book.ask_min == 1001
       assert Enum.count(new_order_book.completed_trades) == 4
     end
   end
