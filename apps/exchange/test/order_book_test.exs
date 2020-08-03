@@ -263,6 +263,32 @@ defmodule OrderBookTest do
       assert new_book.ask_min == 4010
       assert new_book.bid_max == 4000
     end
+
+    test "consuming sell side then consume buy side", %{order_book: order_book} do
+      new_order_increment = Utils.sample_order(%{size: 2350, price: 99_999, side: :buy})
+      new_order_decrement = Utils.sample_order(%{size: 1850, price: 1001, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
+      assert new_order_book.bid_max == 99_999
+      assert new_order_book.ask_min == 99_999
+      new_order_book2 = OrderBook.price_time_match(new_order_book, new_order_decrement)
+      assert new_order_book2.bid_max == 1001
+      assert new_order_book2.ask_min == 1001
+    end
+
+    test "consume sell side with one order", %{order_book: order_book} do
+      new_order_increment = Utils.sample_order(%{size: 2350, price: 5000, side: :buy})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
+      assert new_order_book.bid_max == 5000
+      assert new_order_book.ask_min == 99_999
+    end
+
+    test "consume buy side with one order", %{order_book: order_book} do
+      new_order_decrement = Utils.sample_order(%{size: 1750, price: 1001, side: :sell})
+      new_order_book = OrderBook.price_time_match(order_book, new_order_decrement)
+      assert new_order_book.bid_max == 1001
+      assert new_order_book.ask_min == 1001
+      assert Enum.count(new_order_book.completed_trades) == 4
+    end
   end
 
   describe "multiple trades with order of exact size of more then 2 orders" do
@@ -429,32 +455,6 @@ defmodule OrderBookTest do
       {:ok, %{order_book: Utils.sample_order_book(:AUXLND)}}
     end
 
-    test "increment_or_decrement", %{order_book: order_book} do
-      new_order_increment = Utils.sample_order(%{size: 2350, price: 99_999, side: :buy})
-      new_order_decrement = Utils.sample_order(%{size: 1850, price: 1, side: :sell})
-      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
-      assert new_order_book.bid_max == 99_999
-      assert new_order_book.ask_min == 99_999
-      new_order_book = OrderBook.price_time_match(new_order_book, new_order_decrement)
-      assert new_order_book.bid_max == 1001
-      assert new_order_book.ask_min == 1
-    end
-
-    test "only increment", %{order_book: order_book} do
-      new_order_increment = Utils.sample_order(%{size: 2350, price: 5000, side: :buy})
-      new_order_book = OrderBook.price_time_match(order_book, new_order_increment)
-      assert new_order_book.bid_max == 5000
-      assert new_order_book.ask_min == 99_999
-    end
-
-    test "only decrement", %{order_book: order_book} do
-      new_order_decrement = Utils.sample_order(%{size: 1750, price: 1, side: :sell})
-      new_order_book = OrderBook.price_time_match(order_book, new_order_decrement)
-      assert new_order_book.bid_max == 1001
-      assert new_order_book.ask_min == 1
-      assert Enum.count(new_order_book.completed_trades) == 4
-    end
-
     test "flush_trades", %{order_book: order_book} do
       buy_order = Utils.sample_order(%{size: 2100, price: 4010, side: :buy})
       new_book = OrderBook.price_time_match(order_book, buy_order)
@@ -609,6 +609,18 @@ defmodule OrderBookTest do
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.total_ask_orders(new_order_book) == 3
+    end
+  end
+
+  describe "empty order book" do
+    setup _context do
+      {:ok, %{order_book: Utils.empty_order_book()}}
+    end
+    test "Empty order book" , %{order_book: order_book} do
+      order = Utils.sample_order(%{size: 1, price: (order_book.max_price-1), side: :buy})
+      order_book = Exchange.OrderBook.price_time_match(order_book, order)
+      assert order_book.ask_min ==  99_999
+      assert order_book.bid_max ==  99_999
     end
   end
 end
