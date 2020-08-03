@@ -15,6 +15,7 @@ defmodule Flux.EventListener do
     message_bus().add_listener(:order_queued)
     message_bus().add_listener(:order_cancelled)
     message_bus().add_listener(:order_expired)
+    message_bus().add_listener(:price_broadcast)
 
     {:ok, state}
   end
@@ -45,6 +46,15 @@ defmodule Flux.EventListener do
     order = expired_order.order
     %{order | size: 0}
     |> Flux.Orders.save_order!()
+
+    {:noreply, state}
+  end
+
+  def handle_info({:cast_event, :price_broadcast, price}, state) do
+    Logger.info("[F] Processing Price: #{inspect(price)}")
+    IO.puts("PBF")
+    %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}
+    |> Flux.Prices.save_price!()
 
     {:noreply, state}
   end
