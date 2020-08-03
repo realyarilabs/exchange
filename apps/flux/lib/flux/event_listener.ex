@@ -52,7 +52,6 @@ defmodule Flux.EventListener do
 
   def handle_info({:cast_event, :price_broadcast, price}, state) do
     Logger.info("[F] Processing Price: #{inspect(price)}")
-    IO.puts("PBF")
     %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}
     |> Flux.Prices.save_price!()
 

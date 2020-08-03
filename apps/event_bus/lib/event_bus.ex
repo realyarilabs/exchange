@@ -45,8 +45,8 @@ defmodule EventBus do
 
   def cast_event(:price_broadcast, payload)
     do
-      p = %EventBus.PriceBroadcast{ticker: payload.ticker, ask_min: payload.ask_min, bid_max: payload.bid_max}
-      dispatch_event(:price_broadcast, p)
+      price_broadcast_event = %EventBus.PriceBroadcast{ticker: payload.ticker, ask_min: payload.ask_min, bid_max: payload.bid_max}
+      dispatch_event(:price_broadcast, price_broadcast_event)
     end
 
   defp dispatch_event(key, payload) do
