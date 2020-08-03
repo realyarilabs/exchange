@@ -9,7 +9,6 @@ config :flux, Flux.Connection,
   scheme: "http",
   writer: Instream.Writer.Line
 
-
 config :flux, Flux.EventListener,
   message_bus_adapter: EventBus
 
