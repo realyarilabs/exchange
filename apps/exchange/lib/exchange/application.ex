@@ -9,7 +9,7 @@ defmodule Exchange.Application do
   def start(_type, _args) do
 
     children =
-      [ supervisor(Registry, [:unique, :matching_engine_registry]) ] ++
+      [supervisor(Registry, [:unique, :matching_engine_registry])] ++
       Exchange.Application.create_tickers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
@@ -18,9 +18,9 @@ defmodule Exchange.Application do
     Supervisor.start_link(children, opts)
   end
 
-  def create_tickers() do
+  def create_tickers do
     get_tickers_config()
-    |> Enum.map( fn {ticker, currency , min_price, max_price} ->
+    |> Enum.map(fn {ticker, currency , min_price, max_price} ->
       supervisor(
         Exchange.MatchingEngine,
           [[ticker: ticker, currency: currency, min_price: min_price, max_price: max_price]],
@@ -29,7 +29,7 @@ defmodule Exchange.Application do
     end)
   end
 
-  def get_tickers_config() do
+  def get_tickers_config do
     Application.get_env(:exchange, __MODULE__, [])[:tickers]
   end
 
