@@ -11,42 +11,47 @@ defmodule Flux.EventListener do
   end
 
   def init(state) do
-    EventBus.add_listener(:trade_executed)
-    EventBus.add_listener(:order_queued)
-    EventBus.add_listener(:order_cancelled)
-    EventBus.add_listener(:order_expired)
+    message_bus().add_listener(:trade_executed)
+    message_bus().add_listener(:order_queued)
+    message_bus().add_listener(:order_cancelled)
+    message_bus().add_listener(:order_expired)
 
     {:ok, state}
   end
 
-  def handle_info({:cast_event, :trade_executed, %EventBus.TradeExecuted{} = payload}, state) do
-    Flux.Trades.process_trade!(payload)
-    Logger.info("[Flux] Processing trade: #{inspect(payload)}")
+  def handle_info({:cast_event, :trade_executed, payload}, state) do
+    Flux.Trades.process_trade!(payload.trade)
+    Logger.info("[Flux] Processing trade: #{inspect(payload.trade)}")
     {:noreply, state}
   end
 
-  def handle_info({:cast_event, :order_queued, %EventBus.OrderQueued{order: order}}, state) do
-    Logger.info("[F] Processing Order: #{inspect(order)}")
-    Flux.Orders.save_order!(order)
+  def handle_info({:cast_event, :order_queued, queued_order}, state) do
+    Logger.info("[F] Processing Order: #{inspect(queued_order.order)}")
+    Flux.Orders.save_order!(queued_order.order)
     {:noreply, state}
   end
 
-  def handle_info({:cast_event, :order_cancelled, %EventBus.OrderCancelled{order: order}}, state) do
-    Logger.info("[F] Processing Order: #{inspect(order)}")
-
+  def handle_info({:cast_event, :order_cancelled, order_cancelled}, state) do
+    Logger.info("[F] Processing Order: #{inspect(order_cancelled.order)}")
+    order = order_cancelled.order
     %{order | size: 0}
     |> Flux.Orders.save_order!()
 
     {:noreply, state}
   end
 
-  def handle_info({:cast_event, :order_expired, %EventBus.OrderExpired{order: order}}, state) do
-    Logger.info("[F] Processing Order: #{inspect(order)}")
-
+  def handle_info({:cast_event, :order_expired, expired_order}, state) do
+    Logger.info("[F] Processing Order: #{inspect(expired_order.order)}")
+    order = expired_order.order
     %{order | size: 0}
     |> Flux.Orders.save_order!()
 
     {:noreply, state}
+  end
+
+  defp message_bus do
+    Application.get_env(:flux, Flux.EventListener)[:message_bus_adapter]
+
   end
 
 end

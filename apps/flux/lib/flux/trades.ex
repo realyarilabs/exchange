@@ -23,22 +23,9 @@ defmodule Flux.Trades do
     field(:acknowledged_at)
   end
 
-  def completed_trades_by_id(ticker, trader_id) do
-    response =
-      ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{ticker}')
-      |> Flux.Connection.query(precision: :nanosecond)
-
-    if response.results == [%{statement_id: 0}] do
-      []
-    else
-      Flux.Trades.from_result(response)
-    end
-  end
-
-  def process_trade!(%EventBus.TradeExecuted{} = trade_params) do
+  def process_trade!(trade_params) do
     data = %Flux.Trades{}
     t = trade_params.trade
-
     %{
       data
       | fields: %{
