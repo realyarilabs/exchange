@@ -2,7 +2,7 @@ defmodule Flux do
   @moduledoc """
   Documentation for `Flux`.
   """
-  @behaviour Exchange.Flux
+  @behaviour Exchange.TimeSeries
 
   def completed_trades_by_id(ticker, trader_id) do
     Flux.Trades.completed_trades_by_id(ticker, trader_id)
