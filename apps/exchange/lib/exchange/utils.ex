@@ -4,7 +4,7 @@ defmodule Exchange.Utils do
   """
 
   def fetch_completed_trades(ticker, trader_id) do
-    Flux.Trades.completed_trades_by_id(ticker, trader_id)
+    time_series().completed_trades_by_id(ticker, trader_id)
     |> Enum.map(fn flux_trade ->
       trade = %Exchange.Trade{}
       %{
@@ -26,7 +26,7 @@ defmodule Exchange.Utils do
     end)
   end
   def fetch_live_orders(ticker) do
-    Flux.Orders.get_live_orders(ticker)
+    time_series().get_live_orders(ticker)
     |> Enum.map(fn o ->
       %Exchange.Order{
         order_id: o.fields.order_id,
@@ -243,5 +243,9 @@ defmodule Exchange.Utils do
     Enum.reduce(0..n, [], fn _n, acc ->
       [random_order() | acc]
     end)
+  end
+
+  def time_series do
+    Application.get_env(:exchange, :time_series_adapter)
   end
 end
