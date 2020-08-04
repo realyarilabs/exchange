@@ -7,13 +7,16 @@ defmodule Exchange.Application do
   import Supervisor.Spec
 
   def start(_type, _args) do
-
+    message_bus_adapter = Application.get_env(:exchange, :message_bus_adapter, nil)
     children =
-      [supervisor(Registry, [:unique, :matching_engine_registry])] ++
-      Exchange.Application.create_tickers()
-
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+      if message_bus_adapter do
+        Mix.env(:test)
+        [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]
+      else
+        []
+      end
+    children =
+      [supervisor(Registry, [:unique, :matching_engine_registry]) | Exchange.Application.create_tickers() ++ children]
     opts = [strategy: :one_for_one, name: Exchange.Supervisor]
     Supervisor.start_link(children, opts)
   end

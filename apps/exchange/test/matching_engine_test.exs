@@ -656,4 +656,152 @@ defmodule MatchingEngineTest do
       assert total_active == ids
     end
   end
+
+  describe "Message bus" do
+    setup _context do
+      {:ok, %{order_book: Utils.empty_order_book()}}
+    end
+
+    test "Check if trade_executed event is correctly broadcasted", %{order_book: order_book} do
+      Exchange.Adapters.TestEventBus.flush()
+      order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 1000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+      order_2 = %Order{order_2 | trader_id: "alchemist9"}
+      ids = ~w(100 9)
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
+      {_reply, _response, _order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
+
+      order_queued_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :order_queued
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          payload.order_id
+        end)
+      trade_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :trade_executed
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          {payload.buyer_id , payload.seller_id, payload.buy_order_id, payload.sell_order_id}
+        end)
+
+      {buyer_id , seller_id, buy_order_id, sell_order_id} = hd(trade_ids)
+      assert order_queued_ids == ids
+      assert Enum.count(order_queued_ids) == 2
+      assert buyer_id == "alchemist0"
+      assert seller_id == "alchemist9"
+      assert sell_order_id == "9"
+      assert buy_order_id == "100"
+      assert Enum.count(trade_ids) == 1
+    end
+
+    test "Check if order_cancelled event is correctly broadcasted", %{order_book: order_book} do
+      Exchange.Adapters.TestEventBus.flush()
+      order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+      order_2 = %Order{order_2 | trader_id: "alchemist9"}
+      ids = ~w(100 9)
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
+
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:cancel_order, "9"}, nil, order_book)
+      {_reply, _response, _order_book} =
+        MatchingEngine.handle_call({:cancel_order, "100"}, nil, order_book)
+
+      order_queued_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :order_queued
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          payload.order_id
+        end)
+      cancel_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :order_cancelled
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          payload.order_id
+        end)
+      assert order_queued_ids == ids
+      assert Enum.count(order_queued_ids) == 2
+      assert cancel_ids == Enum.reverse(ids)
+      assert Enum.count(cancel_ids) == 2
+    end
+
+    test "Check if order_expired event is correctly broadcasted", %{order_book: order_book} do
+      Exchange.Adapters.TestEventBus.flush()
+      order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
+      t = :os.system_time(:millisecond) - 2000
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t}
+
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
+      {:noreply, _order_book} = MatchingEngine.handle_info(:check_expiration, order_book)
+      :timer.sleep(3000)
+      expired_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :order_expired
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          payload.order_id
+        end)
+      assert hd(expired_ids) == "100"
+      assert Enum.count(expired_ids) == 1
+    end
+
+    test "Check if order_queued event is correctly broadcasted", %{order_book: order_book} do
+      Exchange.Adapters.TestEventBus.flush()
+      order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+      order_2 = %Order{order_2 | trader_id: "alchemist0"}
+      ids = ~w(100 9)
+      {_reply, _response, order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_1}, nil, order_book)
+      {_reply, _response, _order_book} =
+        MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
+      queue_ids =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :order_queued
+        end)
+        |> Enum.map(fn {_cast_event, _event, payload} ->
+          payload.order_id
+        end)
+
+      assert queue_ids == ids
+      assert Enum.count(queue_ids) == 2
+    end
+
+    test "Check if price_broadcast event is correctly broadcasted" do
+      Exchange.Adapters.TestEventBus.flush()
+      :timer.sleep(2000)
+      prices =
+        Exchange.Adapters.TestEventBus.value()
+        |> Enum.filter(fn {_cast_event, event, _payload} ->
+          event == :price_broadcast
+        end)
+
+      assert Enum.uniq(prices) |> Enum.map(
+        fn {:cast_event, :price_broadcast, prices} ->
+          prices.ticker
+        end)
+        |> Enum.sort() == Enum.sort([:AUXLND, :AGUS])
+      assert Enum.count(prices) > 0
+    end
+  end
+
 end
