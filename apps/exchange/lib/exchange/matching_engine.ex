@@ -11,6 +11,7 @@ defmodule Exchange.MatchingEngine do
   require Logger
   # Client
   @check_expiration_rate 1_000
+  @price_broadcast_rate 1_000
 
   def start_link(ticker: ticker, currency: currency, min_price: min_price, max_price: max_price)
       when is_atom(currency) and is_atom(ticker) and is_number(min_price) and is_number(max_price) do
@@ -167,6 +168,7 @@ defmodule Exchange.MatchingEngine do
     order_book = order_book_restore!(order_book)
 
     Process.send_after(self(), :check_expiration, @check_expiration_rate)
+    Process.send_after(self(), :price_broadcast, @price_broadcast_rate)
     {:ok, order_book}
   end
 
@@ -181,6 +183,13 @@ defmodule Exchange.MatchingEngine do
     else
       order_book
     end
+  end
+
+  def handle_info(:price_broadcast, order_book) do
+    price_info = %{ticker: order_book.name, ask_min: order_book.ask_min, bid_max: order_book.bid_max}
+    message_bus().cast_event(:price_broadcast, price_info)
+    Process.send_after(self(), :price_broadcast, @price_broadcast_rate)
+    {:noreply, order_book}
   end
 
   def handle_info(:check_expiration, order_book) do

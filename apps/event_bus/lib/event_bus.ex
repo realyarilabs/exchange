@@ -6,7 +6,7 @@ defmodule EventBus do
   @behaviour Exchange.MessageBus
 
   @events ~w(trade_executed order_queued order_cancelled order_expired
-             transaction_open order_placed trade_processed)a
+             transaction_open order_placed trade_processed price_broadcast)a
 
   def add_listener(key) do
     if Enum.member?(@events, key) do
@@ -42,6 +42,12 @@ defmodule EventBus do
 
   def cast_event(:trade_processed, payload),
     do: dispatch_event(:trade_processed, %EventBus.TradeProcessed{} = payload)
+
+  def cast_event(:price_broadcast, payload)
+    do
+      price_broadcast_event = %EventBus.PriceBroadcast{ticker: payload.ticker, ask_min: payload.ask_min, bid_max: payload.bid_max}
+      dispatch_event(:price_broadcast, price_broadcast_event)
+    end
 
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do

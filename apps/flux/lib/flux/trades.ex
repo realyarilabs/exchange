@@ -35,9 +35,9 @@ defmodule Flux.Trades do
     end
   end
 
-  def process_trade!(%EventBus.TradeExecuted{} = trade_params) do
+  def process_trade!(trade_params) do
     data = %Flux.Trades{}
-    t = trade_params.trade
+    t = trade_params
 
     %{
       data
