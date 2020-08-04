@@ -1,6 +1,6 @@
 defmodule Exchange.TimeSeries do
   @moduledoc """
-  Behaviour that a flux library must implement
+  Behaviour that a time series database must implement
   to be able to comunicate with the Exchange
   """
   @callback completed_trades_by_id(atom, String.t()) :: [Exchange.Trade]
