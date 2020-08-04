@@ -1,7 +1,7 @@
 defmodule MatchingEngineTest do
   use ExUnit.Case
 
-  alias Exchange.{MatchingEngine, Order, OrderBook, Utils}
+  alias Exchange.{Adapters.TestEventBus, MatchingEngine, Order, OrderBook, Utils}
 
   describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
@@ -663,7 +663,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if trade_executed event is correctly broadcasted", %{order_book: order_book} do
-      Exchange.Adapters.TestEventBus.flush()
+      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 1000, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -675,7 +675,7 @@ defmodule MatchingEngineTest do
         MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
 
       order_queued_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :order_queued
         end)
@@ -683,7 +683,7 @@ defmodule MatchingEngineTest do
           payload.order_id
         end)
       trade_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :trade_executed
         end)
@@ -702,7 +702,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_cancelled event is correctly broadcasted", %{order_book: order_book} do
-      Exchange.Adapters.TestEventBus.flush()
+      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -719,7 +719,7 @@ defmodule MatchingEngineTest do
         MatchingEngine.handle_call({:cancel_order, "100"}, nil, order_book)
 
       order_queued_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :order_queued
         end)
@@ -727,7 +727,7 @@ defmodule MatchingEngineTest do
           payload.order_id
         end)
       cancel_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :order_cancelled
         end)
@@ -741,7 +741,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_expired event is correctly broadcasted", %{order_book: order_book} do
-      Exchange.Adapters.TestEventBus.flush()
+      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
       t = :os.system_time(:millisecond) - 2000
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t}
@@ -751,7 +751,7 @@ defmodule MatchingEngineTest do
       {:noreply, _order_book} = MatchingEngine.handle_info(:check_expiration, order_book)
       :timer.sleep(3000)
       expired_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :order_expired
         end)
@@ -763,7 +763,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_queued event is correctly broadcasted", %{order_book: order_book} do
-      Exchange.Adapters.TestEventBus.flush()
+      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1000, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -774,7 +774,7 @@ defmodule MatchingEngineTest do
       {_reply, _response, _order_book} =
         MatchingEngine.handle_call({:place_limit_order, order_2}, nil, order_book)
       queue_ids =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :order_queued
         end)
@@ -787,10 +787,10 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if price_broadcast event is correctly broadcasted" do
-      Exchange.Adapters.TestEventBus.flush()
+      TestEventBus.flush()
       :timer.sleep(2000)
       prices =
-        Exchange.Adapters.TestEventBus.value()
+        TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
           event == :price_broadcast
         end)

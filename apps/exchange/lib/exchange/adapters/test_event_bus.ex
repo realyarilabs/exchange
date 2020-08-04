@@ -1,4 +1,7 @@
 defmodule Exchange.Adapters.TestEventBus do
+  @moduledoc """
+  This is used to test the message sent by the Matching Engine
+  """
   use Agent
 
   def start_link(initial_value \\ Qex.new()) do
@@ -43,11 +46,8 @@ defmodule Exchange.Adapters.TestEventBus do
   def cast_event(:trade_executed, payload),
     do: dispatch_event(:trade_executed,  payload)
 
-  def cast_event(:order_expired, payload)
-    do
-      IO.puts("Exppired")
-      dispatch_event(:order_expired, payload)
-    end
+  def cast_event(:order_expired, payload),
+    do: dispatch_event(:order_expired, payload)
 
   def cast_event(:order_placed, payload),
     do: dispatch_event(:order_placed,  payload)

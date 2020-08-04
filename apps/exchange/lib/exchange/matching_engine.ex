@@ -159,8 +159,8 @@ defmodule Exchange.MatchingEngine do
       expiration_list: [],
       completed_trades: [],
       expired_orders: [],
-      ask_min: max_price-1,
-      bid_max: min_price+1,
+      ask_min: max_price - 1,
+      bid_max: min_price + 1,
       max_price: max_price,
       min_price: min_price || 0
     }
@@ -328,7 +328,6 @@ defmodule Exchange.MatchingEngine do
       cancelled_order = OrderBook.fetch_order_by_id(order_book, order_id)
       order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
       message_bus().cast_event(:order_cancelled, cancelled_order)
-
 
       {:reply, :ok, order_book}
     else
