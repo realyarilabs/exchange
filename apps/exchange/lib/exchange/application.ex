@@ -11,7 +11,6 @@ defmodule Exchange.Application do
 
     children =
       if message_bus_adapter do
-        Mix.env(:test)
         [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]
       else
         []
