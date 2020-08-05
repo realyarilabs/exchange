@@ -533,7 +533,7 @@ defmodule MatchingEngineTest do
 
       active = orders |> Enum.map(&Map.get(&1, :trader_id, nil))
       assert Enum.count(active) == 1
-      assert hd(active) == "alchemist1"
+      assert active == ["alchemist1"]
     end
 
     test "Get orders from non existing trader_id" do
@@ -616,7 +616,7 @@ defmodule MatchingEngineTest do
           {payload.buyer_id, payload.seller_id, payload.buy_order_id, payload.sell_order_id}
         end)
 
-      {buyer_id, seller_id, buy_order_id, sell_order_id} = hd(trade_ids)
+      [{buyer_id, seller_id, buy_order_id, sell_order_id}| _tail] = trade_ids
       assert order_queued_ids == ids
       assert Enum.count(order_queued_ids) == 2
       assert buyer_id == "alchemist0"
@@ -680,7 +680,7 @@ defmodule MatchingEngineTest do
           payload.order_id
         end)
 
-      assert hd(expired_ids) == "100"
+      assert expired_ids == ["100"]
       assert Enum.count(expired_ids) == 1
     end
 
