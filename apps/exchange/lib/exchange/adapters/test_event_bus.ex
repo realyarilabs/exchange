@@ -62,7 +62,7 @@ defmodule Exchange.Adapters.TestEventBus do
     do: dispatch_event(:price_broadcast, payload)
 
   defp dispatch_event(key, payload) do
-    if Application.get_env(:exchange, :envorinment) == :test do
+    if Application.get_env(:exchange, :environment) == :test do
       append({:cast_event, key, payload})
     end
   end
