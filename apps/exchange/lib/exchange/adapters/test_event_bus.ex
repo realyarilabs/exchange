@@ -13,7 +13,7 @@ defmodule Exchange.Adapters.TestEventBus do
   end
 
   def append(payload) do
-    Agent.update(__MODULE__, &(Qex.push(&1, payload)))
+    Agent.update(__MODULE__, &Qex.push(&1, payload))
   end
 
   def flush do
@@ -44,19 +44,19 @@ defmodule Exchange.Adapters.TestEventBus do
     do: dispatch_event(:order_cancelled, payload)
 
   def cast_event(:trade_executed, payload),
-    do: dispatch_event(:trade_executed,  payload)
+    do: dispatch_event(:trade_executed, payload)
 
   def cast_event(:order_expired, payload),
     do: dispatch_event(:order_expired, payload)
 
   def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed,  payload)
+    do: dispatch_event(:order_placed, payload)
 
   def cast_event(:order_queued, payload),
-    do: dispatch_event(:order_queued,  payload)
+    do: dispatch_event(:order_queued, payload)
 
   def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed,  payload)
+    do: dispatch_event(:trade_processed, payload)
 
   def cast_event(:price_broadcast, payload),
     do: dispatch_event(:price_broadcast, payload)

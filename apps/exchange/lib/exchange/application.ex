@@ -8,6 +8,7 @@ defmodule Exchange.Application do
 
   def start(_type, _args) do
     message_bus_adapter = Application.get_env(:exchange, :message_bus_adapter, nil)
+
     children =
       if message_bus_adapter do
         Mix.env(:test)
@@ -15,25 +16,32 @@ defmodule Exchange.Application do
       else
         []
       end
-    children =
-      [supervisor(Registry, [:unique, :matching_engine_registry]) | Exchange.Application.create_tickers() ++ children]
+
+    children = [
+      supervisor(Registry, [:unique, :matching_engine_registry])
+      | Exchange.Application.create_tickers() ++ children
+    ]
+
     opts = [strategy: :one_for_one, name: Exchange.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
   def create_tickers do
     get_tickers_config()
-    |> Enum.map(fn {ticker, currency , min_price, max_price} ->
+    |> Enum.map(fn {ticker, currency, min_price, max_price} ->
       supervisor(
         Exchange.MatchingEngine,
-          [[ticker: ticker, currency: currency, min_price: min_price, max_price: max_price]],
-          id: ticker
-        )
+        [[ticker: ticker, currency: currency, min_price: min_price, max_price: max_price]],
+        id: ticker
+      )
     end)
   end
 
   def get_tickers_config do
-    Application.get_env(:exchange, __MODULE__, [])[:tickers]
-  end
+    ticker_list = Application.get_env(:exchange, __MODULE__, [])
+    if ticker_list != [] do
+      ticker_list[:tickers]
+    end
 
+  end
 end

@@ -186,7 +186,12 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_info(:price_broadcast, order_book) do
-    price_info = %{ticker: order_book.name, ask_min: order_book.ask_min, bid_max: order_book.bid_max}
+    price_info = %{
+      ticker: order_book.name,
+      ask_min: order_book.ask_min,
+      bid_max: order_book.bid_max
+    }
+
     message_bus().cast_event(:price_broadcast, price_info)
     Process.send_after(self(), :price_broadcast, @price_broadcast_rate)
     {:noreply, order_book}
