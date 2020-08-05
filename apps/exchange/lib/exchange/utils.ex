@@ -202,7 +202,6 @@ defmodule Exchange.Utils do
       ]
       |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
 
-
     (buy_book ++ sell_book)
     |> Enum.each(fn order ->
       Exchange.MatchingEngine.place_limit_order(ticker, order)

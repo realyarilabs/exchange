@@ -3,7 +3,6 @@ defmodule MatchingEngineTest do
 
   alias Exchange.{Adapters.TestEventBus, MatchingEngine, Order, OrderBook, Utils}
 
-
   describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
       Exchange.MatchingEngine.start_link([ticker: :AUXLND, currency: :GBP, min_price: 1000, max_price: 100_000])
@@ -178,7 +177,6 @@ defmodule MatchingEngineTest do
       assert [] == ob.expired_orders
     end
   end
-
 
   describe "Placing and canceling orders:" do
     setup _context do
@@ -391,7 +389,6 @@ defmodule MatchingEngineTest do
     end
   end
 
-
   describe "Volume queries:" do
     setup _context do
       Exchange.MatchingEngine.start_link([ticker: :AGLND, currency: :GBP, min_price: 1000, max_price: 100_000])
@@ -514,7 +511,6 @@ defmodule MatchingEngineTest do
     end
   end
 
-
   describe "Open orders queries:" do
     setup _context do
       Exchange.MatchingEngine.start_link([ticker: :KAPPA, currency: :GBP, min_price: 1000, max_price: 100_000])
@@ -541,7 +537,7 @@ defmodule MatchingEngineTest do
     end
 
     test "Get orders from non existing trader_id" do
-      {:ok,orders} = MatchingEngine.open_orders_by_trader(:KAPPA, "alchemist0")
+      {:ok, orders} = MatchingEngine.open_orders_by_trader(:KAPPA, "alchemist0")
       active = orders |> Enum.map(& &1.trader_id)
       assert active == []
     end
@@ -601,7 +597,7 @@ defmodule MatchingEngineTest do
       ids = ~w(100 101)
       MatchingEngine.place_limit_order(:BTCUS, order_1)
       MatchingEngine.place_limit_order(:BTCUS, order_2)
-      IO.inspect(MatchingEngine.order_book_entries(:BTCUS))
+
       order_queued_ids =
         TestEventBus.value()
         |> Enum.filter(fn {_cast_event, event, _payload} ->
@@ -639,8 +635,8 @@ defmodule MatchingEngineTest do
       ids = ~w(100 9)
       MatchingEngine.place_limit_order(:BTCUS, order_1)
       MatchingEngine.place_limit_order(:BTCUS, order_2)
-      MatchingEngine.cancel_order(:BTCUS,"9")
-      MatchingEngine.cancel_order(:BTCUS,"100")
+      MatchingEngine.cancel_order(:BTCUS, "9")
+      MatchingEngine.cancel_order(:BTCUS, "100")
 
       order_queued_ids =
         TestEventBus.value()
