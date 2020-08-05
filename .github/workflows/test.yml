@@ -28,5 +28,5 @@ jobs:
       - run: mix deps.get
       - run: mix credo --strict
       - run: mix format --check-formatted
-      - run: mix test
+      - run: MIX_ENV=test mix test
       - run: mix coveralls.github
