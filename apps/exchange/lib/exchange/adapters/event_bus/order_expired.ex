@@ -1,4 +1,4 @@
-defmodule EventBus.OrderExpired do
+defmodule Exchange.Adapters.EventBus.OrderExpired do
   @moduledoc """
   A struct representing the payload of :order_expired events.
   """

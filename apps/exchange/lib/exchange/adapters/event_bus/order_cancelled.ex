@@ -1,4 +1,4 @@
-defmodule EventBus.OrderCancelled do
+defmodule Exchange.Adapters.EventBus.OrderCancelled do
   @moduledoc """
   A struct representing the payload of :order_cancelled events.
   """

@@ -11,7 +11,7 @@ use Mix.Config
 # dependencies, regardless if they belong to one or multiple
 # apps, should be configured in the umbrella to avoid confusion.
 
-import_config "../apps/*/config/config.exs"
+import_config "../apps/exchange/config/config.exs"
 
 config :money,
   # default_currency: :EUR,

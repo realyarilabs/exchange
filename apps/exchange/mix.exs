@@ -29,8 +29,9 @@ defmodule Exchange.MixProject do
     [
       {:qex, "~> 0.5"},
       {:elixir_uuid, "~> 1.2"},
-      {:event_bus, in_umbrella: true},
-      {:flux, in_umbrella: true},
+      {:typed_struct, "~> 0.2"},
+      # {:event_bus, in_umbrella: true},
+      # {:flux, in_umbrella: true},
       {:benchee, "~> 1.0", only: :dev},
       {:benchee_html, "~> 1.0", only: :dev}
     ]

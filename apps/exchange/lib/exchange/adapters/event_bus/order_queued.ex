@@ -1,4 +1,4 @@
-defmodule EventBus.OrderQueued do
+defmodule Exchange.Adapters.EventBus.OrderQueued do
   @moduledoc """
   A struct representing the payload of :order_queued events.
   """

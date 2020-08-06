@@ -8,10 +8,28 @@ defmodule Exchange.Application do
 
   def start(_type, _args) do
 
+
+    message_bus_children = case Application.get_env(:exchange, :message_bus_adapter) do
+      Exchange.Adapters.EventBus -> [
+        {Registry,
+         keys: :duplicate, name: Exchange.Adapters.EventBus.Registry, partitions: System.schedulers_online()}
+      ]
+      _ -> []
+    end
+
+    time_series_children = case Application.get_env(:exchange, :time_series_adapter) do
+      Exchange.Adapters.InMemoryTimeSeries -> [
+        supervisor( Exchange.Adapters.InMemoryTimeSeries, [[]], id: :in_memory_time_series)
+      ]
+      _ -> []
+    end
+
     children =
       [supervisor(Registry, [:unique, :matching_engine_registry])] ++
+      message_bus_children ++
+      time_series_children ++
       Exchange.Application.create_tickers()
-
+    IO.inspect(children)
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Exchange.Supervisor]

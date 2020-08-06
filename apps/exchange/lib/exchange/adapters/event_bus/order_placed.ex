@@ -1,4 +1,4 @@
-defmodule EventBus.OrderPlaced do
+defmodule Exchange.Adapters.EventBus.OrderPlaced do
   @moduledoc """
   A struct representing the payload of :order_placed events.
   """

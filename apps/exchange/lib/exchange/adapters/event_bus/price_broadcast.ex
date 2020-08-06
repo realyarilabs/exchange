@@ -1,4 +1,4 @@
-defmodule EventBus.PriceBroadcast do
+defmodule Exchange.Adapters.EventBus.PriceBroadcast do
   @moduledoc """
   A struct representing the payload of :price_broadcast events.
   """
