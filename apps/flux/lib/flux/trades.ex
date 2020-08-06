@@ -25,7 +25,9 @@ defmodule Flux.Trades do
 
   def completed_trades_by_id(ticker, trader_id) do
     response =
-      ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{ticker}')
+      ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{
+        ticker
+      }')
       |> Flux.Connection.query(precision: :nanosecond)
 
     if response.results == [%{statement_id: 0}] do

@@ -9,8 +9,7 @@ config :flux, Flux.Connection,
   scheme: "http",
   writer: Instream.Writer.Line
 
-config :flux, Flux.EventListener,
-  message_bus_adapter: EventBus
+config :flux, Flux.EventListener, message_bus_adapter: EventBus
 
 config :logger, :console,
   format: "\n$time $metadata[$level] $levelpad$message\n",

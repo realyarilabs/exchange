@@ -5,7 +5,13 @@ defmodule MatchingEngineTest do
 
   describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :AUXLND, currency: :GBP, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :AUXLND,
+        currency: :GBP,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       :ok
     end
 
@@ -70,6 +76,7 @@ defmodule MatchingEngineTest do
 
       order = Utils.sample_order(%{size: 500, price: 3900, side: :sell})
       order = %{order | order_id: "10"}
+
       MatchingEngine.place_limit_order(
         :AUXLND,
         order
@@ -81,6 +88,7 @@ defmodule MatchingEngineTest do
 
       order = Utils.sample_order(%{size: 1000, price: 3900, side: :sell})
       order = %{order | order_id: "10"}
+
       MatchingEngine.place_limit_order(
         :AUXLND,
         order
@@ -92,15 +100,14 @@ defmodule MatchingEngineTest do
 
       order = Utils.sample_order(%{size: 250, price: 3800, side: :buy})
       order = %{order | order_id: "11"}
+
       MatchingEngine.place_limit_order(
         :AUXLND,
         order
       )
 
       {:ok, spread_5} = MatchingEngine.spread(:AUXLND)
-
       {:ok, ask_min_5} = MatchingEngine.ask_min(:AUXLND)
-
       {:ok, bid_max_5} = MatchingEngine.bid_max(:AUXLND)
 
       assert spread_1 == %Money{amount: 98_998, currency: :GBP}
@@ -125,7 +132,13 @@ defmodule MatchingEngineTest do
 
   describe "Expirations:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :AGZRC, currency: :EUR, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :AGZRC,
+        currency: :EUR,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       Utils.sample_matching_engine_init(:AGZRC)
       :ok
     end
@@ -180,7 +193,13 @@ defmodule MatchingEngineTest do
 
   describe "Placing and canceling orders:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :AUXZRC, currency: :EUR, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :AUXZRC,
+        currency: :EUR,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       Utils.sample_matching_engine_init(:AUXZRC)
       :ok
     end
@@ -391,7 +410,13 @@ defmodule MatchingEngineTest do
 
   describe "Volume queries:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :AGLND, currency: :GBP, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :AGLND,
+        currency: :GBP,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       Utils.sample_matching_engine_init(:AGLND)
       :ok
     end
@@ -450,7 +475,13 @@ defmodule MatchingEngineTest do
 
   describe "Total orders queries:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :AUXUS, currency: :USD, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :AUXUS,
+        currency: :USD,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       Utils.sample_matching_engine_init(:AUXUS)
       :ok
     end
@@ -513,7 +544,13 @@ defmodule MatchingEngineTest do
 
   describe "Open orders queries:" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :KAPPA, currency: :GBP, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :KAPPA,
+        currency: :GBP,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       Utils.sample_matching_engine_init(:KAPPA)
       :ok
     end
@@ -584,7 +621,13 @@ defmodule MatchingEngineTest do
 
   describe "Message bus" do
     setup _context do
-      Exchange.MatchingEngine.start_link([ticker: :BTCUS, currency: :USD, min_price: 1000, max_price: 100_000])
+      Exchange.MatchingEngine.start_link(
+        ticker: :BTCUS,
+        currency: :USD,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
       :ok
     end
 
@@ -616,7 +659,7 @@ defmodule MatchingEngineTest do
           {payload.buyer_id, payload.seller_id, payload.buy_order_id, payload.sell_order_id}
         end)
 
-      [{buyer_id, seller_id, buy_order_id, sell_order_id}| _tail] = trade_ids
+      [{buyer_id, seller_id, buy_order_id, sell_order_id} | _tail] = trade_ids
       assert order_queued_ids == ids
       assert Enum.count(order_queued_ids) == 2
       assert buyer_id == "alchemist0"

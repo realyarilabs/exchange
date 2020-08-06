@@ -14,6 +14,7 @@ defmodule ExchangeTest do
 
     assert Exchange.place_order(buy_limit_order, :TEST1) == :ok
   end
+
   describe "Multi ticker" do
     setup _context do
       {:ok, %{config: Application.get_env(:exchange, Exchange.Application, [])[:tickers]}}
