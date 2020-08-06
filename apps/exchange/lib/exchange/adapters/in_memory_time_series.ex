@@ -70,7 +70,10 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:noreply, state}
   end
 
-  def handle_info({:cast_event, :price_broadcast, price}, state) do
+  def handle_info(
+        {:cast_event, :price_broadcast, %Exchange.Adapters.EventBus.PriceBroadcast{} = price},
+        state
+      ) do
     # Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
 
     state =
@@ -98,7 +101,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:reply, {:ok, trades_by_id}, state}
   end
 
-  @spec save_price(map, map) :: map
+  @spec save_price(price :: map, state :: map) :: map
   def save_price(price, state) do
     current_time = :os.system_time(:nanosecond)
     {:ok, prices} = Map.fetch(state, :prices)
@@ -120,13 +123,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :prices, update_prices)
   end
 
-  @spec save_trade(
-          Exchange.Adapters.EventBus.OrderCancelled
-          | Exchange.Adapters.EventBus.OrderExpired
-          | Exchange.Adapters.EventBus.OrderPlaced
-          | Exchange.Adapters.EventBus.OrderQueued,
-          map
-        ) :: map
+  @spec save_trade(Exchange.Order, map) :: map
   def save_order(order, state) do
     current_time = :os.system_time(:nanosecond)
 
@@ -149,7 +146,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :orders, update_orders)
   end
 
-  @spec save_trade(Exchange.Adapters.EventBus.TradeExecuted, map) :: map
+  @spec save_trade(price :: Exchange.Trade, state :: map) :: map
   def save_trade(trade, state) do
     current_time = :os.system_time(:nanosecond)
     {:ok, trades} = Map.fetch(state, :trades)
@@ -171,7 +168,8 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :trades, update_trades)
   end
 
-  @spec cast_event(atom, Exchange.Adapters.EventBus.*()) :: Exchange.Adapters.EventBus.*()
+  @spec cast_event(event :: atom, payload :: Exchange.Adapters.EventBus.*()) ::
+          Exchange.Adapters.EventBus.*()
   def cast_event(event, payload) do
     send(:in_memory_time_series, {:cast_event, event, payload})
   end
