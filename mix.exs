@@ -36,7 +36,7 @@ defmodule AlchemistExchange.MixProject do
 
   defp package do
     [
-      files: ~w(lib priv .formatter.exs mix.exs README* readme* LICENSE*
+      files: ~w(apps .formatter.exs mix.exs README* readme* LICENSE*
                 license* CHANGELOG* changelog* src),
       # licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/realyarilabs/alchemist_exchange"}
