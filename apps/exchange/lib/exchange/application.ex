@@ -12,6 +12,8 @@ defmodule Exchange.Application do
     message_bus_child =
       if message_bus_adapter do
         [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]
+      else
+        []
       end
 
     children =
