@@ -69,7 +69,13 @@ defmodule OrderBookTest do
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
 
       sell_order =
-        Utils.sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
+        Utils.sample_expiring_order(%{
+          size: 1000,
+          price: 4020,
+          side: :sell,
+          id: "10",
+          exp_time: t2
+        })
 
       new_book = OrderBook.price_time_match(ob, buy_order)
       new_book = OrderBook.price_time_match(new_book, sell_order)
@@ -91,7 +97,10 @@ defmodule OrderBookTest do
 
     test "order is automatically  cancelled on expiration time", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
+      order =
+        Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
       new_book = OrderBook.price_time_match(ob, order)
       assert [{t, order.order_id}] == new_book.expiration_list
 
@@ -101,7 +110,10 @@ defmodule OrderBookTest do
 
     test "flushing expired orders from order_book", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
+      order =
+        Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
       new_book = ob |> OrderBook.price_time_match(order) |> OrderBook.check_expired_orders!()
       assert [order] == new_book.expired_orders
       new_book_with_flushed_expired = OrderBook.flush_expired_orders!(new_book)
@@ -616,11 +628,12 @@ defmodule OrderBookTest do
     setup _context do
       {:ok, %{order_book: Utils.empty_order_book()}}
     end
-    test "Empty order book" , %{order_book: order_book} do
-      order = Utils.sample_order(%{size: 1, price: (order_book.max_price-1), side: :buy})
+
+    test "Empty order book", %{order_book: order_book} do
+      order = Utils.sample_order(%{size: 1, price: order_book.max_price - 1, side: :buy})
       order_book = Exchange.OrderBook.price_time_match(order_book, order)
-      assert order_book.ask_min ==  99_999
-      assert order_book.bid_max ==  99_999
+      assert order_book.ask_min == 99_999
+      assert order_book.bid_max == 99_999
     end
   end
 end

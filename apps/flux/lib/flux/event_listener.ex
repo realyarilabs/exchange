@@ -35,6 +35,7 @@ defmodule Flux.EventListener do
   def handle_info({:cast_event, :order_cancelled, order_cancelled}, state) do
     Logger.info("[F] Processing Order: #{inspect(order_cancelled.order)}")
     order = order_cancelled.order
+
     %{order | size: 0}
     |> Flux.Orders.save_order!()
 
@@ -44,6 +45,7 @@ defmodule Flux.EventListener do
   def handle_info({:cast_event, :order_expired, expired_order}, state) do
     Logger.info("[F] Processing Order: #{inspect(expired_order.order)}")
     order = expired_order.order
+
     %{order | size: 0}
     |> Flux.Orders.save_order!()
 
@@ -52,6 +54,7 @@ defmodule Flux.EventListener do
 
   def handle_info({:cast_event, :price_broadcast, price}, state) do
     Logger.info("[F] Processing Price: #{inspect(price)}")
+
     %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}
     |> Flux.Prices.save_price!()
 
@@ -60,7 +63,5 @@ defmodule Flux.EventListener do
 
   defp message_bus do
     Application.get_env(:flux, Flux.EventListener)[:message_bus_adapter]
-
   end
-
 end

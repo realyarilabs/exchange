@@ -122,6 +122,7 @@ defmodule Exchange do
   def completed_trades_by_id(ticker, trader_id) when is_atom(trader_id) do
     completed_trades_by_id(ticker, Atom.to_string(trader_id))
   end
+
   def completed_trades_by_id(ticker, trader_id) do
     Exchange.Utils.fetch_completed_trades(ticker, trader_id)
   end
@@ -131,6 +132,6 @@ defmodule Exchange do
   end
 
   def total_sell_orders(ticker) do
-   Exchange.MatchingEngine.total_ask_orders(ticker)
+    Exchange.MatchingEngine.total_ask_orders(ticker)
   end
 end

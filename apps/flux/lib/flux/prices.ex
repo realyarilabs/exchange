@@ -35,12 +35,12 @@ defmodule Flux.Prices do
       | fields: %{
           data.fields
           | ask_min: price_params.ask_min,
-            bid_max: price_params.bid_max,
+            bid_max: price_params.bid_max
         },
         tags: %{
           data.tags
           | ticker: price_params.ticker
-        },
+        }
     }
   end
 end

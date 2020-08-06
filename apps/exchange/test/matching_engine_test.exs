@@ -166,7 +166,13 @@ defmodule MatchingEngineTest do
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
 
       sell_order =
-        Utils.sample_expiring_order(%{size: 1000, price: 4020, side: :sell, id: "10", exp_time: t2})
+        Utils.sample_expiring_order(%{
+          size: 1000,
+          price: 4020,
+          side: :sell,
+          id: "10",
+          exp_time: t2
+        })
 
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, buy_order}, nil, ob)
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, sell_order}, nil, ob)
@@ -188,7 +194,10 @@ defmodule MatchingEngineTest do
 
     test "order is automatically cancelled on expiration time", %{order_book: ob} do
       t = :os.system_time(:millisecond) - 1
-      order = Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
+      order =
+        Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
+
       {:reply, _code, ob} = MatchingEngine.handle_call({:place_limit_order, order}, nil, ob)
       assert [{t, order.order_id}] == ob.expiration_list
       {:noreply, ob} = MatchingEngine.handle_info(:check_expiration, ob)
