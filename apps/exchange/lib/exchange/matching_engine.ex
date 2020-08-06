@@ -159,8 +159,8 @@ defmodule Exchange.MatchingEngine do
       expiration_list: [],
       completed_trades: [],
       expired_orders: [],
-      ask_min: max_price,
-      bid_max: 0,
+      ask_min: max_price - 1,
+      bid_max: min_price + 1,
       max_price: max_price,
       min_price: min_price || 0
     }
@@ -186,7 +186,12 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_info(:price_broadcast, order_book) do
-    price_info = %{ticker: order_book.name, ask_min: order_book.ask_min, bid_max: order_book.bid_max}
+    price_info = %{
+      ticker: order_book.name,
+      ask_min: order_book.ask_min,
+      bid_max: order_book.bid_max
+    }
+
     message_bus().cast_event(:price_broadcast, price_info)
     Process.send_after(self(), :price_broadcast, @price_broadcast_rate)
     {:noreply, order_book}
@@ -206,7 +211,6 @@ defmodule Exchange.MatchingEngine do
 
     order_book = OrderBook.flush_expired_orders!(order_book)
     Process.send_after(self(), :check_expiration, @check_expiration_rate)
-
     {:noreply, order_book}
   end
 

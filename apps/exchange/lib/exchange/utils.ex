@@ -120,6 +120,95 @@ defmodule Exchange.Utils do
     }
   end
 
+  def sample_matching_engine_init(ticker) do
+    buy_book =
+      [
+        %Exchange.Order{
+          type: :limit,
+          order_id: "4",
+          trader_id: "alchemist1",
+          side: :buy,
+          initial_size: 250,
+          size: 250,
+          price: 4000
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "6",
+          trader_id: "alchemist2",
+          side: :buy,
+          initial_size: 500,
+          size: 500,
+          price: 4000
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "2",
+          trader_id: "alchemist3",
+          side: :buy,
+          initial_size: 750,
+          size: 750,
+          price: 3970
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "7",
+          trader_id: "alchemist4",
+          side: :buy,
+          initial_size: 150,
+          size: 150,
+          price: 3960
+        }
+      ]
+      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+
+    sell_book =
+      [
+        %Exchange.Order{
+          type: :limit,
+          order_id: "1",
+          trader_id: "alchemist5",
+          side: :sell,
+          initial_size: 750,
+          size: 750,
+          price: 4010
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "5",
+          trader_id: "alchemist6",
+          side: :sell,
+          initial_size: 500,
+          size: 500,
+          price: 4010
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "8",
+          trader_id: "alchemist7",
+          side: :sell,
+          initial_size: 750,
+          size: 750,
+          price: 4010
+        },
+        %Exchange.Order{
+          type: :limit,
+          order_id: "3",
+          trader_id: "alchemist8",
+          side: :sell,
+          initial_size: 250,
+          size: 250,
+          price: 4020
+        }
+      ]
+      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+
+    (buy_book ++ sell_book)
+    |> Enum.each(fn order ->
+      Exchange.MatchingEngine.place_limit_order(ticker, order)
+    end)
+  end
+
   def sample_order_book(ticker) do
     buy_book =
       [

@@ -26,7 +26,8 @@ defmodule Exchange.Adapters.EventBus do
   end
 
   def cast_event(:order_cancelled, payload),
-    do: dispatch_event(:order_cancelled, %Exchange.Adapters.EventBus.OrderCancelled{order: payload})
+    do:
+      dispatch_event(:order_cancelled, %Exchange.Adapters.EventBus.OrderCancelled{order: payload})
 
   def cast_event(:trade_executed, payload),
     do: dispatch_event(:trade_executed, %Exchange.Adapters.EventBus.TradeExecuted{trade: payload})
@@ -43,11 +44,15 @@ defmodule Exchange.Adapters.EventBus do
   def cast_event(:trade_processed, payload),
     do: dispatch_event(:trade_processed, %Exchange.Adapters.EventBus.TradeProcessed{} = payload)
 
-  def cast_event(:price_broadcast, payload)
-    do
-      price_broadcast_event = %Exchange.Adapters.EventBus.PriceBroadcast{ticker: payload.ticker, ask_min: payload.ask_min, bid_max: payload.bid_max}
-      dispatch_event(:price_broadcast, price_broadcast_event)
-    end
+  def cast_event(:price_broadcast, payload) do
+    price_broadcast_event = %Exchange.Adapters.EventBus.PriceBroadcast{
+      ticker: payload.ticker,
+      ask_min: payload.ask_min,
+      bid_max: payload.bid_max
+    }
+
+    dispatch_event(:price_broadcast, price_broadcast_event)
+  end
 
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do

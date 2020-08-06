@@ -17,6 +17,9 @@ defmodule Exchange.Application do
              partitions: System.schedulers_online()}
           ]
 
+        Exchange.Adapters.TestEventBus ->
+          [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]
+
         _ ->
           []
       end
@@ -54,6 +57,10 @@ defmodule Exchange.Application do
   end
 
   def get_tickers_config do
-    Application.get_env(:exchange, __MODULE__, [])[:tickers]
+    ticker_list = Application.get_env(:exchange, __MODULE__, [])
+
+    if ticker_list != [] do
+      ticker_list[:tickers]
+    end
   end
 end
