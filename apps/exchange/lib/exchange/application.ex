@@ -16,10 +16,14 @@ defmodule Exchange.Application do
         []
       end
 
-    children =
-      [supervisor(Registry, [:unique, :matching_engine_registry])] ++
-        message_bus_child ++
-        Exchange.Application.create_tickers()
+    children = [
+      supervisor(Registry, [:unique, :matching_engine_registry]),
+      ExchangeWeb.Telemetry,
+      {Phoenix.PubSub, name: Exchange.PubSub},
+      ExchangeWeb.Endpoint
+    ]
+    ++ message_bus_child
+    ++ Exchange.Application.create_tickers()
 
     opts = [strategy: :one_for_one, name: Exchange.Supervisor]
     Supervisor.start_link(children, opts)
@@ -42,5 +46,10 @@ defmodule Exchange.Application do
     if ticker_list != [] do
       ticker_list[:tickers]
     end
+  end
+
+  def config_change(changed, _new, removed) do
+    ExchangeWeb.Endpoint.config_change(changed, removed)
+    :ok
   end
 end
