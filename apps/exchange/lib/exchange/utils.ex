@@ -7,6 +7,7 @@ defmodule Exchange.Utils do
     time_series().completed_trades_by_id(ticker, trader_id)
     |> Enum.map(fn flux_trade ->
       trade = %Exchange.Trade{}
+
       %{
         trade
         | trade_id: flux_trade.fields.trade_id,
@@ -25,6 +26,7 @@ defmodule Exchange.Utils do
       }
     end)
   end
+
   def fetch_live_orders(ticker) do
     time_series().get_live_orders(ticker)
     |> Enum.map(fn o ->
@@ -91,6 +93,7 @@ defmodule Exchange.Utils do
       min_price: 0
     }
   end
+
   def sample_order(%{size: z, price: p, side: s}) do
     %Exchange.Order{
       type: :limit,
@@ -99,7 +102,8 @@ defmodule Exchange.Utils do
       side: s,
       initial_size: z,
       size: z,
-      price: p
+      price: p,
+      ticker: :AUXLND
     }
   end
 
@@ -224,7 +228,8 @@ defmodule Exchange.Utils do
     type = Enum.random([:market, :limit])
     price = 0..10 |> Enum.map(fn x -> 2000 + x * 200 end) |> Enum.random()
     size = 0..10 |> Enum.map(fn x -> 1000 + x * 500 end) |> Enum.random()
-    order_id = UUID.uuid1
+    order_id = UUID.uuid1()
+
     %Exchange.Order{
       order_id: order_id,
       trader_id: trader_id,
@@ -239,7 +244,7 @@ defmodule Exchange.Utils do
   end
 
   def generate_random_orders(n)
-  when is_integer(n) and n > 0 do
+      when is_integer(n) and n > 0 do
     Enum.reduce(0..n, [], fn _n, acc ->
       [random_order() | acc]
     end)

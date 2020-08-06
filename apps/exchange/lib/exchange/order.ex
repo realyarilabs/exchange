@@ -17,7 +17,8 @@ defmodule Exchange.Order do
             type: :market,
             exp_time: nil,
             acknowledged_at: :os.system_time(:nanosecond),
-            modified_at: :os.system_time(:nanosecond)
+            modified_at: :os.system_time(:nanosecond),
+            ticker: nil
 
   @type price_in_cents :: integer
   @type size_in_grams :: integer
@@ -30,12 +31,28 @@ defmodule Exchange.Order do
           size: size_in_grams,
           initial_size: size_in_grams,
           type: atom,
+          ticker: atom,
           exp_time: integer
         }
 end
 
 defimpl Jason.Encoder, for: Exchange.Order do
   def encode(value, opts) do
-    Jason.Encode.map(Map.take(value, [:order_id, :trader_id, :side, :price, :size, :initial_size, :type, :exp_time, :acknowledged_at, :modified_at]), opts)
+    Jason.Encode.map(
+      Map.take(value, [
+        :order_id,
+        :trader_id,
+        :side,
+        :price,
+        :size,
+        :initial_size,
+        :type,
+        :exp_time,
+        :acknowledged_at,
+        :modified_at,
+        :ticker
+      ]),
+      opts
+    )
   end
 end
