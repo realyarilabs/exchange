@@ -16,14 +16,15 @@ defmodule Exchange.Application do
         []
       end
 
-    children = [
-      supervisor(Registry, [:unique, :matching_engine_registry]),
-      ExchangeWeb.Telemetry,
-      {Phoenix.PubSub, name: Exchange.PubSub},
-      ExchangeWeb.Endpoint
-    ]
-    ++ message_bus_child
-    ++ Exchange.Application.create_tickers()
+    children =
+      [
+        supervisor(Registry, [:unique, :matching_engine_registry]),
+        ExchangeWeb.Telemetry,
+        {Phoenix.PubSub, name: Exchange.PubSub},
+        ExchangeWeb.Endpoint
+      ] ++
+        message_bus_child ++
+        Exchange.Application.create_tickers()
 
     opts = [strategy: :one_for_one, name: Exchange.Supervisor]
     Supervisor.start_link(children, opts)
