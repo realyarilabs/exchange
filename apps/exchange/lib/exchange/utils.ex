@@ -102,8 +102,7 @@ defmodule Exchange.Utils do
       side: s,
       initial_size: z,
       size: z,
-      price: p,
-      ticker: :AUXLND
+      price: p
     }
   end
 

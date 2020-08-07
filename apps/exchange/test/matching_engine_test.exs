@@ -406,6 +406,45 @@ defmodule MatchingEngineTest do
       code = MatchingEngine.cancel_order(:AUXZRC, "")
       assert code == :error
     end
+
+    test "place marketable limit order(fullfilled)" do
+      order = Utils.sample_order(%{size: 100, price: 0, side: :sell})
+      order = %{order | type: :marketable_limit}
+      _code = MatchingEngine.place_marketable_limit_order(:AUXZRC, order)
+
+      {:ok, ob} = MatchingEngine.order_book_entries(:AUXZRC)
+      partial_order = OrderBook.fetch_order_by_id(ob, "4")
+      assert partial_order.initial_size == 250
+      assert partial_order.size == 150
+      assert partial_order.side == :buy
+    end
+
+    test "place marketable limit order(partial)" do
+      order = Utils.sample_order(%{size: 2100, price: 0, side: :buy})
+      order = %{order | type: :marketable_limit, order_id: "120"}
+      _code = MatchingEngine.place_marketable_limit_order(:AUXZRC, order)
+
+      {:ok, ob} = MatchingEngine.order_book_entries(:AUXZRC)
+      partial_order = OrderBook.fetch_order_by_id(ob, "120")
+      assert partial_order.initial_size == 2100
+      assert partial_order.size == 100
+      assert partial_order.price == 4010
+    end
+
+    test "place buy marketable limit order with empty sell" do
+      order = Utils.sample_order(%{size: 2250, price: 4500, side: :buy})
+      order = %{order | order_id: "100"}
+      _code = MatchingEngine.place_limit_order(:AUXZRC, order)
+
+      order = Utils.sample_order(%{size: 1000, price: 0, side: :buy})
+      order = %{order | type: :marketable_limit, order_id: "120"}
+      _code = MatchingEngine.place_marketable_limit_order(:AUXZRC, order)
+
+      {:ok, ob} = MatchingEngine.order_book_entries(:AUXZRC)
+      partial_order = OrderBook.fetch_order_by_id(ob, "120")
+      assert partial_order.size == 1000
+      assert partial_order.price == ob.max_price - 1
+    end
   end
 
   describe "Volume queries:" do
@@ -628,11 +667,12 @@ defmodule MatchingEngineTest do
         max_price: 100_000
       )
 
+      TestEventBus.flush()
+
       :ok
     end
 
     test "Check if trade_executed event is correctly broadcasted" do
-      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 1010, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -670,7 +710,6 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_cancelled event is correctly broadcasted" do
-      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -706,7 +745,6 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_expired event is correctly broadcasted" do
-      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       t = :os.system_time(:millisecond) - 2000
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t}
@@ -728,7 +766,6 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if order_queued event is correctly broadcasted" do
-      TestEventBus.flush()
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 2000, side: :sell})
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
@@ -751,7 +788,6 @@ defmodule MatchingEngineTest do
     end
 
     test "Check if price_broadcast event is correctly broadcasted" do
-      TestEventBus.flush()
       :timer.sleep(2000)
 
       prices =
@@ -767,6 +803,243 @@ defmodule MatchingEngineTest do
              |> Enum.member?(:BTCUS)
 
       assert Enum.count(prices) > 0
+    end
+  end
+
+  describe "Time series" do
+    setup _context do
+      Exchange.MatchingEngine.start_link(
+        ticker: :AGPT,
+        currency: :EUR,
+        min_price: 1000,
+        max_price: 100_000
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.flush()
+
+      :ok
+    end
+
+    test "check if trade executed event is processed" do
+      order_1 = Utils.sample_order(%{size: 1200, price: 3000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
+      order_3 = Utils.sample_order(%{size: 500, price: 3000, side: :buy})
+      order_4 = Utils.sample_order(%{size: 700, price: 3000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", ticker: :AGPT}
+      order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
+      order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
+      order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit)
+      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_2}
+      )
+
+      {_code, ts_trade_1} =
+        Exchange.Adapters.InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist0")
+
+      {_code, ts_trade_2} =
+        Exchange.Adapters.InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist2")
+
+      assert ts_trade_1 == [trade_1]
+      assert ts_trade_2 == [trade_2]
+    end
+
+    test "check if orders are queued" do
+      order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+      order_2 = %Order{order_2 | trader_id: "alchemist0"}
+      ids = ~w(100 9)
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+      )
+
+      ts_ids =
+        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        |> elem(1)
+        |> Map.get(:orders)
+        |> Enum.flat_map(fn {_ts, elem} -> elem end)
+        |> Enum.filter(fn order ->
+          order.trader_id == "alchemist0"
+        end)
+        |> Enum.map(fn order ->
+          order.order_id
+        end)
+
+      assert ts_ids == ids
+      assert Enum.count(ts_ids) == 2
+    end
+
+    test "check if orders are expired" do
+      order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
+      t1 = :os.system_time(:millisecond) - 2000
+      t2 = :os.system_time(:millisecond) - 2000
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t1}
+      order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
+      ids = ~w(100 9 100 9)
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_expired,
+        %Exchange.Adapters.EventBus.OrderExpired{order: order_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_expired,
+        %Exchange.Adapters.EventBus.OrderExpired{order: order_2}
+      )
+
+      ts_orders =
+        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        |> elem(1)
+        |> Map.get(:orders)
+        |> Enum.flat_map(fn {_ts, elem} -> elem end)
+        |> Enum.filter(fn order ->
+          order.trader_id == "alchemist0"
+        end)
+
+      ts_sizes =
+        ts_orders
+        |> Enum.map(fn order ->
+          order.size
+        end)
+
+      ts_ids =
+        ts_orders
+        |> Enum.map(fn order ->
+          order.order_id
+        end)
+
+      assert Enum.count(ts_ids) == 4
+      assert ts_ids == ids
+      assert ts_sizes == [1000, 1000, 0, 0]
+    end
+
+    test "check if orders are cancelled" do
+      order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
+      t1 = :os.system_time(:millisecond) - 2000
+      t2 = :os.system_time(:millisecond) - 2000
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t1}
+      order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
+      ids = ~w(100 9 100 9)
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_queued,
+        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_cancelled,
+        %Exchange.Adapters.EventBus.OrderCancelled{order: order_1}
+      )
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+        :order_cancelled,
+        %Exchange.Adapters.EventBus.OrderCancelled{order: order_2}
+      )
+
+      ts_orders =
+        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        |> elem(1)
+        |> Map.get(:orders)
+        |> Enum.flat_map(fn {_ts, elem} -> elem end)
+        |> Enum.filter(fn order ->
+          order.trader_id == "alchemist0"
+        end)
+
+      ts_sizes =
+        ts_orders
+        |> Enum.map(fn order ->
+          order.size
+        end)
+
+      ts_ids =
+        ts_orders
+        |> Enum.map(fn order ->
+          order.order_id
+        end)
+
+      assert Enum.count(ts_ids) == 4
+      assert ts_ids == ids
+      assert ts_sizes == [1000, 1000, 0, 0]
+    end
+
+    test "check if prices are broadcasted" do
+      price_broadcast_event_1 = %Exchange.Adapters.EventBus.PriceBroadcast{
+        ticker: :AGPT,
+        ask_min: 1001,
+        bid_max: 99_999
+      }
+
+      price_broadcast_event_2 = %Exchange.Adapters.EventBus.PriceBroadcast{
+        ticker: :BTCUS,
+        ask_min: 5000,
+        bid_max: 70_012
+      }
+
+      price_broadcast_event_3 = %Exchange.Adapters.EventBus.PriceBroadcast{
+        ticker: :AUXLND,
+        ask_min: 2000,
+        bid_max: 80_000
+      }
+
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_1)
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_2)
+      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_3)
+
+      prices =
+        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        |> elem(1)
+        |> Map.get(:prices)
+        |> Enum.flat_map(fn {_ts, elem} -> elem end)
+        |> Enum.sort()
+
+      assert prices ==
+               [
+                 price_broadcast_event_1,
+                 price_broadcast_event_2,
+                 price_broadcast_event_3
+               ]
+               |> Enum.map(fn %Exchange.Adapters.EventBus.PriceBroadcast{
+                                ask_min: ask_min,
+                                bid_max: bid_max,
+                                ticker: ticker
+                              } ->
+                 %{ask_min: ask_min, bid_max: bid_max, ticker: ticker}
+               end)
+               |> Enum.sort()
     end
   end
 end

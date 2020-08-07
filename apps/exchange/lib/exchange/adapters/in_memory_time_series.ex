@@ -83,6 +83,10 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:noreply, state}
   end
 
+  def handle_call(:flush, _from, _state) do
+    {:reply, :ok, %{orders: %{}, prices: %{}, trades: %{}}}
+  end
+
   def handle_call(:state, _from, state) do
     {:reply, {:ok, state}, state}
   end
@@ -125,12 +129,12 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
 
   @spec save_trade(Exchange.Order, map) :: map
   def save_order(order, state) do
-    current_time = :os.system_time(:nanosecond)
+    ack_time = order.acknowledged_at
 
     {:ok, orders} = Map.fetch(state, :orders)
 
     current_time_orders =
-      case Map.fetch(orders, current_time) do
+      case Map.fetch(orders, ack_time) do
         {:ok, value} -> value
         :error -> nil
       end
@@ -142,17 +146,17 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         Qex.new([order])
       end
 
-    update_orders = Map.put(orders, current_time, updated_time_orders)
+    update_orders = Map.put(orders, ack_time, updated_time_orders)
     Map.put(state, :orders, update_orders)
   end
 
-  @spec save_trade(price :: Exchange.Trade, state :: map) :: map
+  @spec save_trade(trade :: Exchange.Trade, state :: map) :: map
   def save_trade(trade, state) do
-    current_time = :os.system_time(:nanosecond)
+    ack_time = trade.acknowledged_at
     {:ok, trades} = Map.fetch(state, :trades)
 
     current_time_trades =
-      case Map.fetch(trades, current_time) do
+      case Map.fetch(trades, ack_time) do
         {:ok, value} -> value
         :error -> nil
       end
@@ -164,7 +168,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         Qex.new([trade])
       end
 
-    update_trades = Map.put(trades, current_time, updated_time_trades)
+    update_trades = Map.put(trades, ack_time, updated_time_trades)
     Map.put(state, :trades, update_trades)
   end
 
@@ -177,6 +181,10 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   @spec get_state :: map
   def get_state do
     GenServer.call(:in_memory_time_series, :state)
+  end
+
+  def flush do
+    GenServer.call(:in_memory_time_series, :flush)
   end
 
   defp message_bus do

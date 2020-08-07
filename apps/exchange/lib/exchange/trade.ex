@@ -19,8 +19,12 @@ defmodule Exchange.Trade do
             type: :full_fill,
             acknowledged_at: :os.system_time(:nanosecond)
 
-  def generate_trade(%Order{side: s1} = order, %Order{side: s2} = matched_order, type)
-      when s1 != s2 do
+  def generate_trade(
+        %Order{side: s1, ticker: t1} = order,
+        %Order{side: s2, ticker: t2} = matched_order,
+        type
+      )
+      when s1 != s2 and t1 == t2 do
     sides = get_sides(order, matched_order)
 
     %Exchange.Trade{
@@ -34,7 +38,8 @@ defmodule Exchange.Trade do
       size: min(order.size, matched_order.size),
       price: matched_order.price,
       type: type,
-      acknowledged_at: :os.system_time(:nanosecond)
+      acknowledged_at: :os.system_time(:nanosecond),
+      ticker: t1
     }
   end
 
