@@ -1,7 +1,14 @@
 defmodule MatchingEngineTest do
   use ExUnit.Case
 
-  alias Exchange.{Adapters.TestEventBus, MatchingEngine, Order, OrderBook, Utils}
+  alias Exchange.{
+    Adapters.TestEventBus,
+    Exchange.Adapters.InMemoryTimeSeries,
+    MatchingEngine,
+    Order,
+    OrderBook,
+    Utils
+  }
 
   describe "Spread, bid_max and ask_min queries unit tests:" do
     setup _context do
@@ -815,7 +822,7 @@ defmodule MatchingEngineTest do
         max_price: 100_000
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.flush()
+      InMemoryTimeSeries.flush()
 
       :ok
     end
@@ -833,21 +840,19 @@ defmodule MatchingEngineTest do
       trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit)
       trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :trade_executed,
         %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :trade_executed,
         %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_2}
       )
 
-      {_code, ts_trade_1} =
-        Exchange.Adapters.InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist0")
+      {_code, ts_trade_1} = InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist0")
 
-      {_code, ts_trade_2} =
-        Exchange.Adapters.InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist2")
+      {_code, ts_trade_2} = InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist2")
 
       assert ts_trade_1 == [trade_1]
       assert ts_trade_2 == [trade_2]
@@ -860,18 +865,18 @@ defmodule MatchingEngineTest do
       order_2 = %Order{order_2 | trader_id: "alchemist0"}
       ids = ~w(100 9)
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
       )
 
       ts_ids =
-        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        InMemoryTimeSeries.get_state()
         |> elem(1)
         |> Map.get(:orders)
         |> Enum.flat_map(fn {_ts, elem} -> elem end)
@@ -895,28 +900,28 @@ defmodule MatchingEngineTest do
       order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
       ids = ~w(100 9 100 9)
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_expired,
         %Exchange.Adapters.EventBus.OrderExpired{order: order_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_expired,
         %Exchange.Adapters.EventBus.OrderExpired{order: order_2}
       )
 
       ts_orders =
-        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        InMemoryTimeSeries.get_state()
         |> elem(1)
         |> Map.get(:orders)
         |> Enum.flat_map(fn {_ts, elem} -> elem end)
@@ -950,28 +955,28 @@ defmodule MatchingEngineTest do
       order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
       ids = ~w(100 9 100 9)
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_queued,
         %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_cancelled,
         %Exchange.Adapters.EventBus.OrderCancelled{order: order_1}
       )
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(
+      InMemoryTimeSeries.cast_event(
         :order_cancelled,
         %Exchange.Adapters.EventBus.OrderCancelled{order: order_2}
       )
 
       ts_orders =
-        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        InMemoryTimeSeries.get_state()
         |> elem(1)
         |> Map.get(:orders)
         |> Enum.flat_map(fn {_ts, elem} -> elem end)
@@ -1015,12 +1020,12 @@ defmodule MatchingEngineTest do
         bid_max: 80_000
       }
 
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_1)
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_2)
-      Exchange.Adapters.InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_3)
+      InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_1)
+      InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_2)
+      InMemoryTimeSeries.cast_event(:price_broadcast, price_broadcast_event_3)
 
       prices =
-        Exchange.Adapters.InMemoryTimeSeries.get_state()
+        InMemoryTimeSeries.get_state()
         |> elem(1)
         |> Map.get(:prices)
         |> Enum.flat_map(fn {_ts, elem} -> elem end)
