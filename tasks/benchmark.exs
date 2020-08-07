@@ -1,11 +1,13 @@
 insert_into_exchange = fn orders, order_book ->
+  orders
+  |> Enum.reduce(order_book, fn order, ob ->
+    type =
+      case order.type do
+        :market -> :place_market_order
+        :limit -> :place_limit_order
+      end
 
-  orders |> Enum.reduce(order_book, fn order, ob ->
-    type = case order.type do
-      :market -> :place_market_order
-      :limit -> :place_limit_order
-    end
-    {:reply, :ok, nob} = Exchange.MatchingEngine.handle_call({type,order},nil,ob)
+    {:reply, :ok, nob} = Exchange.MatchingEngine.handle_call({type, order}, nil, ob)
     nob
   end)
 end
@@ -13,6 +15,7 @@ end
 small = Exchange.Utils.generate_random_orders(1_000)
 medium = Exchange.Utils.generate_random_orders(10_000)
 big = Exchange.Utils.generate_random_orders(100_000)
+
 small_ob = %Exchange.OrderBook{
   name: :AUXLND,
   currency: :gbp,
@@ -25,6 +28,7 @@ small_ob = %Exchange.OrderBook{
   max_price: 100_000,
   min_price: 0
 }
+
 medium_ob = %Exchange.OrderBook{
   name: :AUXLND,
   currency: :gbp,
@@ -37,6 +41,7 @@ medium_ob = %Exchange.OrderBook{
   max_price: 100_000,
   min_price: 0
 }
+
 big_ob = %Exchange.OrderBook{
   name: :AUXLND,
   currency: :gbp,
@@ -52,9 +57,9 @@ big_ob = %Exchange.OrderBook{
 
 Benchee.run(
   %{
-    "1000 orders" => fn  -> insert_into_exchange.(small, small_ob) end,
+    "1000 orders" => fn -> insert_into_exchange.(small, small_ob) end,
     "10000 orders" => fn -> insert_into_exchange.(medium, medium_ob) end,
-    "100000 orders" => fn -> insert_into_exchange.(big, big_ob) end,
+    "100000 orders" => fn -> insert_into_exchange.(big, big_ob) end
   },
   print: %{
     benchmarking: true,
