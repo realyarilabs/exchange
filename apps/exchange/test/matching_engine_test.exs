@@ -2,8 +2,8 @@ defmodule MatchingEngineTest do
   use ExUnit.Case
 
   alias Exchange.{
-    Adapters.TestEventBus,
     Adapters.InMemoryTimeSeries,
+    Adapters.TestEventBus,
     MatchingEngine,
     Order,
     OrderBook,
