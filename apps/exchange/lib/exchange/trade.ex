@@ -21,10 +21,10 @@ defmodule Exchange.Trade do
 
   def generate_trade(
         %Order{side: s1, ticker: t1} = order,
-        %Order{side: s2, ticker: t2} = matched_order,
+        %Order{side: s2} = matched_order,
         type
       )
-      when s1 != s2 and t1 == t2 do
+      when s1 != s2 do
     sides = get_sides(order, matched_order)
 
     %Exchange.Trade{

@@ -218,6 +218,7 @@ defmodule Exchange.Utils do
           side: :buy,
           initial_size: 250,
           size: 250,
+          ticker: ticker,
           price: 4000
         },
         %Exchange.Order{
@@ -227,6 +228,7 @@ defmodule Exchange.Utils do
           side: :buy,
           initial_size: 500,
           size: 500,
+          ticker: ticker,
           price: 4000
         },
         %Exchange.Order{
@@ -236,6 +238,7 @@ defmodule Exchange.Utils do
           side: :buy,
           initial_size: 750,
           size: 750,
+          ticker: ticker,
           price: 3970
         },
         %Exchange.Order{
@@ -245,6 +248,7 @@ defmodule Exchange.Utils do
           side: :buy,
           initial_size: 150,
           size: 150,
+          ticker: ticker,
           price: 3960
         }
       ]
@@ -259,6 +263,7 @@ defmodule Exchange.Utils do
           side: :sell,
           initial_size: 750,
           size: 750,
+          ticker: ticker,
           price: 4010
         },
         %Exchange.Order{
@@ -268,6 +273,7 @@ defmodule Exchange.Utils do
           side: :sell,
           initial_size: 500,
           size: 500,
+          ticker: ticker,
           price: 4010
         },
         %Exchange.Order{
@@ -277,6 +283,7 @@ defmodule Exchange.Utils do
           side: :sell,
           initial_size: 750,
           size: 750,
+          ticker: ticker,
           price: 4010
         },
         %Exchange.Order{
@@ -286,6 +293,7 @@ defmodule Exchange.Utils do
           side: :sell,
           initial_size: 250,
           size: 250,
+          ticker: ticker,
           price: 4020
         }
       ]

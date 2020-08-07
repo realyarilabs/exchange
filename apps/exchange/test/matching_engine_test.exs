@@ -3,7 +3,7 @@ defmodule MatchingEngineTest do
 
   alias Exchange.{
     Adapters.TestEventBus,
-    Exchange.Adapters.InMemoryTimeSeries,
+    Adapters.InMemoryTimeSeries,
     MatchingEngine,
     Order,
     OrderBook,

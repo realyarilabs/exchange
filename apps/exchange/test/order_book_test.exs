@@ -178,6 +178,7 @@ defmodule OrderBookTest do
 
     test "buy order has the exact same size", %{order_book: ob} do
       buy_order = Utils.sample_order(%{size: 750, price: 4010, side: :buy})
+      buy_order = %{buy_order | ticker: :AUXLND}
       new_book = OrderBook.price_time_match(ob, buy_order)
       [trade] = new_book.completed_trades
 
@@ -203,6 +204,7 @@ defmodule OrderBookTest do
 
     test "sell order has exact same size", %{order_book: ob} do
       sell_order = Utils.sample_order(%{size: 250, price: 4000, side: :sell})
+      sell_order = %{sell_order | ticker: :AUXLND}
       new_book = OrderBook.price_time_match(ob, sell_order)
       [trade] = new_book.completed_trades
 
