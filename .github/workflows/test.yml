@@ -1,0 +1,32 @@
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      influxdb:
+        image: influxdb
+        env:
+          INFLUXDB_DB: alchemist
+        ports:
+          - 8086:8086
+
+    env:
+      FLUX_DB_HOST: localhost
+      FLUX_DB_NAME: alchemist
+      FLUX_DB_PORT: 8086
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-elixir@v1
+        with:
+          otp-version: '23.0'
+          elixir-version: '1.10.4'
+      - run: mix deps.get
+      - run: mix credo --strict
+      - run: mix format --check-formatted
+      - run: mix test
+      - run: mix coveralls.github
