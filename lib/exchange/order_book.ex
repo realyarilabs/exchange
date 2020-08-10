@@ -552,7 +552,7 @@ defmodule Exchange.OrderBook do
     open_sell_orders ++ open_buy_orders
   end
 
-  @spec orders_to_list(Map.t()) :: list()
+  @spec orders_to_list(map()) :: list()
   def orders_to_list(orders) do
     orders
     |> Enum.flat_map(fn {_k, v} -> v end)

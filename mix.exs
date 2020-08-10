@@ -11,6 +11,8 @@ defmodule Exchange.MixProject do
       lockfile: "mix.lock",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
+      description: description(),
+      package: package(),
       deps: deps(),
       name: "Exchange",
       source_url: "https://github.com/realyarilabs/alchemist_exchange",
@@ -56,7 +58,11 @@ defmodule Exchange.MixProject do
 
   defp package do
     [
+<<<<<<< HEAD
       files: ~w(lib test tasks .formatter.exs mix.exs README* readme* LICENSE*
+=======
+      files: ~w(apps .formatter.exs mix.exs README* readme* LICENSE*
+>>>>>>> develop
                 license* CHANGELOG* changelog* src),
       # licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/realyarilabs/alchemist_exchange"}
