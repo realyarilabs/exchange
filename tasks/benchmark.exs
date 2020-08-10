@@ -1,65 +1,34 @@
-insert_into_exchange = fn orders, order_book ->
+insert_into_exchange = fn orders ->
   orders
-  |> Enum.reduce(order_book, fn order, ob ->
-    type =
-      case order.type do
-        :market -> :place_market_order
-        :limit -> :place_limit_order
-      end
+  |> Enum.each(fn order ->
+    case order.type do
+      :market ->
+        Exchange.MatchingEngine.place_market_order(order.ticker, order)
 
-    {:reply, :ok, nob} = Exchange.MatchingEngine.handle_call({type, order}, nil, ob)
-    nob
+      :limit ->
+        Exchange.MatchingEngine.place_limit_order(order.ticker, order)
+
+      :marketable_limit ->
+        Exchange.MatchingEngine.place_marketable_limit_order(order.ticker, order)
+    end
   end)
 end
 
-small = Exchange.Utils.generate_random_orders(1_000)
-medium = Exchange.Utils.generate_random_orders(10_000)
-big = Exchange.Utils.generate_random_orders(100_000)
-
-small_ob = %Exchange.OrderBook{
-  name: :AUXLND,
-  currency: :gbp,
-  buy: %{},
-  sell: %{},
-  order_ids: Map.new(),
-  completed_trades: [],
-  ask_min: 99_999,
-  bid_max: 0,
-  max_price: 100_000,
-  min_price: 0
-}
-
-medium_ob = %Exchange.OrderBook{
-  name: :AUXLND,
-  currency: :gbp,
-  buy: %{},
-  sell: %{},
-  order_ids: Map.new(),
-  completed_trades: [],
-  ask_min: 99_999,
-  bid_max: 0,
-  max_price: 100_000,
-  min_price: 0
-}
-
-big_ob = %Exchange.OrderBook{
-  name: :AUXLND,
-  currency: :gbp,
-  buy: %{},
-  sell: %{},
-  order_ids: Map.new(),
-  completed_trades: [],
-  ask_min: 99_999,
-  bid_max: 0,
-  max_price: 100_000,
-  min_price: 0
-}
+aux_small = Exchange.Utils.generate_random_orders(1_000, :AUXLND)
+aux_medium = Exchange.Utils.generate_random_orders(10_000, :AUXLND)
+aux_big = Exchange.Utils.generate_random_orders(100_000, :AUXLND)
+ag_small = Exchange.Utils.generate_random_orders(1_000, :AGUS)
+ag_medium = Exchange.Utils.generate_random_orders(10_000, :AGUS)
+ag_big = Exchange.Utils.generate_random_orders(100_000, :AGUS)
+mix_small = aux_small ++ ag_small
+mix_medium = aux_medium ++ aux_medium
+mix_big = aux_big ++ ag_small
 
 Benchee.run(
   %{
-    "1000 orders" => fn -> insert_into_exchange.(small, small_ob) end,
-    "10000 orders" => fn -> insert_into_exchange.(medium, medium_ob) end,
-    "100000 orders" => fn -> insert_into_exchange.(big, big_ob) end
+    "1000 orders" => fn -> insert_into_exchange.(aux_small) end,
+    "10000 orders" => fn -> insert_into_exchange.(aux_medium) end,
+    "100000 orders" => fn -> insert_into_exchange.(aux_big) end
   },
   print: %{
     benchmarking: true,
@@ -67,9 +36,30 @@ Benchee.run(
     configuration: true
   },
   formatters: [
-    {Benchee.Formatters.HTML, file: "benchmark/v1.html"},
+    {Benchee.Formatters.HTML, file: "benchmark/single.html"},
     {Benchee.Formatters.Console, extended_statistics: true}
   ],
   unit_scaling: :smallest,
-  memory_time: 5
+  memory_time: 5,
+  time: 100
+)
+
+Benchee.run(
+  %{
+    "1000*2 orders" => fn -> insert_into_exchange.(mix_small) end,
+    "10000*2 orders" => fn -> insert_into_exchange.(mix_medium) end,
+    "100000*2 orders" => fn -> insert_into_exchange.(mix_big) end
+  },
+  print: %{
+    benchmarking: true,
+    fast_warning: false,
+    configuration: true
+  },
+  formatters: [
+    {Benchee.Formatters.HTML, file: "benchmark/multi.html"},
+    {Benchee.Formatters.Console, extended_statistics: true}
+  ],
+  unit_scaling: :smallest,
+  memory_time: 5,
+  time: 100
 )

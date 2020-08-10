@@ -318,10 +318,10 @@ defmodule Exchange.Utils do
     end)
   end
 
-  def random_order do
+  def random_order(ticker \\ :AUXLND) do
     trader_id = "alchemist" <> Integer.to_string(Enum.random(0..9))
     side = Enum.random([:buy, :sell])
-    type = Enum.random([:market, :limit])
+    type = Enum.random([:market, :limit, :marketable_limit])
     price = 0..10 |> Enum.map(fn x -> 2000 + x * 200 end) |> Enum.random()
     size = 0..10 |> Enum.map(fn x -> 1000 + x * 500 end) |> Enum.random()
     order_id = UUID.uuid1()
@@ -335,14 +335,15 @@ defmodule Exchange.Utils do
       size: size,
       type: type,
       exp_time: nil,
+      ticker: ticker,
       acknowledged_at: :os.system_time(:nanosecond)
     }
   end
 
-  def generate_random_orders(n)
+  def generate_random_orders(n, ticker)
       when is_integer(n) and n > 0 do
     Enum.reduce(0..n, [], fn _n, acc ->
-      [random_order() | acc]
+      [random_order(ticker) | acc]
     end)
   end
 

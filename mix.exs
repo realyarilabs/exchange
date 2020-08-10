@@ -20,7 +20,9 @@ defmodule Exchange.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ]
+      ],
+      description: description(),
+      package: package()
     ]
   end
 

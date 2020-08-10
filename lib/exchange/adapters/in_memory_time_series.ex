@@ -105,48 +105,50 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:reply, {:ok, trades_by_id}, state}
   end
 
-  @spec save_price(price :: map, state :: map) :: map
-  def save_price(price, state) do
-    current_time = :os.system_time(:nanosecond)
-    {:ok, prices} = Map.fetch(state, :prices)
+  def handle_call({:live_orders, ticker}, _from, state) do
+    {:ok, orders} = Map.fetch(state, :orders)
 
-    current_time_prices =
-      case Map.fetch(prices, current_time) do
+    in_memory_orders =
+      orders
+      |> Enum.flat_map(fn {_ts, queue} -> queue end)
+      |> Enum.filter(fn order ->
+        order.ticker == ticker and order.size > 0
+      end)
+
+    {:reply, {:ok, in_memory_orders}, state}
+  end
+
+  @spec save(item :: any, timestamp :: number, state :: map) :: map
+  def save(item, timestamp, state_map) do
+    current_queue =
+      case Map.fetch(state_map, timestamp) do
         {:ok, value} -> value
         :error -> nil
       end
 
-    updated_time_prices =
-      if current_time_prices do
-        Qex.push(current_time_prices, price)
+    updated_queue =
+      if current_queue do
+        Qex.push(current_queue, item)
       else
-        Qex.new([price])
+        Qex.new([item])
       end
 
-    update_prices = Map.put(prices, current_time, updated_time_prices)
+    Map.put(state_map, timestamp, updated_queue)
+  end
+
+  @spec save_price(price :: map, state :: map) :: map
+  def save_price(price, state) do
+    current_time = :os.system_time(:nanosecond)
+    {:ok, prices} = Map.fetch(state, :prices)
+    update_prices = save(price, current_time, prices)
     Map.put(state, :prices, update_prices)
   end
 
   @spec save_trade(Exchange.Order, map) :: map
   def save_order(order, state) do
     ack_time = order.acknowledged_at
-
     {:ok, orders} = Map.fetch(state, :orders)
-
-    current_time_orders =
-      case Map.fetch(orders, ack_time) do
-        {:ok, value} -> value
-        :error -> nil
-      end
-
-    updated_time_orders =
-      if current_time_orders do
-        Qex.push(current_time_orders, order)
-      else
-        Qex.new([order])
-      end
-
-    update_orders = Map.put(orders, ack_time, updated_time_orders)
+    update_orders = save(order, ack_time, orders)
     Map.put(state, :orders, update_orders)
   end
 
@@ -154,21 +156,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   def save_trade(trade, state) do
     ack_time = trade.acknowledged_at
     {:ok, trades} = Map.fetch(state, :trades)
-
-    current_time_trades =
-      case Map.fetch(trades, ack_time) do
-        {:ok, value} -> value
-        :error -> nil
-      end
-
-    updated_time_trades =
-      if current_time_trades do
-        Qex.push(current_time_trades, trade)
-      else
-        Qex.new([trade])
-      end
-
-    update_trades = Map.put(trades, ack_time, updated_time_trades)
+    update_trades = save(trade, ack_time, trades)
     Map.put(state, :trades, update_trades)
   end
 
@@ -199,7 +187,8 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   @spec get_live_orders(ticker :: atom) :: [Exchange.Order]
-  def get_live_orders(_ticker) do
-    []
+  def get_live_orders(ticker) do
+    GenServer.call(:in_memory_time_series, {:live_orders, ticker})
+    |> elem(1)
   end
 end

@@ -2,7 +2,7 @@ defmodule Exchange.Adapters.EventBus do
   @moduledoc """
   Public API to use the Event Bus.
   """
-
+  alias Exchange.Adapters.EventBus
   @behaviour Exchange.MessageBus
 
   @events ~w(trade_executed order_queued order_cancelled order_expired
@@ -19,33 +19,32 @@ defmodule Exchange.Adapters.EventBus do
 
   def remove_listener(key) do
     if Enum.member?(@events, key) do
-      Registry.unregister(Regitryhange.Adapters.EventBus.Registry, key)
+      Registry.unregister(Exchange.Adapters.EventBus.Registry, key)
     else
       :error
     end
   end
 
   def cast_event(:order_cancelled, payload),
-    do:
-      dispatch_event(:order_cancelled, %Exchange.Adapters.EventBus.OrderCancelled{order: payload})
+    do: dispatch_event(:order_cancelled, %EventBus.OrderCancelled{order: payload})
 
   def cast_event(:trade_executed, payload),
-    do: dispatch_event(:trade_executed, %Exchange.Adapters.EventBus.TradeExecuted{trade: payload})
+    do: dispatch_event(:trade_executed, %EventBus.TradeExecuted{trade: payload})
 
   def cast_event(:order_expired, payload),
-    do: dispatch_event(:order_expired, %Exchange.Adapters.EventBus.OrderExpired{order: payload})
+    do: dispatch_event(:order_expired, %EventBus.OrderExpired{order: payload})
 
   def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed, %Exchange.Adapters.EventBus.OrderPlaced{} = payload)
+    do: dispatch_event(:order_placed, %EventBus.OrderPlaced{} = payload)
 
   def cast_event(:order_queued, payload),
-    do: dispatch_event(:order_queued, %Exchange.Adapters.EventBus.OrderQueued{order: payload})
+    do: dispatch_event(:order_queued, %EventBus.OrderQueued{order: payload})
 
   def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed, %Exchange.Adapters.EventBus.TradeProcessed{} = payload)
+    do: dispatch_event(:trade_processed, %EventBus.TradeProcessed{} = payload)
 
   def cast_event(:price_broadcast, payload) do
-    price_broadcast_event = %Exchange.Adapters.EventBus.PriceBroadcast{
+    price_broadcast_event = %EventBus.PriceBroadcast{
       ticker: payload.ticker,
       ask_min: payload.ask_min,
       bid_max: payload.bid_max
