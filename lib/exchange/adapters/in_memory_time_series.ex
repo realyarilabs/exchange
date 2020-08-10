@@ -188,7 +188,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
 
   @spec get_live_orders(ticker :: atom) :: [Exchange.Order]
   def get_live_orders(ticker) do
-    GenServer.call(:in_memory_time_series, {:live_orders, ticker})
-    |> elem(1)
+    {:ok, orders} = GenServer.call(:in_memory_time_series, {:live_orders, ticker})
+    orders
   end
 end

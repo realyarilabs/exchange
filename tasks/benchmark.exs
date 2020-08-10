@@ -20,9 +20,9 @@ aux_big = Exchange.Utils.generate_random_orders(100_000, :AUXLND)
 ag_small = Exchange.Utils.generate_random_orders(1_000, :AGUS)
 ag_medium = Exchange.Utils.generate_random_orders(10_000, :AGUS)
 ag_big = Exchange.Utils.generate_random_orders(100_000, :AGUS)
-mix_small = aux_small ++ ag_small
-mix_medium = aux_medium ++ aux_medium
-mix_big = aux_big ++ ag_small
+mix_small = Enum.shuffle(aux_small ++ ag_small)
+mix_medium = Enum.shuffle(aux_medium ++ ag_medium)
+mix_big = Enum.shuffle(aux_big ++ ag_big)
 
 Benchee.run(
   %{
