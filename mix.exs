@@ -58,8 +58,8 @@ defmodule Exchange.MixProject do
 
   defp package do
     [
-      files: ~w(lib .formatter.exs mix.exs README*),
-      # licenses: ["Apache-2.0"],
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/realyarilabs/exchange"}
     ]
   end
