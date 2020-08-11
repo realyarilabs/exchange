@@ -103,10 +103,17 @@ defmodule Exchange.OrderBook do
   @doc """
   This is the core of the Matching Engine.
   Our Matching Engine implements the Price-Time Matching Algorithm.
+  The first Orders arriving at that price point have priority.
 
-  The first Orders arriving at that price point have priority
+  ## Parameters
+    - order_book:
+    - order:
   """
-  @spec price_time_match(order_book, Order.order()) :: order_book
+  @spec price_time_match(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def price_time_match(
         %{bid_max: bid_max, ask_min: ask_min} = order_book,
         %Order{side: side, price: price, size: size} = order
@@ -152,10 +159,19 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Register Trade on Order Book completed_trades
+  Generates a trade and adds it to the `completed_trades` of the order_book.
+
+  ## Parameters
+    - order_book: OrderBook that will store the trade
+    - order: Newly placed order
+    - matched_order: Existing order that matched the criteria of `order`
   """
 
-  @spec register_trade(order_book, Order.order(), Order.order()) :: order_book()
+  @spec register_trade(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order(),
+          matched_order :: Exchange.Order.order()
+        ) :: Exchange.OrderBook.order_book()
   def register_trade(order_book, order, matched_order) do
     type =
       if order.initial_size <= matched_order.size do
@@ -170,29 +186,52 @@ defmodule Exchange.OrderBook do
     %{order_book | completed_trades: trades}
   end
 
-  @spec completed_trades(order_book) :: list()
+  @doc """
+  Returns the list of completed trades.
+
+  ## Parameters
+    - order_book: OrderBook that stores the completed trades
+  """
+  @spec completed_trades(order_book :: Exchange.OrderBook.order_book()) :: [Exchange.Trade]
   def completed_trades(order_book) do
     order_book.completed_trades
   end
 
-  @spec flush_trades!(order_book) :: order_book()
+  @doc """
+  Removes all the completed trades from the OrderBook.
+
+  ## Parameters
+    - order_book: OrderBook that stores the completed trades
+  """
+  @spec flush_trades!(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
   def flush_trades!(order_book) do
     %{order_book | completed_trades: []}
   end
 
   @doc """
-  returns spread for this exchange
+  Returns spread for this exchange by calculating the difference between `ask_min` and `bid_max`
+
+  ## Parameters
+    - order_book: OrderBook that stores the current state of a exchange
   """
-  @spec spread(order_book) :: number
+  @spec spread(order_book :: Exchange.OrderBook.order_book()) :: number
   def spread(order_book) do
     order_book.ask_min - order_book.bid_max
   end
 
   @doc """
   Try to feth a matching buy/sell at the current bid_max/ask_min price
-  """
 
-  @spec fetch_matching_order(order_book, Order.order()) :: atom() | {atom(), Order.order()}
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` used to search a matching order
+  """
+  @spec fetch_matching_order(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          atom() | {atom(), Exchange.Order.order()}
   def fetch_matching_order(order_book, %Order{} = order) do
     price_points_queue =
       case order.side do
@@ -210,7 +249,15 @@ defmodule Exchange.OrderBook do
     end
   end
 
-  @spec fetch_order_by_id(order_book, String.t()) :: Order.order()
+  @doc """
+  Try to fetch a matching buy/sell with an order_id
+
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` used to search an order
+  """
+  @spec fetch_order_by_id(order_book :: Exchange.OrderBook.order_book(), order_id :: String.t()) ::
+          Order.order()
   def fetch_order_by_id(order_book, order_id) do
     index_of_order = Map.get(order_book.order_ids, order_id)
 
@@ -229,10 +276,17 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Queues an %Order{} in to the correct price_point in the order_book
-  """
+  Queues an `Exchange.Order` in to the correct price_point in the Order Book
 
-  @spec queue_order(order_book, Order.order()) :: order_book
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` to be queued
+  """
+  @spec queue_order(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def queue_order(order_book, %Order{} = order) do
     order_book
     |> insert_order_in_queue(order)
@@ -243,15 +297,28 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Removes an %Order{} from the Order Book
+  Removes an `Exchange.Order` from the Order Book
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` to be removed
   """
-
-  @spec dequeue_order(order_book, Order.order()) :: order_book()
+  @spec dequeue_order(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def dequeue_order(order_book, %Order{} = order) do
     dequeue_order_by_id(order_book, order.order_id)
   end
 
-  @spec dequeue_order_by_id(order_book, String.t()) :: order_book()
+  @doc """
+  Removes an `Exchange.Order` using its `order_id` from the Order Book
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` to be removed
+  """
+  @spec dequeue_order_by_id(order_book :: Exchange.OrderBook.order_book(), order_id :: String.t()) ::
+          Exchange.OrderBook.order_book()
   def dequeue_order_by_id(order_book, order_id) do
     {side, price_point} = Map.get(order_book.order_ids, order_id)
 
@@ -275,7 +342,21 @@ defmodule Exchange.OrderBook do
     |> calculate_min_max_prices(poped_order)
   end
 
-  @spec update_queue(order_book, atom, price_in_cents, queue_of_orders) :: order_book
+  @doc """
+  Updates an `Exchange.OrderBook.queue_of_orders()` from the Order Book
+
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - side: The side of the queue
+    - price_point: Key to get the queue
+    - new_queue: Queue to be updated under the `price_point`
+  """
+  @spec update_queue(
+          order_book :: Exchange.OrderBook.order_book(),
+          side :: atom,
+          price_point :: Exchange.OrderBook.price_in_cents(),
+          new_queue :: Exchange.OrderBook.queue_of_orders()
+        ) :: Exchange.OrderBook.order_book()
   def update_queue(order_book, side, price_point, new_queue) do
     len = Enum.count(new_queue)
 
@@ -298,7 +379,19 @@ defmodule Exchange.OrderBook do
     end
   end
 
-  @spec insert_order_in_queue(order_book, Order.order()) :: order_book
+  @doc """
+  Inserts an `Exchange.Order` in to the queue.
+  The order is pushed to the end of the queue.
+
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` to be inserted
+  """
+  @spec insert_order_in_queue(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def insert_order_in_queue(order_book, order) do
     price_point = order.price()
 
@@ -316,7 +409,17 @@ defmodule Exchange.OrderBook do
     Map.put(order_book, order.side, side_order_book)
   end
 
-  @spec update_order(order_book, Order.order()) :: order_book
+  @doc """
+  Updated an `Exchange.Order` from the Order Book
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order: `Exchange.Order` to be updated
+  """
+  @spec update_order(
+          order_book :: Exchange.OrderBook.order_book(),
+          order :: Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def update_order(order_book, order) do
     price_point = order.price()
 
@@ -339,8 +442,11 @@ defmodule Exchange.OrderBook do
   @doc """
   Updates the Order Book setting bid_max
   """
-
-  @spec set_bid_max(order_book, Order.order()) :: order_book
+  @spec set_bid_max(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def set_bid_max(%OrderBook{bid_max: bid_max} = order_book, %Order{side: :buy, price: price})
       when bid_max < price do
     %{order_book | bid_max: price}
@@ -351,8 +457,11 @@ defmodule Exchange.OrderBook do
   @doc """
   Updates the Order Book setting ask_min
   """
-
-  @spec set_ask_min(order_book, Order.order()) :: order_book
+  @spec set_ask_min(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def set_ask_min(%OrderBook{ask_min: ask_min} = order_book, %Order{side: :sell, price: price})
       when ask_min > price do
     %{order_book | ask_min: price}
@@ -360,7 +469,16 @@ defmodule Exchange.OrderBook do
 
   def set_ask_min(order_book, %Order{}), do: order_book
 
-  @spec calculate_min_max_prices(order_book, Order.order()) :: order_book
+  @doc """
+  When a order is matched and removed from the order the `ask_min` or `bid_max` must be updated.
+  To update these values it is necessary to traverse the keys of the corresponding side of the Order Book, sort them and take the first element.
+  When one of the sides is empty the value is set to `max_price - 1` or `min_price + 1` to the `ask_min` or `bid_max`, respectively.
+  """
+  @spec calculate_min_max_prices(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def calculate_min_max_prices(order_book, %Order{side: :sell}) do
     new_ask_min =
       order_book.sell
@@ -394,58 +512,34 @@ defmodule Exchange.OrderBook do
     %{order_book | bid_max: new_bid_max}
   end
 
-  @doc """
-  Updates the Order Book incrementing the ask_min by 1 or decrementing the bid_max by 1
-  taking into account the order's side and price
-  """
-  @spec increment_or_decrement(order_book, Order.order()) :: order_book
-  def increment_or_decrement(order_book, %Order{side: side, price: price}) do
-    case side do
-      :buy -> increment_ask_min(order_book, price)
-      :sell -> decrement_bid_max(order_book, price)
-    end
-  end
-
-  @doc """
-  Updates the Order Book incrementing the ask_min by 1
-  """
-  @spec increment_ask_min(order_book, number()) :: order_book
-  def increment_ask_min(order_book, price) do
-    new_ask_min = price + 1
-
-    if new_ask_min >= order_book.max_price do
-      %{order_book | ask_min: order_book.max_price - 1}
-    else
-      %{order_book | ask_min: new_ask_min}
-    end
-  end
-
-  @doc """
-  Updates the Order Book decrementing the bid_max by 1
-  """
-
-  @spec decrement_bid_max(order_book, number()) :: order_book
-  def decrement_bid_max(order_book, price) do
-    new_bid_max = price - 1
-
-    if new_bid_max <= order_book.min_price do
-      %{order_book | bid_max: order_book.min_price + 1}
-    else
-      %{order_book | bid_max: new_bid_max}
-    end
-  end
-
   # OrderBook Index Management
 
-  @spec order_exists?(order_book, String.t()) :: boolean
+  @doc """
+  Verifies if an `Exchange.Order` with `order_id` exists in the Order Book
+
+  ## Parameters
+    - order_book: OrderBook that contains the active orders
+    - order_id: Id to be searched in the `order_book`
+  """
+  @spec order_exists?(order_book :: Exchange.OrderBook.order_book(), order_id :: String.t()) ::
+          boolean
   def order_exists?(order_book, order_id) do
     order_book.order_ids
     |> Map.keys()
     |> Enum.member?(order_id)
   end
 
-  @spec check_expired_orders!(order_book) :: order_book
-  def check_expired_orders!(order_book) do
+  @doc """
+  Periodic function that is triggered every second.
+  This function is used to verify if there are expired orders.
+  The expired orders are added to the `expired_orders`, removed from the `expiration_list` and removed from the sell or buy side.
+
+  ## Parameters
+    - order_book: OrderBook that contains the expired orders
+  """
+  @spec check_expired_orders!(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
+  def(check_expired_orders!(order_book)) do
     current_time = :os.system_time(:millisecond)
 
     order_book.expiration_list
@@ -459,23 +553,57 @@ defmodule Exchange.OrderBook do
     end)
   end
 
+  @doc """
+  Fetches the order with `order_id` and adds it to the Order Book's `expired_orders`
+
+  ## Parameters
+    - order_book: OrderBook that contains the `expired_orders`
+  """
+  @spec update_expired_orders(
+          order_book :: Exchange.OrderBook.order_book(),
+          order_id :: String.t()
+        ) :: Exchange.OrderBook.order_book()
   def update_expired_orders(order_book, order_id) do
     order = fetch_order_by_id(order_book, order_id)
     %{order_book | expired_orders: order_book.expired_orders ++ [order]}
   end
 
-  @spec flush_expired_orders!(order_book) :: order_book
+  @doc """
+  Flushes all the expired orders from the OrderBook's `expired_orders`
+
+  ## Parameters
+    - order_book: OrderBook that contains the `expired_orders`
+  """
+  @spec flush_expired_orders!(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
   def flush_expired_orders!(order_book) do
     %{order_book | expired_orders: []}
   end
 
-  @spec pop_order_from_expiration(order_book) :: order_book
+  @doc """
+  Removes the first element from the OrderBook's `experiration_list`
+
+  ## Parameters
+    - order_book: OrderBook that contains the `experiration_list`
+  """
+  @spec pop_order_from_expiration(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
   def pop_order_from_expiration(order_book) do
     [_pop | new_expiration_list] = order_book.expiration_list
     %{order_book | expiration_list: new_expiration_list}
   end
 
-  @spec add_order_to_expirations(order_book, Order.order()) :: order_book
+  @doc """
+  Adds the expirating order to the Order Book's `expiration_list`, which is sorted by the `exp_time` afterwards.
+
+  ## Parameters
+    - order_book: OrderBook that contains the `expiration_list`
+  """
+  @spec add_order_to_expirations(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def add_order_to_expirations(order_book, %Order{exp_time: exp} = order)
       when is_integer(exp) and exp > 0 do
     new_expiration =
@@ -489,13 +617,34 @@ defmodule Exchange.OrderBook do
     order_book
   end
 
-  @spec add_order_to_index(order_book, Order.order()) :: order_book
+  @doc """
+  Adds the order to the Order Book's `order_ids`.
+  The `order_ids` is used to have a better performance when searching for specific order.
+
+  ## Parameters
+    - order_book: OrderBook that contains the `order_ids`
+  """
+  @spec add_order_to_index(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def add_order_to_index(order_book, order) do
     idx = Map.put(order_book.order_ids, order.order_id, {order.side, order.price})
     Map.put(order_book, :order_ids, idx)
   end
 
-  @spec remove_order_from_index(order_book, Order.order()) :: order_book
+  @doc """
+  Removes the order to the Order Book's `order_ids`.
+
+  ## Parameters
+    - order_book: OrderBook that contains the `order_ids`
+  """
+  @spec remove_order_from_index(
+          order_book :: Exchange.OrderBook.order_book(),
+          Exchange.Order.order()
+        ) ::
+          Exchange.OrderBook.order_book()
   def remove_order_from_index(order_book, order) do
     Map.put(
       order_book,
@@ -505,46 +654,70 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  returns the highest asking volume
+  Returns the sum of the size of all buy orders
+
+  ## Parameters
+    - order_book: OrderBook used to sum the size
   """
-  @spec highest_ask_volume(order_book) :: number()
+  @spec highest_ask_volume(order_book :: Exchange.OrderBook.order_book()) :: number
   def highest_ask_volume(order_book) do
     highest_volume(order_book.sell)
   end
 
-  @spec highest_volume(Map.t()) :: number()
+  @spec highest_volume(Map.t()) :: number
   defp highest_volume(book) do
     book
     |> Enum.flat_map(fn {_k, v} -> v end)
     |> Enum.reduce(0, fn order, acc -> order.size + acc end)
   end
 
-  @spec highest_bid_volume(order_book) :: number()
+  @doc """
+  Returns the sum of the size of all sell orders
+
+  ## Parameters
+    - order_book: OrderBook used to sum the size
+  """
+  @spec highest_bid_volume(order_book :: Exchange.OrderBook.order_book()) :: number
   def highest_bid_volume(order_book) do
     highest_volume(order_book.buy)
   end
 
-  @spec total_orders(Map.t()) :: number()
+  @spec total_orders(Exchange.OrderBook.queue_of_orders()) :: number
   defp total_orders(book) do
     book
     |> Enum.flat_map(fn {_k, v} -> v end)
     |> Enum.reduce(0, fn _order, acc -> 1 + acc end)
   end
 
-  @spec total_bid_orders(order_book) :: number()
+  @doc """
+  Returns the number of active buy orders.
+
+  ## Parameters
+    - order_book: OrderBook used to search the active orders
+  """
+  @spec total_bid_orders(order_book :: Exchange.OrderBook.order_book()) :: number
   def total_bid_orders(order_book) do
     total_orders(order_book.buy)
   end
 
-  @spec total_ask_orders(order_book) :: number()
+  @doc """
+  Returns the number of active sell orders.
+
+  ## Parameters
+    - order_book: OrderBook used to search the active orders
+  """
+  @spec total_ask_orders(order_book :: Exchange.OrderBook.order_book()) :: number
   def total_ask_orders(order_book) do
     total_orders(order_book.sell)
   end
 
   @doc """
   Returns the list of open orders
+
+  ## Parameters
+    - order_book: OrderBook used to search the active orders
   """
-  @spec open_orders(Exchange.OrderBook) :: [Exchange.Order]
+  @spec open_orders(order_book :: Exchange.OrderBook.order_book()) :: [Exchange.Order.order()]
   def open_orders(order_book) do
     open_sell_orders = orders_to_list(order_book.sell)
     open_buy_orders = orders_to_list(order_book.buy)
@@ -552,16 +725,32 @@ defmodule Exchange.OrderBook do
     open_sell_orders ++ open_buy_orders
   end
 
-  @spec orders_to_list(map()) :: list()
+  @doc """
+  Returns the list resulting of flattening a `Exchange.OrderBook.queue_of_orders()`
+
+  ## Parameters
+    - order_book: OrderBook used to search the active orders
+  """
+  @spec orders_to_list(Exchange.OrderBook.queue_of_orders()) :: [Exchange.Order.order()]
   def orders_to_list(orders) do
     orders
     |> Enum.flat_map(fn {_k, v} -> v end)
   end
 
   @doc """
-  Returns the list of open orders from a trader
+  Returns the list of open orders from a trader by filtering the orders don't have `trader_id`
+
+  ## Parameters
+    - order_book: OrderBook used to search the orders
+    - trader_id: The id that is used to filter orders
   """
-  @spec open_orders_by_trader(Exchange.OrderBook, String) :: [Exchange.Order]
+  @spec open_orders_by_trader(
+          order_book :: Exchange.OrderBook.order_book(),
+          trader_id :: String.t()
+        ) ::
+          [
+            Exchange.Order.order()
+          ]
   def open_orders_by_trader(order_book, trader_id) do
     order_book
     |> open_orders()

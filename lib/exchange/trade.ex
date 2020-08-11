@@ -19,6 +19,19 @@ defmodule Exchange.Trade do
             type: :full_fill,
             acknowledged_at: :os.system_time(:nanosecond)
 
+  @doc """
+  Function that creates a trade given two matching orders
+
+  ## Parameters
+   - order: Newly placed order
+   - matched_order: Order that is in the `Exchange.OrderBook` that matches the newly placed order
+   - type: Atom that can either be `:partial_fill` or `:fulfill`
+  """
+  @spec generate_trade(
+          order :: Exchange.Order.order(),
+          matched_order :: Exchange.Order.order(),
+          type :: atom
+        ) :: Exchange.Trade
   def generate_trade(
         %Order{side: s1, ticker: t1} = order,
         %Order{side: s2} = matched_order,
