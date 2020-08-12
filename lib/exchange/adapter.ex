@@ -32,10 +32,10 @@ defmodule Exchange.Adapter do
                 Code.ensure_loaded?(module)
             end
 
-          if !dep_loaded do
-            [dep | acc_missing_dependencies]
-          else
+          if dep_loaded do
             acc_missing_dependencies
+          else
+            [dep | acc_missing_dependencies]
           end
         end
       )
