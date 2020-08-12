@@ -8,8 +8,13 @@ defmodule Exchange.Application do
 
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
+    message_bus_module = Application.get_env(:exchange, :message_bus_adapter)
+    message_bus_module.validate_dependency()
+    time_series_adapter = Application.get_env(:exchange, :time_series_adapter)
+    time_series_adapter.validate_dependency()
+
     message_bus_children =
-      case Application.get_env(:exchange, :message_bus_adapter) do
+      case message_bus_module do
         Exchange.Adapters.EventBus ->
           [
             {Registry,

@@ -4,8 +4,9 @@ defmodule Exchange.Adapters.EventBus do
   This module uses the Registry to un/register processes under a event and send messages to the registered processes.
   """
   alias Exchange.Adapters.EventBus
-  @behaviour Exchange.MessageBus
 
+  use Exchange.Adapter
+  @behaviour Exchange.MessageBus
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed price_broadcast)a
 

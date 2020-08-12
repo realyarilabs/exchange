@@ -180,6 +180,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Application.get_env(:exchange, :message_bus_adapter)
   end
 
+  use Exchange.Adapter
   @behaviour Exchange.TimeSeries
 
   @spec completed_trades_by_id(ticker :: atom, trader_id :: String.t()) :: [Exchange.Trade]
