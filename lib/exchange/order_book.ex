@@ -245,19 +245,15 @@ defmodule Exchange.OrderBook do
       matched_order =
         price_points_queue
         |> Enum.filter(fn order ->
-          cond do
-            is_integer(order.exp_time) ->
-              current_time = :os.system_time(:millisecond)
+          if is_integer(order.exp_time) do
+            current_time = :os.system_time(:millisecond)
 
-              if order.exp_time < current_time do
-                false
-              else
-                true
-              end
-
-            true ->
-              true
+            if order.exp_time < current_time do
+              false
+            end
           end
+
+          true
         end)
         |> List.first()
 
