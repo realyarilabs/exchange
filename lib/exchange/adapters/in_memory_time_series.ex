@@ -1,6 +1,7 @@
 defmodule Exchange.Adapters.InMemoryTimeSeries do
   @moduledoc """
-  Documentation for a InMemoryTimeSeries adapter
+  Public API to use the adapter of `Exchange.TimeSeries`, the InMemoryTimeSeries.
+  This adapter is an approach of an in memory time series database and it keeps state about orders, prices and trades.
   """
   use GenServer
   require Logger

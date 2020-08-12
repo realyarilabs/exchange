@@ -6,6 +6,7 @@ defmodule Exchange.Application do
   use Application
   import Supervisor.Spec
 
+  @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     message_bus_children =
       case Application.get_env(:exchange, :message_bus_adapter) do
@@ -45,6 +46,10 @@ defmodule Exchange.Application do
     Supervisor.start_link(children, opts)
   end
 
+  @doc """
+  Creates the necessary supervisors to run the application's markets which are obtained through the `config.exs`
+  """
+  @spec create_tickers :: list
   def create_tickers do
     get_tickers_config()
     |> Enum.map(fn {ticker, currency, min_price, max_price} ->
@@ -56,6 +61,10 @@ defmodule Exchange.Application do
     end)
   end
 
+  @doc """
+  Fetches the application configuration corresponding to the `tickers` key
+  """
+  @spec get_tickers_config :: list
   def get_tickers_config do
     ticker_list = Application.get_env(:exchange, __MODULE__, [])
 

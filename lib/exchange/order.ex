@@ -1,6 +1,6 @@
 defmodule Exchange.Order do
   @moduledoc """
-  An Order
+  A struct representing an Order to be placed in the Exchange
 
   side: :buy, :sell
   type: :market, :limit
