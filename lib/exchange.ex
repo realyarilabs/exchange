@@ -8,7 +8,7 @@ defmodule Exchange do
 
   ## Parameters
 
-    - order_params: Map that representes the parameters of the order to be placed
+    - order_params: Map that represents the parameters of the order to be placed
     - ticker: Atom that represents on which market the order should be placed
 
   """

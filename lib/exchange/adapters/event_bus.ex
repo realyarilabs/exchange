@@ -41,7 +41,7 @@ defmodule Exchange.Adapters.EventBus do
   end
 
   @doc """
-  Sends a message to all registered processes under the permited events.
+  Sends a message to all registered processes under the permitted events.
   The `payload` is sent through the `Registry` module using `dispatch/3`
 
   ## Parameters
