@@ -288,7 +288,9 @@ defmodule Exchange.OrderBook do
         |> Map.get(side)
         |> Map.get(price_point)
 
-      Enum.find(orders_queue, fn o -> o.order_id == order_id end)
+      Enum.find(orders_queue, fn o ->
+        o.order_id == order_id
+      end)
     else
       nil
     end
