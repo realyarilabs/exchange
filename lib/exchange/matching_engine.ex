@@ -338,12 +338,13 @@ defmodule Exchange.MatchingEngine do
             cancelled_order.exp_time < current_time) or !is_integer(cancelled_order.exp_time) do
         order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
         message_bus().cast_event(:order_cancelled, cancelled_order)
-
         {:reply, :ok, order_book}
+      else
+        {:reply, :error, order_book}
       end
+    else
+      {:reply, :error, order_book}
     end
-
-    {:reply, :error, order_book}
   end
 
   def handle_call(:total_bid_orders, _from, order_book) do
