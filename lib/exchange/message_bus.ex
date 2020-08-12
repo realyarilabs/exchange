@@ -1,7 +1,7 @@
 defmodule Exchange.MessageBus do
   @moduledoc """
   Behaviour that a message library adapter must implement
-  in order to comunicate with the Exchange
+  in order to communicate with the Exchange
   """
   @doc """
   The current process subscribes to event of type key

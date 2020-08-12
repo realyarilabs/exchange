@@ -410,7 +410,7 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Updated an `Exchange.Order` from the Order Book
+  Updates an `Exchange.Order` in the Order Book
   ## Parameters
     - order_book: OrderBook that contains the active orders
     - order: `Exchange.Order` to be updated
@@ -470,7 +470,7 @@ defmodule Exchange.OrderBook do
   def set_ask_min(order_book, %Order{}), do: order_book
 
   @doc """
-  When a order is matched and removed from the order the `ask_min` or `bid_max` must be updated.
+  When an order is matched and removed from the order book the `ask_min` or `bid_max` must be updated.
   To update these values it is necessary to traverse the keys of the corresponding side of the Order Book, sort them and take the first element.
   When one of the sides is empty the value is set to `max_price - 1` or `min_price + 1` to the `ask_min` or `bid_max`, respectively.
   """
@@ -594,7 +594,7 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Adds the expirating order to the Order Book's `expiration_list`, which is sorted by the `exp_time` afterwards.
+  Adds the expiring order to the Order Book's `expiration_list`, which is sorted by the `exp_time` afterwards.
 
   ## Parameters
     - order_book: OrderBook that contains the `expiration_list`

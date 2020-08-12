@@ -1,7 +1,7 @@
 defmodule Exchange.TimeSeries do
   @moduledoc """
   Behaviour that a time series database must implement
-  to be able to comunicate with the Exchange.
+  to be able to communicate with the Exchange.
   """
 
   @doc """
