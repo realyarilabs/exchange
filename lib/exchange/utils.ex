@@ -393,7 +393,7 @@ defmodule Exchange.Utils do
       initial_size: size,
       size: size,
       type: type,
-      exp_time: nil,
+      exp_time: :os.system_time(:millisecond),
       ticker: ticker,
       acknowledged_at: :os.system_time(:nanosecond)
     }

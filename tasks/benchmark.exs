@@ -26,9 +26,9 @@ mix_big = Enum.shuffle(aux_big ++ ag_big)
 
 Benchee.run(
   %{
-    "1000 orders" => fn -> insert_into_exchange.(aux_small) end,
-    "10000 orders" => fn -> insert_into_exchange.(aux_medium) end,
-    "100000 orders" => fn -> insert_into_exchange.(aux_big) end
+    "1000 orders" => fn -> insert_into_exchange.(aux_small) end
+    # "10000 orders" => fn -> insert_into_exchange.(aux_medium) end,
+    # "100000 orders" => fn -> insert_into_exchange.(aux_big) end
   },
   print: %{
     benchmarking: true,
@@ -44,22 +44,22 @@ Benchee.run(
   time: 100
 )
 
-Benchee.run(
-  %{
-    "1000*2 orders" => fn -> insert_into_exchange.(mix_small) end,
-    "10000*2 orders" => fn -> insert_into_exchange.(mix_medium) end,
-    "100000*2 orders" => fn -> insert_into_exchange.(mix_big) end
-  },
-  print: %{
-    benchmarking: true,
-    fast_warning: false,
-    configuration: true
-  },
-  formatters: [
-    {Benchee.Formatters.HTML, file: "benchmark/multi.html"},
-    {Benchee.Formatters.Console, extended_statistics: true}
-  ],
-  unit_scaling: :smallest,
-  memory_time: 5,
-  time: 100
-)
+# Benchee.run(
+#   %{
+#     "1000*2 orders" => fn -> insert_into_exchange.(mix_small) end,
+#     "10000*2 orders" => fn -> insert_into_exchange.(mix_medium) end,
+#     "100000*2 orders" => fn -> insert_into_exchange.(mix_big) end
+#   },
+#   print: %{
+#     benchmarking: true,
+#     fast_warning: false,
+#     configuration: true
+#   },
+#   formatters: [
+#     {Benchee.Formatters.HTML, file: "benchmark/multi.html"},
+#     {Benchee.Formatters.Console, extended_statistics: true}
+#   ],
+#   unit_scaling: :smallest,
+#   memory_time: 5,
+#   time: 100
+# )

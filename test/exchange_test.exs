@@ -9,7 +9,8 @@ defmodule ExchangeTest do
       side: :buy,
       size: 2000,
       price: 4030,
-      type: :limit
+      type: :limit,
+      ticker: :TEST1
     }
 
     assert Exchange.place_order(buy_limit_order, :TEST1) == :ok

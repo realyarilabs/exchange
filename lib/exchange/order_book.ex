@@ -221,7 +221,7 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Try to feth a matching buy/sell at the current bid_max/ask_min price
+  Try to fetch a matching buy/sell at the current bid_max/ask_min price
 
   ## Parameters
     - order_book: OrderBook that contains the active orders
@@ -242,9 +242,24 @@ defmodule Exchange.OrderBook do
     if price_points_queue == nil do
       :empty
     else
-      case Qex.pop(price_points_queue) do
-        {:empty, _empty_queue} -> :empty
-        {{:value, matched_order}, _price_points_queue} -> {:ok, matched_order}
+      matched_order =
+        price_points_queue
+        |> Enum.filter(fn order ->
+          if is_integer(order.exp_time) do
+            current_time = :os.system_time(:millisecond)
+
+            if order.exp_time < current_time do
+              false
+            end
+          end
+
+          true
+        end)
+        |> List.first()
+
+      case matched_order do
+        nil -> :empty
+        matched_order -> {:ok, matched_order}
       end
     end
   end
@@ -269,7 +284,9 @@ defmodule Exchange.OrderBook do
         |> Map.get(side)
         |> Map.get(price_point)
 
-      Enum.find(orders_queue, fn o -> o.order_id == order_id end)
+      Enum.find(orders_queue, fn o ->
+        o.order_id == order_id
+      end)
     else
       nil
     end
