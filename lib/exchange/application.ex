@@ -109,11 +109,6 @@ defmodule Exchange.Application do
   """
   @spec get_tickers_config :: list
   def get_tickers_config do
-    ticker_list = Application.get_env(:exchange, __MODULE__, [])
-
-    case ticker_list do
-      [] -> []
-      _ -> ticker_list[:tickers]
-    end
+    Application.get_env(:exchange, :tickers, [])
   end
 end
