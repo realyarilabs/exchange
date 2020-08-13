@@ -30,12 +30,14 @@ defmodule Exchange.Trade do
   @spec generate_trade(
           order :: Exchange.Order.order(),
           matched_order :: Exchange.Order.order(),
-          type :: atom
+          type :: atom,
+          currency :: atom
         ) :: %Exchange.Trade{}
   def generate_trade(
         %Order{side: s1, ticker: t1} = order,
         %Order{side: s2} = matched_order,
-        type
+        type,
+        currency
       )
       when s1 != s2 do
     sides = get_sides(order, matched_order)
@@ -52,7 +54,8 @@ defmodule Exchange.Trade do
       price: matched_order.price,
       type: type,
       acknowledged_at: :os.system_time(:nanosecond),
-      ticker: t1
+      ticker: t1,
+      currency: currency
     }
   end
 

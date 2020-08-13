@@ -180,7 +180,7 @@ defmodule Exchange.OrderBook do
         :partial_fill
       end
 
-    new_trade = Exchange.Trade.generate_trade(order, matched_order, type)
+    new_trade = Exchange.Trade.generate_trade(order, matched_order, type, order_book.currency)
     trades = order_book.completed_trades ++ [new_trade]
 
     %{order_book | completed_trades: trades}

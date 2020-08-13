@@ -836,8 +836,8 @@ defmodule MatchingEngineTest do
       order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
       order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
       order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
-      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit)
-      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit)
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
       trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
 
       InMemoryTimeSeries.cast_event(
