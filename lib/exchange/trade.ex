@@ -6,8 +6,8 @@ defmodule Exchange.Trade do
   alias Exchange.Order
 
   defstruct trade_id: UUID.uuid1(),
-            ticker: :AUXLND,
-            currency: :gbp,
+            ticker: nil,
+            currency: nil,
             buyer_id: nil,
             seller_id: nil,
             buy_order_id: nil,
@@ -31,7 +31,7 @@ defmodule Exchange.Trade do
           order :: Exchange.Order.order(),
           matched_order :: Exchange.Order.order(),
           type :: atom
-        ) :: Exchange.Trade
+        ) :: %Exchange.Trade{}
   def generate_trade(
         %Order{side: s1, ticker: t1} = order,
         %Order{side: s2} = matched_order,

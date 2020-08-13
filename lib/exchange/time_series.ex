@@ -4,6 +4,22 @@ defmodule Exchange.TimeSeries do
   to be able to communicate with the Exchange.
   """
 
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @required_config opts[:required_config] || []
+      @required_deps opts[:required_deps] || []
+      @behaviour Exchange.TimeSeries
+
+      def validate_config(config) do
+        Exchange.Adapters.Helpers.validate_config(@required_config, config)
+      end
+
+      def validate_dependency do
+        Exchange.Adapters.Helpers.validate_dependency(@required_deps)
+      end
+    end
+  end
+
   @doc """
   Function that fetches the completed trades from a market which a specific user participated.
   """

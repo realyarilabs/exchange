@@ -4,6 +4,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   This adapter is an approach of an in memory time series database and it keeps state about orders, prices and trades.
   """
   use GenServer
+  use Exchange.TimeSeries, required_config: [], required_deps: []
   require Logger
 
   def start_link(_) do
@@ -179,9 +180,6 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   defp message_bus do
     Application.get_env(:exchange, :message_bus_adapter)
   end
-
-  use Exchange.Adapter
-  @behaviour Exchange.TimeSeries
 
   @spec completed_trades_by_id(ticker :: atom, trader_id :: String.t()) :: [Exchange.Trade]
   def completed_trades_by_id(ticker, trader_id) do

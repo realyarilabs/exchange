@@ -162,7 +162,7 @@ defmodule Exchange.MatchingEngine do
       ask_min: max_price - 1,
       bid_max: min_price + 1,
       max_price: max_price,
-      min_price: min_price || 0
+      min_price: min_price
     }
 
     order_book = order_book_restore!(order_book)

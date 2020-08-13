@@ -8,47 +8,75 @@ defmodule Exchange.Application do
 
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
-    message_bus_module = Application.get_env(:exchange, :message_bus_adapter)
-    message_bus_module.validate_dependency()
+    with {:ok, time_series_children} <- setup_time_series(),
+         {:ok, message_bus_children} <- setup_message_bus() do
+      children =
+        [supervisor(Registry, [:unique, :matching_engine_registry])] ++
+          message_bus_children ++
+          time_series_children ++
+          Exchange.Application.create_tickers()
+
+      opts = [strategy: :one_for_one, name: Exchange.Supervisor]
+      Supervisor.start_link(children, opts)
+    else
+      err -> err
+    end
+  end
+
+  @doc """
+
+  """
+  @spec setup_time_series() :: {:ok, list()} | {:error, String.t()}
+  def setup_time_series() do
     time_series_adapter = Application.get_env(:exchange, :time_series_adapter)
-    time_series_adapter.validate_dependency()
 
-    message_bus_children =
-      case message_bus_module do
-        Exchange.Adapters.EventBus ->
-          [
-            {Registry,
-             keys: :duplicate,
-             name: Exchange.Adapters.EventBus.Registry,
-             partitions: System.schedulers_online()}
-          ]
+    if time_series_adapter == nil do
+      {:error, "Invalid time series adapter"}
+    else
+      time_series_adapter.validate_dependency()
 
-        Exchange.Adapters.TestEventBus ->
-          [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]
-
-        _ ->
-          []
-      end
-
-    time_series_children =
       case Application.get_env(:exchange, :time_series_adapter) do
         Exchange.Adapters.InMemoryTimeSeries ->
-          [
-            supervisor(Exchange.Adapters.InMemoryTimeSeries, [[]], id: :in_memory_time_series)
-          ]
+          {:ok,
+           [
+             supervisor(Exchange.Adapters.InMemoryTimeSeries, [[]], id: :in_memory_time_series)
+           ]}
 
         _ ->
-          []
+          {:ok, []}
       end
+    end
+  end
 
-    children =
-      [supervisor(Registry, [:unique, :matching_engine_registry])] ++
-        message_bus_children ++
-        time_series_children ++
-        Exchange.Application.create_tickers()
+  @doc """
 
-    opts = [strategy: :one_for_one, name: Exchange.Supervisor]
-    Supervisor.start_link(children, opts)
+  """
+  @spec setup_message_bus() :: {:ok, list()} | {:error, String.t()}
+  def setup_message_bus do
+    message_bus_module = Application.get_env(:exchange, :message_bus_adapter)
+
+    if message_bus_module == nil do
+      {:error, "Invalid message bus adapter"}
+    else
+      message_bus_module.validate_dependency()
+
+      case message_bus_module do
+        Exchange.Adapters.EventBus ->
+          {:ok,
+           [
+             {Registry,
+              keys: :duplicate,
+              name: Exchange.Adapters.EventBus.Registry,
+              partitions: System.schedulers_online()}
+           ]}
+
+        Exchange.Adapters.TestEventBus ->
+          {:ok, [supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]}
+
+        _ ->
+          {:ok, []}
+      end
+    end
   end
 
   @doc """
@@ -56,14 +84,24 @@ defmodule Exchange.Application do
   """
   @spec create_tickers :: list
   def create_tickers do
-    get_tickers_config()
-    |> Enum.map(fn {ticker, currency, min_price, max_price} ->
-      supervisor(
-        Exchange.MatchingEngine,
-        [[ticker: ticker, currency: currency, min_price: min_price, max_price: max_price]],
-        id: ticker
-      )
-    end)
+    tickers = get_tickers_config()
+
+    if Enum.all?(tickers, fn ticker ->
+         is_tuple(ticker) and tuple_size(ticker) == 4
+       end) do
+      tickers
+      |> Enum.map(fn ticker_config when is_tuple(ticker_config) ->
+        {ticker, currency, min_price, max_price} = ticker_config
+
+        supervisor(
+          Exchange.MatchingEngine,
+          [[ticker: ticker, currency: currency, min_price: min_price, max_price: max_price]],
+          id: ticker
+        )
+      end)
+    else
+      raise RuntimeError, message: "Invalid ticker configuration"
+    end
   end
 
   @doc """
@@ -73,8 +111,9 @@ defmodule Exchange.Application do
   def get_tickers_config do
     ticker_list = Application.get_env(:exchange, __MODULE__, [])
 
-    if ticker_list != [] do
-      ticker_list[:tickers]
+    case ticker_list do
+      [] -> []
+      _ -> ticker_list[:tickers]
     end
   end
 end

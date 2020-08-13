@@ -764,10 +764,7 @@ defmodule Exchange.OrderBook do
   @spec open_orders_by_trader(
           order_book :: Exchange.OrderBook.order_book(),
           trader_id :: String.t()
-        ) ::
-          [
-            Exchange.Order.order()
-          ]
+        ) :: [Exchange.Order.order()]
   def open_orders_by_trader(order_book, trader_id) do
     order_book
     |> open_orders()

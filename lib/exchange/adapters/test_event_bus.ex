@@ -5,6 +5,7 @@ defmodule Exchange.Adapters.TestEventBus do
   The `Agent` behaviour is used to encapsulate the messages that are meant to be sent in a real scenario.
   """
   use Agent
+  use Exchange.MessageBus, required_config: [], required_deps: []
 
   def start_link(initial_value \\ Qex.new()) do
     Agent.start_link(fn -> initial_value end, name: __MODULE__)
@@ -22,8 +23,6 @@ defmodule Exchange.Adapters.TestEventBus do
     Agent.update(__MODULE__, fn _q -> Qex.new() end)
   end
 
-  use Exchange.Adapter
-  @behaviour Exchange.MessageBus
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed price_broadcast)a
 

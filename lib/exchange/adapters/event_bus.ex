@@ -5,8 +5,7 @@ defmodule Exchange.Adapters.EventBus do
   """
   alias Exchange.Adapters.EventBus
 
-  use Exchange.Adapter
-  @behaviour Exchange.MessageBus
+  use Exchange.MessageBus, required_config: [], required_deps: []
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed price_broadcast)a
 
