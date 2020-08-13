@@ -9,13 +9,14 @@ defmodule Exchange.TimeSeries do
       @required_config opts[:required_config] || []
       @required_deps opts[:required_deps] || []
       @behaviour Exchange.TimeSeries
+      alias Exchange.Adapters.Helpers
 
       def validate_config(config) do
-        Exchange.Adapters.Helpers.validate_config(@required_config, config)
+        Helpers.validate_config(@required_config, config)
       end
 
       def validate_dependency do
-        Exchange.Adapters.Helpers.validate_dependency(@required_deps)
+        Helpers.validate_dependency(@required_deps)
       end
     end
   end

@@ -27,7 +27,7 @@ defmodule Exchange.Application do
 
   """
   @spec setup_time_series() :: {:ok, list()} | {:error, String.t()}
-  def setup_time_series() do
+  def setup_time_series do
     time_series_adapter = Application.get_env(:exchange, :time_series_adapter)
 
     if time_series_adapter == nil do
