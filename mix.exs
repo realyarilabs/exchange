@@ -2,6 +2,8 @@ defmodule Exchange.MixProject do
   use Mix.Project
 
   def project do
+    IO.inspect(Application.fetch_env(:exchange, :message_bus_adapter))
+
     [
       app: :exchange,
       version: "0.1.0",
@@ -31,7 +33,7 @@ defmodule Exchange.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:logger, :compiletimeconfig],
       mod: {Exchange.Application, []}
     ]
   end

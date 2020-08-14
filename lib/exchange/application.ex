@@ -61,6 +61,13 @@ defmodule Exchange.Application do
       message_bus_module.validate_dependency()
 
       case message_bus_module do
+        Exchange.Adapters.Flux ->
+          {:ok,
+           [
+             Flux.Connection,
+             Flux.EventListener
+           ]}
+
         Exchange.Adapters.EventBus ->
           {:ok,
            [

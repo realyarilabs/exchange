@@ -15,6 +15,7 @@ defmodule Exchange.TimeSeries do
         Helpers.validate_config(@required_config, config)
       end
 
+      @on_load :validate_dependency
       def validate_dependency do
         Helpers.validate_dependency(@required_deps)
       end
