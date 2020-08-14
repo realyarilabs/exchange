@@ -1,10 +1,9 @@
-defmodule Flux.Trades do
+defmodule Exchange.Adapters.Flux.Trades do
   @moduledoc """
   InfluxDB support for Trades
   """
 
   use Instream.Series
-  alias Exchange.Adapters.Flux.Connection
 
   series do
     measurement("trades")
@@ -30,17 +29,17 @@ defmodule Flux.Trades do
       ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{
         ticker
       }')
-      |> Connection.query(precision: :nanosecond)
+      |> Exchange.Adapters.Flux.Connection.query(precision: :nanosecond)
 
     if response.results == [%{statement_id: 0}] do
       []
     else
-      Trades.from_result(response)
+      Exchange.Adapters.Flux.Trades.from_result(response)
     end
   end
 
   def process_trade!(trade_params) do
-    data = %Trades{}
+    data = %Exchange.Adapters.Flux.Trades{}
     t = trade_params
 
     %{
@@ -59,6 +58,6 @@ defmodule Flux.Trades do
         },
         tags: %{data.tags | seller_id: t.seller_id, buyer_id: t.buyer_id}
     }
-    |> Connection.write()
+    |> Exchange.Adapters.Flux.Connection.write()
   end
 end

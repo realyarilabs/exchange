@@ -24,7 +24,8 @@ defmodule Exchange.Application do
   end
 
   @doc """
-
+  Setup for the time series adapters shipped with the Exchange application.
+  This function return a list of children necessary for the proper execution of the adapters for InfluxDB and in memory DB.
   """
   @spec setup_time_series() :: {:ok, list()} | {:error, String.t()}
   def setup_time_series do
@@ -49,7 +50,8 @@ defmodule Exchange.Application do
   end
 
   @doc """
-
+  Setup for the message bus adapters shipped with the Exchange application.
+  This function return a list of children necessary for the proper execution of the adapters that use the `Registry` and RabbitMQ
   """
   @spec setup_message_bus() :: {:ok, list()} | {:error, String.t()}
   def setup_message_bus do

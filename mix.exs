@@ -2,8 +2,6 @@ defmodule Exchange.MixProject do
   use Mix.Project
 
   def project do
-    IO.inspect(Application.fetch_env(:exchange, :message_bus_adapter))
-
     [
       app: :exchange,
       version: "0.1.0",
@@ -33,7 +31,7 @@ defmodule Exchange.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :compiletimeconfig],
+      extra_applications: [:logger],
       mod: {Exchange.Application, []}
     ]
   end
@@ -50,7 +48,9 @@ defmodule Exchange.MixProject do
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
       {:mox, "~> 0.5.1", only: :test},
-      {:money, "~> 1.7"}
+      {:money, "~> 1.7"},
+      {:instream, github: "mneudert/instream"},
+      {:amqp, "~> 1.0"}
     ]
   end
 

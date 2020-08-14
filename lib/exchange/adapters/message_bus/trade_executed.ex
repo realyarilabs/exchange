@@ -1,4 +1,4 @@
-defmodule Exchange.Adapters.EventBus.TradeExecuted do
+defmodule Exchange.Adapters.MessageBus.TradeExecuted do
   @moduledoc """
   A struct representing the payload of :trade_executed events.
   """

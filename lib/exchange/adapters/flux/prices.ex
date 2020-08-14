@@ -1,4 +1,4 @@
-defmodule Flux.Prices do
+defmodule Exchange.Adapters.Flux.Prices do
   @moduledoc """
   InfluxDB support for Prices
   """
@@ -20,16 +20,16 @@ defmodule Flux.Prices do
   def save_price!(price_params) do
     price_params
     |> convert_into_flux
-    |> Flux.Connection.write()
+    |> Exchange.Adapters.Flux.Connection.write()
   end
 
   def delete_all_prices! do
     "drop series from prices"
-    |> Flux.Connection.query(method: :post)
+    |> Exchange.Adapters.Flux.Connection.query(method: :post)
   end
 
   defp convert_into_flux(price_params) do
-    data = %Flux.Prices{}
+    data = %Exchange.Adapters.Flux.Prices{}
 
     %{
       data

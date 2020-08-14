@@ -1,21 +1,13 @@
-defmodule Exchange.Adapters.EventBus do
+defmodule Exchange.Adapters.RabbitBus do
   @moduledoc """
-  Public API to use the adapter of `Exchange.MessageBus`, the Event Bus.
-  This module uses the Registry to un/register processes under a event and send messages to the registered processes.
+  Public API to use the adapter of `Exchange.MessageBus`, the RabbitMQ Bus.
   """
   alias Exchange.Adapters.MessageBus
-
-  use Exchange.MessageBus, required_config: [], required_deps: []
+  use Exchange.MessageBus, required_config: [], required_deps: [:amqp]
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed price_broadcast)a
 
-  @doc """
-  Adds the process calling this function to the `Registry` under the given `key`
-
-  ## Parameters
-    - key: Event to register the process
-  """
-  @spec add_listener(any) :: :error | :ok
+  @spec add_listener(key :: String.t()) :: :error | :ok
   def add_listener(key) do
     if Enum.member?(@events, key) do
       {:ok, _} = Registry.register(Exchange.Adapters.EventBus.Registry, key, [])
@@ -31,7 +23,7 @@ defmodule Exchange.Adapters.EventBus do
   ## Parameters
     - key: Event to register the process
   """
-  @spec remove_listener(any) :: :error | :ok
+  @spec remove_listener(key :: String.t()) :: :error | :ok
   def remove_listener(key) do
     if Enum.member?(@events, key) do
       Registry.unregister(Exchange.Adapters.EventBus.Registry, key)
@@ -40,14 +32,6 @@ defmodule Exchange.Adapters.EventBus do
     end
   end
 
-  @doc """
-  Sends a message to all registered processes under the permitted events.
-  The `payload` is sent through the `Registry` module using `dispatch/3`
-
-  ## Parameters
-    - key: Payload's event type
-    - payload: Data to be sent to the processes
-  """
   @spec cast_event(
           :order_cancelled
           | :order_expired

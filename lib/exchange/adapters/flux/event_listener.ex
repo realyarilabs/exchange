@@ -4,7 +4,6 @@ defmodule Exchange.Adapters.Flux.EventListener do
   and Dispatches Actions for Flux App
   """
   use GenServer
-  alias Exchange.Adapters.Flux.{Orders, Prices, Trades}
   require Logger
 
   def start_link(_) do
@@ -22,14 +21,14 @@ defmodule Exchange.Adapters.Flux.EventListener do
   end
 
   def handle_info({:cast_event, :trade_executed, payload}, state) do
-    Trades.process_trade!(payload.trade)
+    Exchange.Adapters.Flux.Trades.process_trade!(payload.trade)
     Logger.info("[Flux] Processing trade: #{inspect(payload.trade)}")
     {:noreply, state}
   end
 
   def handle_info({:cast_event, :order_queued, queued_order}, state) do
     Logger.info("[F] Processing Order: #{inspect(queued_order.order)}")
-    Flux.Orders.save_order!(queued_order.order)
+    Exchange.Adapters.Flux.Orders.save_order!(queued_order.order)
     {:noreply, state}
   end
 
@@ -38,7 +37,7 @@ defmodule Exchange.Adapters.Flux.EventListener do
     order = order_cancelled.order
 
     %{order | size: 0}
-    |> Orders.save_order!()
+    |> Exchange.Adapters.Flux.Orders.save_order!()
 
     {:noreply, state}
   end
@@ -48,7 +47,7 @@ defmodule Exchange.Adapters.Flux.EventListener do
     order = expired_order.order
 
     %{order | size: 0}
-    |> Orders.save_order!()
+    |> Exchange.Adapters.Flux.Orders.save_order!()
 
     {:noreply, state}
   end
@@ -57,7 +56,7 @@ defmodule Exchange.Adapters.Flux.EventListener do
     Logger.info("[F] Processing Price: #{inspect(price)}")
 
     %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}
-    |> Prices.save_price!()
+    |> Exchange.Adapters.Flux.Prices.save_price!()
 
     {:noreply, state}
   end

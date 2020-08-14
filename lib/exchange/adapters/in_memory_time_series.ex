@@ -23,7 +23,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :trade_executed, %Exchange.Adapters.EventBus.TradeExecuted{} = payload},
+        {:cast_event, :trade_executed, %Exchange.Adapters.MessageBus.TradeExecuted{} = payload},
         state
       ) do
     # Logger.info("[InMemoryTimeSeries] Processing trade: #{inspect(payload.trade)}")
@@ -36,7 +36,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_queued, %Exchange.Adapters.EventBus.OrderQueued{} = payload},
+        {:cast_event, :order_queued, %Exchange.Adapters.MessageBus.OrderQueued{} = payload},
         state
       ) do
     # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
@@ -45,7 +45,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_cancelled, %Exchange.Adapters.EventBus.OrderCancelled{} = payload},
+        {:cast_event, :order_cancelled, %Exchange.Adapters.MessageBus.OrderCancelled{} = payload},
         state
       ) do
     # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
@@ -59,7 +59,8 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_expired, %Exchange.Adapters.EventBus.OrderExpired{} = expired_order},
+        {:cast_event, :order_expired,
+         %Exchange.Adapters.MessageBus.OrderExpired{} = expired_order},
         state
       ) do
     # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(expired_order.order)}")
@@ -73,7 +74,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :price_broadcast, %Exchange.Adapters.EventBus.PriceBroadcast{} = price},
+        {:cast_event, :price_broadcast, %Exchange.Adapters.MessageBus.PriceBroadcast{} = price},
         state
       ) do
     # Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
@@ -162,8 +163,8 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :trades, update_trades)
   end
 
-  @spec cast_event(event :: atom, payload :: Exchange.Adapters.EventBus.*()) ::
-          Exchange.Adapters.EventBus.*()
+  @spec cast_event(event :: atom, payload :: Exchange.Adapters.MessageBus.*()) ::
+          Exchange.Adapters.MessageBus.*()
   def cast_event(event, payload) do
     send(:in_memory_time_series, {:cast_event, event, payload})
   end

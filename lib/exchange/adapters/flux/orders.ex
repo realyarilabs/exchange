@@ -2,7 +2,6 @@ defmodule Exchange.Adapters.Flux.Orders do
   @moduledoc """
   InfluxDB support for Orders
   """
-
   use Instream.Series
 
   series do
