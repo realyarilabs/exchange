@@ -1,6 +1,6 @@
 defmodule Exchange.Order do
   @moduledoc """
-  An Order
+  A struct representing an Order to be placed in the Exchange
 
   side: :buy, :sell
   type: :market, :limit
@@ -32,7 +32,7 @@ defmodule Exchange.Order do
           initial_size: size_in_grams,
           type: atom,
           ticker: atom,
-          exp_time: integer
+          exp_time: integer | atom
         }
 end
 

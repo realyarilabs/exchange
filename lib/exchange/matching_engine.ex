@@ -331,10 +331,17 @@ defmodule Exchange.MatchingEngine do
   def handle_call({:cancel_order, order_id}, _from, order_book) do
     if OrderBook.order_exists?(order_book, order_id) do
       cancelled_order = OrderBook.fetch_order_by_id(order_book, order_id)
-      order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
-      message_bus().cast_event(:order_cancelled, cancelled_order)
 
-      {:reply, :ok, order_book}
+      current_time = :os.system_time(:millisecond)
+
+      if (is_integer(cancelled_order.exp_time) and
+            cancelled_order.exp_time < current_time) or !is_integer(cancelled_order.exp_time) do
+        order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
+        message_bus().cast_event(:order_cancelled, cancelled_order)
+        {:reply, :ok, order_book}
+      else
+        {:reply, :error, order_book}
+      end
     else
       {:reply, :error, order_book}
     end

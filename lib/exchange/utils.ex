@@ -3,6 +3,14 @@ defmodule Exchange.Utils do
   Auxiliary functions for Exchange APP
   """
 
+  @doc """
+  Fetches the completed trades stored by a `Exchange.TimeSeries` adapter given a ticker and a id
+
+  ## Parameters
+    - ticker: Market where the fetch should be made
+    - trader_id: The that a given trade must match
+  """
+  @spec fetch_completed_trades(ticker :: atom, trader_id :: String.t()) :: list
   def fetch_completed_trades(ticker, trader_id) do
     time_series().completed_trades_by_id(ticker, trader_id)
     |> Enum.map(fn flux_trade ->
@@ -27,6 +35,13 @@ defmodule Exchange.Utils do
     end)
   end
 
+  @doc """
+  Fetches the active orders stored by a `Exchange.TimeSeries` adapter given a ticker
+
+  ## Parameters
+    - ticker: Market where the fetch should be made
+  """
+  @spec fetch_live_orders(ticker :: atom) :: list
   def fetch_live_orders(ticker) do
     time_series().get_live_orders(ticker)
     |> Enum.map(fn o ->
@@ -44,6 +59,10 @@ defmodule Exchange.Utils do
     end)
   end
 
+  @doc """
+  Prints an `Exchange.OrderBook`
+  """
+  @spec print_order_book(order_book :: Exchange.OrderBook.order_book()) :: :ok
   def print_order_book(order_book) do
     IO.puts("----------------------------")
     IO.puts(" Price Level | ID | Size ")
@@ -79,6 +98,10 @@ defmodule Exchange.Utils do
     end)
   end
 
+  @doc """
+  Return a empty `Exchange.OrderBook`
+  """
+  @spec empty_order_book :: Exchange.OrderBook.order_book()
   def empty_order_book do
     %Exchange.OrderBook{
       name: :AUXLND,
@@ -94,6 +117,10 @@ defmodule Exchange.Utils do
     }
   end
 
+  @doc """
+  Creates a limit order for a given ticker
+  """
+  @spec sample_order(map) :: Exchange.Order.order()
   def sample_order(%{size: z, price: p, side: s}) do
     %Exchange.Order{
       type: :limit,
@@ -106,6 +133,18 @@ defmodule Exchange.Utils do
     }
   end
 
+  @doc """
+  Creates a expiring limit order for a given ticker
+
+  """
+  @spec sample_expiring_order(%{
+          price: number,
+          side: atom,
+          size: number,
+          exp_time: number,
+          id: String.t()
+        }) ::
+          Exchange.Order.order()
   def sample_expiring_order(%{size: z, price: p, side: s, id: id, exp_time: t}) do
     %Exchange.Order{
       type: :limit,
@@ -119,6 +158,12 @@ defmodule Exchange.Utils do
     }
   end
 
+  @doc """
+  This function places sample buy orders and sell orders in the correct market using the ticker.
+  ## Arguments
+    - ticker: Market where the orders should be placed
+  """
+  @spec sample_matching_engine_init(ticker :: atom) :: :ok
   def sample_matching_engine_init(ticker) do
     buy_book =
       [
@@ -208,6 +253,13 @@ defmodule Exchange.Utils do
     end)
   end
 
+  @doc """
+  Creates an `Exchange.OrderBook` with sample buy and sell orders
+
+  ## Arguments
+    - ticker: Market where the order book belongs
+  """
+  @spec sample_order_book(ticker :: atom) :: Exchange.OrderBook.order_book()
   def sample_order_book(ticker) do
     buy_book =
       [
@@ -318,7 +370,14 @@ defmodule Exchange.Utils do
     end)
   end
 
-  def random_order(ticker \\ :AUXLND) do
+  @doc """
+  Creates a random order for a given ticker
+
+  ## Arguments
+    - ticker: Market where the order should be placed
+  """
+  @spec random_order(ticker :: atom) :: Exchange.Order.order()
+  def random_order(ticker) do
     trader_id = "alchemist" <> Integer.to_string(Enum.random(0..9))
     side = Enum.random([:buy, :sell])
     type = Enum.random([:market, :limit, :marketable_limit])
@@ -334,12 +393,19 @@ defmodule Exchange.Utils do
       initial_size: size,
       size: size,
       type: type,
-      exp_time: nil,
+      exp_time: :os.system_time(:millisecond),
       ticker: ticker,
       acknowledged_at: :os.system_time(:nanosecond)
     }
   end
 
+  @doc """
+  Function that generates n random orders given a specific ticker
+  ## Arguments
+    - ticker: Market where the order should be placed
+    - n: Number of orders to be generated
+  """
+  @spec generate_random_orders(n :: number, ticker :: atom) :: [Exchange.Order.order()]
   def generate_random_orders(n, ticker)
       when is_integer(n) and n > 0 do
     Enum.reduce(0..n, [], fn _n, acc ->
@@ -347,6 +413,10 @@ defmodule Exchange.Utils do
     end)
   end
 
+  @doc """
+  Retrieves the module of an adapter of `Exchange.TimeSeries`
+  """
+  @spec time_series :: any
   def time_series do
     Application.get_env(:exchange, :time_series_adapter)
   end

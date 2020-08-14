@@ -3,6 +3,22 @@ defmodule Exchange.Validations do
   Validations for Data Structures for the Exchange
   """
 
+  @doc """
+  Function that validates the parameters of an order taking into account the type of the `Exchange.Order`.
+
+
+  Different validations are made:
+  - price is positive
+  - side one of [:buy, :sell]
+  - size is positive
+  - exp_time is a date in future
+
+  ## Parameters
+
+    - order_params: Map that represents the parameters on an `Exchange.Order`.
+  """
+  @spec cast_order(%{type: :limit | :market | :marketable_limit}) ::
+          {:ok, Exchange.Order} | {:error, String.t()}
   def cast_order(%{type: :limit} = order_params) do
     validate(order_params)
   end
@@ -28,7 +44,8 @@ defmodule Exchange.Validations do
          initial_size: size,
          price: price,
          type: order_params[:type],
-         exp_time: time
+         exp_time: time,
+         ticker: order_params[:ticker]
        }}
     else
       err -> err
