@@ -31,6 +31,8 @@ defmodule Exchange do
   """
 
   def place_order(%{type: :limit} = order_params, ticker) do
+    order_params = Map.put(order_params, :ticker, ticker)
+
     case Exchange.Validations.cast_order(order_params) do
       {:ok, limit_order} ->
         Exchange.MatchingEngine.place_limit_order(ticker, limit_order)
@@ -51,6 +53,8 @@ defmodule Exchange do
   :ok
   """
   def place_order(%{type: :market} = order_params, ticker) do
+    order_params = Map.put(order_params, :ticker, ticker)
+
     case Exchange.Validations.cast_order(order_params) do
       {:ok, market_order} ->
         Exchange.MatchingEngine.place_market_order(ticker, market_order)
@@ -64,6 +68,8 @@ defmodule Exchange do
   Places a marketable limit order on the Exchange
   """
   def place_order(%{type: :marketable_limit} = order_params, ticker) do
+    order_params = Map.put(order_params, :ticker, ticker)
+
     case Exchange.Validations.cast_order(order_params) do
       {:ok, marketable_limit_order} ->
         Exchange.MatchingEngine.place_marketable_limit_order(ticker, marketable_limit_order)
