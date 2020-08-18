@@ -2,7 +2,16 @@ defmodule Exchange.Adapters.Helpers do
   @moduledoc ~S"""
   Module used by every adapter to validate configurations and dependencies.
   """
+  require Logger
 
+  @doc """
+  Evaluates if the required configuration is defined
+
+  ## Parameters
+    - required_config: list of atoms containing the required configuration
+    - config: current configuration
+
+  """
   @spec validate_config([atom], Keyword.t()) :: :ok | no_return
   def validate_config(required_config, config) do
     missing_keys =
@@ -18,11 +27,16 @@ defmodule Exchange.Adapters.Helpers do
   defp raise_on_missing_config([], _config), do: :ok
 
   defp raise_on_missing_config(key, config) do
-    raise ArgumentError, """
-    expected #{inspect(key)} to be set, got: #{inspect(config)}
-    """
+    Logger.error("expected #{inspect(key)} to be set, got: #{inspect(config)}")
+    raise ArgumentError, "missing configuration"
   end
 
+  @doc """
+  Evaluates if the required dependencies are loaded
+
+  ## Parameters
+    - required_deps: list containing the required dependencies
+  """
   @spec validate_dependency([module | {atom, module}]) :: :ok | no_return
   def validate_dependency(required_deps) do
     missing_dependencies =
@@ -49,9 +63,10 @@ defmodule Exchange.Adapters.Helpers do
   defp raise_on_missing_dependency([]), do: :ok
 
   defp raise_on_missing_dependency(keys) do
-    raise ArgumentError, """
-    expected module(s) #{inspect(keys)} to be loaded.
-    Add them to the dependencies and run mix deps.get.
-    """
+    Logger.error(
+      "Expected module(s) #{inspect(keys)} to be loaded. Add them to the dependencies and run mix deps.get."
+    )
+
+    raise ArgumentError, "missing dependecies."
   end
 end

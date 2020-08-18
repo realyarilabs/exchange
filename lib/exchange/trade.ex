@@ -19,6 +19,30 @@ defmodule Exchange.Trade do
             type: :full_fill,
             acknowledged_at: :os.system_time(:nanosecond)
 
+  @spec decode_from_jason(map) :: Exchange.Trade
+  @doc """
+  Decodes the payload to a Trade struct
+  ## Parameters
+    - payload: map with necessary parameters to populate the struct
+  """
+  def decode_from_jason(trade) do
+    %Exchange.Trade{
+      trade_id: Map.get(trade, :trade_id),
+      ticker: Map.get(trade, :ticker),
+      currency: Map.get(trade, :currency),
+      buyer_id: Map.get(trade, :buyer_id),
+      seller_id: Map.get(trade, :seller_id),
+      buy_order_id: Map.get(trade, :buy_order_id),
+      sell_order_id: Map.get(trade, :sell_order_id),
+      price: Map.get(trade, :price),
+      size: Map.get(trade, :size),
+      buy_init_size: Map.get(trade, :buy_init_size),
+      sell_init_size: Map.get(trade, :sell_init_size),
+      type: Map.get(trade, :type),
+      acknowledged_at: Map.get(trade, :acknowledged_at)
+    }
+  end
+
   @doc """
   Function that creates a trade given two matching orders
 
@@ -79,5 +103,31 @@ defmodule Exchange.Trade do
         sell_init_size: order.initial_size
       }
     end
+  end
+end
+
+defimpl Jason.Encoder, for: Exchange.Trade do
+  def encode(value, opts) do
+    Jason.Encode.map(
+      Map.take(
+        value,
+        [
+          :trade_id,
+          :ticker,
+          :currency,
+          :buyer_id,
+          :seller_id,
+          :buy_order_id,
+          :sell_order_id,
+          :price,
+          :size,
+          :buy_init_size,
+          :sell_init_size,
+          :type,
+          :acknowledged_at
+        ]
+      ),
+      opts
+    )
   end
 end

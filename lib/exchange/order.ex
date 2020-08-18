@@ -34,6 +34,28 @@ defmodule Exchange.Order do
           ticker: atom,
           exp_time: integer | atom
         }
+
+  @doc """
+  Decodes the payload to an Order struct
+  ## Parameters
+    - payload: map with necessary parameters to populate the struct
+  """
+  @spec decode_from_jason(map) :: Exchange.Order.order()
+  def decode_from_jason(order) do
+    %Exchange.Order{
+      order_id: Map.get(order, :order_id),
+      trader_id: Map.get(order, :trader_id),
+      side: String.to_atom(Map.get(order, :side)),
+      price: Map.get(order, :price),
+      size: Map.get(order, :size),
+      initial_size: Map.get(order, :initial_size),
+      type: String.to_atom(Map.get(order, :type)),
+      exp_time: Map.get(order, :exp_time),
+      acknowledged_at: Map.get(order, :acknowledged_at),
+      modified_at: Map.get(order, :modified_at),
+      ticker: Map.get(order, :ticker) |> String.to_atom()
+    }
+  end
 end
 
 defimpl Jason.Encoder, for: Exchange.Order do

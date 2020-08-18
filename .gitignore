@@ -28,6 +28,9 @@ erl_crash.dump
 # Ignore .envrc
 .envrc
 
+# Ignore logs
+/log/
+
 # Ignore ElixirLS extension files
 /.elixir_ls/
 # Ingnores mnesia local db

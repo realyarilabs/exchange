@@ -4,7 +4,7 @@ defmodule Exchange.Adapters.Flux.Prices do
   """
 
   use Instream.Series
-  alias Exchange.Adapters.Flux.Connection
+  alias Exchange.Adapters.Flux
 
   series do
     measurement("prices")
@@ -20,16 +20,16 @@ defmodule Exchange.Adapters.Flux.Prices do
   def save_price!(price_params) do
     price_params
     |> convert_into_flux
-    |> Exchange.Adapters.Flux.Connection.write()
+    |> Flux.write()
   end
 
   def delete_all_prices! do
     "drop series from prices"
-    |> Exchange.Adapters.Flux.Connection.query(method: :post)
+    |> Flux.query(method: :post)
   end
 
   defp convert_into_flux(price_params) do
-    data = %Exchange.Adapters.Flux.Prices{}
+    data = %Flux.Prices{}
 
     %{
       data

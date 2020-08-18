@@ -4,6 +4,7 @@ defmodule Exchange.Adapters.Flux.Trades do
   """
 
   use Instream.Series
+  alias Exchange.Adapters.Flux
 
   series do
     measurement("trades")
@@ -29,17 +30,17 @@ defmodule Exchange.Adapters.Flux.Trades do
       ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{
         ticker
       }')
-      |> Exchange.Adapters.Flux.Connection.query(precision: :nanosecond)
+      |> Flux.query(precision: :nanosecond)
 
     if response.results == [%{statement_id: 0}] do
       []
     else
-      Exchange.Adapters.Flux.Trades.from_result(response)
+      Flux.Trades.from_result(response)
     end
   end
 
   def process_trade!(trade_params) do
-    data = %Exchange.Adapters.Flux.Trades{}
+    data = %Flux.Trades{}
     t = trade_params
 
     %{
@@ -58,6 +59,6 @@ defmodule Exchange.Adapters.Flux.Trades do
         },
         tags: %{data.tags | seller_id: t.seller_id, buyer_id: t.buyer_id}
     }
-    |> Exchange.Adapters.Flux.Connection.write()
+    |> Flux.write()
   end
 end

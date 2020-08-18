@@ -29,18 +29,26 @@ defmodule Exchange.Application do
   """
   @spec setup_time_series() :: {:ok, list()} | {:error, String.t()}
   def setup_time_series do
-    time_series_adapter = Application.get_env(:exchange, :time_series_adapter)
+    time_series_module = Application.get_env(:exchange, :time_series_adapter)
 
-    if time_series_adapter == nil do
+    if time_series_module == nil do
       {:error, "Invalid time series adapter"}
     else
-      time_series_adapter.validate_dependency()
+      time_series_module.validate_dependency()
+      time_series_module.validate_config()
 
-      case Application.get_env(:exchange, :time_series_adapter) do
+      case time_series_module do
         Exchange.Adapters.InMemoryTimeSeries ->
           {:ok,
            [
              supervisor(Exchange.Adapters.InMemoryTimeSeries, [[]], id: :in_memory_time_series)
+           ]}
+
+        Exchange.Adapters.Flux ->
+          {:ok,
+           [
+             Exchange.Adapters.Flux,
+             Exchange.Adapters.Flux.EventListener
            ]}
 
         _ ->
@@ -61,13 +69,14 @@ defmodule Exchange.Application do
       {:error, "Invalid message bus adapter"}
     else
       message_bus_module.validate_dependency()
+      message_bus_module.validate_config()
 
       case message_bus_module do
-        Exchange.Adapters.Flux ->
+        Exchange.Adapters.RabbitBus ->
           {:ok,
            [
-             Flux.Connection,
-             Flux.EventListener
+             Exchange.Adapters.RabbitBus.Consumer,
+             Exchange.Adapters.RabbitBus.Producer
            ]}
 
         Exchange.Adapters.EventBus ->

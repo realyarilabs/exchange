@@ -39,7 +39,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         {:cast_event, :order_queued, %Exchange.Adapters.MessageBus.OrderQueued{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
     state = save_order(payload.order, state)
     {:noreply, state}
   end
@@ -48,7 +48,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         {:cast_event, :order_cancelled, %Exchange.Adapters.MessageBus.OrderCancelled{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
     order = payload.order
 
     state =
@@ -59,12 +59,11 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_expired,
-         %Exchange.Adapters.MessageBus.OrderExpired{} = expired_order},
+        {:cast_event, :order_expired, %Exchange.Adapters.MessageBus.OrderExpired{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(expired_order.order)}")
-    order = expired_order.order
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    order = payload.order
 
     state =
       %{order | size: 0}
@@ -77,7 +76,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         {:cast_event, :price_broadcast, %Exchange.Adapters.MessageBus.PriceBroadcast{} = price},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
+    Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
 
     state =
       %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}

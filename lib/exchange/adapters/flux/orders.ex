@@ -3,6 +3,7 @@ defmodule Exchange.Adapters.Flux.Orders do
   InfluxDB support for Orders
   """
   use Instream.Series
+  alias Exchange.Adapters.Flux
 
   series do
     measurement("orders")
@@ -25,28 +26,28 @@ defmodule Exchange.Adapters.Flux.Orders do
   def save_order!(order_params) do
     order_params
     |> convert_into_flux
-    |> Exchange.Adapters.Flux.Connection.write()
+    |> Flux.write()
   end
 
   def get_live_orders(ticker) do
     response =
       ~s(SELECT * FROM orders WHERE size > 0 AND ticker = '#{ticker}')
-      |> Exchange.Adapters.Flux.Connection.query(precision: :nanosecond)
+      |> Flux.query(precision: :nanosecond)
 
     if response.results == [%{statement_id: 0}] do
       []
     else
-      Exchange.Adapters.Flux.Orders.from_result(response)
+      Flux.Orders.from_result(response)
     end
   end
 
   def delete_all_orders! do
     "drop series from orders"
-    |> Exchange.Adapters.Flux.Connection.query(method: :post)
+    |> Flux.query(method: :post)
   end
 
   defp convert_into_flux(order_params) do
-    data = %Exchange.Adapters.Flux.Orders{}
+    data = %Flux.Orders{}
 
     %{
       data

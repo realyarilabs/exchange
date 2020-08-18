@@ -23,6 +23,7 @@ defmodule Exchange.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
+      xref: [exclude: [AMQP]],
       description: description(),
       package: package()
     ]

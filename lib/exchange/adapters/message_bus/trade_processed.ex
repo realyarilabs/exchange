@@ -22,4 +22,32 @@ defmodule Exchange.Adapters.MessageBus.TradeProcessed do
     field(:buy_total, Money.t(), enforce: true)
     field(:sell_total, Money.t(), enforce: true)
   end
+
+  def decode_from_jason(data) do
+    data
+  end
+end
+
+defimpl Jason.Encoder, for: Exchange.Adapters.MessageBus.TradeProcessed do
+  def encode(value, opts) do
+    Jason.Encode.map(
+      Map.take(value, [
+        :trade_id,
+        :ticker,
+        :currency,
+        :buyer_id,
+        :seller_id,
+        :buy_order_id,
+        :sell_order_id,
+        :price,
+        :size,
+        :acknowledged_at,
+        :buy_commission,
+        :sell_commission,
+        :buy_total,
+        :sell_total
+      ]),
+      opts
+    )
+  end
 end

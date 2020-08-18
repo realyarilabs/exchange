@@ -9,4 +9,20 @@ defmodule Exchange.Adapters.MessageBus.OrderExpired do
   typedstruct do
     field(:order, Exchange.Order.order(), enforce: true)
   end
+
+  def decode_from_jason(data) do
+    order = Map.get(data, :order)
+    %Exchange.Adapters.MessageBus.OrderExpired{order: Exchange.Order.decode_from_jason(order)}
+  end
+end
+
+defimpl Jason.Encoder, for: Exchange.Adapters.MessageBus.OrderExpired do
+  def encode(value, opts) do
+    Jason.Encode.map(
+      Map.take(value, [
+        :order
+      ]),
+      opts
+    )
+  end
 end
