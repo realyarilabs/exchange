@@ -11,13 +11,13 @@ defmodule Exchange.TimeSeries do
       @behaviour Exchange.TimeSeries
       alias Exchange.Adapters.Helpers
 
-      def validate_config do
-        Helpers.validate_config(@required_config, Application.get_env(:exchange, __MODULE__, []))
+      def validate_config(config \\ []) do
+        keys = Helpers.validate_config(@required_config, config, __MODULE__)
       end
 
       @on_load :validate_dependency
       def validate_dependency do
-        Helpers.validate_dependency(@required_deps)
+        keys = Helpers.validate_dependency(@required_deps, __MODULE__)
       end
     end
   end

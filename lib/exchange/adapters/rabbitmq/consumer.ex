@@ -100,8 +100,7 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
   rescue
     exception ->
       :ok = Basic.reject(channel, tag, requeue: not redelivered)
-      IO.inspect(exception)
-      Logger.warn("Error converting payload")
+      Logger.warn("Error converting payload: #{inspect(exception)}")
   end
 
   def handle_info(

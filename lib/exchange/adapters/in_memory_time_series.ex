@@ -26,7 +26,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
         {:cast_event, :trade_executed, %Exchange.Adapters.MessageBus.TradeExecuted{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing trade: #{inspect(payload.trade)}")
+    Logger.info("[InMemoryTimeSeries] Processing trade: #{inspect(payload.trade)}")
 
     state =
       payload.trade

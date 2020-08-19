@@ -34,9 +34,6 @@ defmodule Exchange.Application do
     if time_series_module == nil do
       {:error, "Invalid time series adapter"}
     else
-      time_series_module.validate_dependency()
-      time_series_module.validate_config()
-
       case time_series_module do
         Exchange.Adapters.InMemoryTimeSeries ->
           {:ok,
@@ -45,9 +42,13 @@ defmodule Exchange.Application do
            ]}
 
         Exchange.Adapters.Flux ->
+          time_series_module.validate_config(
+            Application.get_env(:exchange, Exchange.Adapters.Flux.Connection)
+          )
+
           {:ok,
            [
-             Exchange.Adapters.Flux,
+             Exchange.Adapters.Flux.Connection,
              Exchange.Adapters.Flux.EventListener
            ]}
 
@@ -68,9 +69,6 @@ defmodule Exchange.Application do
     if message_bus_module == nil do
       {:error, "Invalid message bus adapter"}
     else
-      message_bus_module.validate_dependency()
-      message_bus_module.validate_config()
-
       case message_bus_module do
         Exchange.Adapters.RabbitBus ->
           {:ok,

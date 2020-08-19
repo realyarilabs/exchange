@@ -9,7 +9,7 @@ defmodule Exchange.Adapters.Flux do
           port: System.get_env("FLUX_DB_PORT") || 8086`
   """
   use Exchange.TimeSeries, required_config: [:database, :host, :port], required_deps: [Instream]
-  use Instream.Connection, otp_app: :exchange
+
   alias Exchange.Adapters.Flux.{Orders, Trades}
 
   def completed_trades_by_id(ticker, trader_id) do

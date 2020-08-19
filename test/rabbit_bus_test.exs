@@ -1,11 +1,12 @@
 defmodule RabbitBusTest do
   use ExUnit.Case
+  alias Exchange.Adapters.RabbitBus
 
   setup_all _context do
     Supervisor.start_link(
       [
-        Exchange.Adapters.RabbitBus.Consumer,
-        Exchange.Adapters.RabbitBus.Producer
+        RabbitBus.Consumer,
+        RabbitBus.Producer
       ],
       strategy: :one_for_one,
       name: RabbitBusTest.Supervisor
@@ -22,8 +23,8 @@ defmodule RabbitBusTest do
     test "Order queued" do
       order = Exchange.Utils.sample_order(%{size: 1000, price: 4000, side: :buy})
       order = %Exchange.Order{order | ticker: :AUXLND}
-      Exchange.Adapters.RabbitBus.add_listener(:order_queued)
-      Exchange.Adapters.RabbitBus.cast_event(:order_queued, order)
+      RabbitBus.add_listener(:order_queued)
+      RabbitBus.cast_event(:order_queued, order)
 
       received_order =
         receive do
@@ -39,8 +40,8 @@ defmodule RabbitBusTest do
     test "Order cancelled" do
       order = Exchange.Utils.sample_order(%{size: 1000, price: 4000, side: :buy})
       order = %Exchange.Order{order | ticker: :AUXLND}
-      Exchange.Adapters.RabbitBus.add_listener(:order_cancelled)
-      Exchange.Adapters.RabbitBus.cast_event(:order_cancelled, order)
+      RabbitBus.add_listener(:order_cancelled)
+      RabbitBus.cast_event(:order_cancelled, order)
 
       received_order =
         receive do
@@ -56,8 +57,8 @@ defmodule RabbitBusTest do
     test "Order expired" do
       order = Exchange.Utils.sample_order(%{size: 1000, price: 4000, side: :buy})
       order = %Exchange.Order{order | ticker: :AUXLND}
-      Exchange.Adapters.RabbitBus.add_listener(:order_expired)
-      Exchange.Adapters.RabbitBus.cast_event(:order_expired, order)
+      RabbitBus.add_listener(:order_expired)
+      RabbitBus.cast_event(:order_expired, order)
 
       received_order =
         receive do
@@ -80,12 +81,12 @@ defmodule RabbitBusTest do
         consideration_currency: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         good_until: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         last_modified: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        limit: :rand.uniform(10000),
+        limit: :rand.uniform(10_000),
         order_id: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         order_time: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         order_value: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        quantity: :rand.uniform(10000),
-        quantity_matched: :rand.uniform(10000),
+        quantity: :rand.uniform(10_000),
+        quantity_matched: :rand.uniform(10_000),
         security_id: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         status_code: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
         total_commission: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
@@ -94,8 +95,8 @@ defmodule RabbitBusTest do
         type_code: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>)
       }
 
-      Exchange.Adapters.RabbitBus.add_listener(:order_placed)
-      Exchange.Adapters.RabbitBus.cast_event(:order_placed, order_placed)
+      RabbitBus.add_listener(:order_placed)
+      RabbitBus.cast_event(:order_placed, order_placed)
 
       received_order =
         receive do
@@ -115,8 +116,8 @@ defmodule RabbitBusTest do
         bid_max: :rand.uniform(1000)
       }
 
-      Exchange.Adapters.RabbitBus.add_listener(:price_broadcast)
-      Exchange.Adapters.RabbitBus.cast_event(:price_broadcast, price_info)
+      RabbitBus.add_listener(:price_broadcast)
+      RabbitBus.cast_event(:price_broadcast, price_info)
 
       received_price =
         receive do
@@ -137,11 +138,11 @@ defmodule RabbitBusTest do
       order_2 = Exchange.Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
       order_2 = %Exchange.Order{order_2 | ticker: :AUXLND}
       trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
-      Exchange.Adapters.RabbitBus.add_listener(:order_queued)
-      Exchange.Adapters.RabbitBus.add_listener(:trade_executed)
-      Exchange.Adapters.RabbitBus.cast_event(:order_queued, order_1)
-      Exchange.Adapters.RabbitBus.cast_event(:order_queued, order_2)
-      Exchange.Adapters.RabbitBus.cast_event(:trade_executed, trade_1)
+      RabbitBus.add_listener(:order_queued)
+      RabbitBus.add_listener(:trade_executed)
+      RabbitBus.cast_event(:order_queued, order_1)
+      RabbitBus.cast_event(:order_queued, order_2)
+      RabbitBus.cast_event(:trade_executed, trade_1)
 
       messages =
         1..3
@@ -166,10 +167,10 @@ defmodule RabbitBusTest do
       order_2 = Exchange.Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
       order_2 = %Exchange.Order{order_2 | ticker: :AUXLND}
       trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
-      Exchange.Adapters.RabbitBus.add_listener(:trade_executed)
-      Exchange.Adapters.RabbitBus.cast_event(:order_queued, order_1)
-      Exchange.Adapters.RabbitBus.cast_event(:order_queued, order_2)
-      Exchange.Adapters.RabbitBus.cast_event(:trade_executed, trade_1)
+      RabbitBus.add_listener(:trade_executed)
+      RabbitBus.cast_event(:order_queued, order_1)
+      RabbitBus.cast_event(:order_queued, order_2)
+      RabbitBus.cast_event(:trade_executed, trade_1)
 
       messages =
         1..3

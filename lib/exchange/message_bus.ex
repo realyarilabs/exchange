@@ -11,12 +11,13 @@ defmodule Exchange.MessageBus do
       @behaviour Exchange.MessageBus
       alias Exchange.Adapters.Helpers
 
-      def validate_config do
-        Helpers.validate_config(@required_config, Application.get_env(:exchange, __MODULE__, []))
+      def validate_config(config \\ []) do
+        Helpers.validate_config(@required_config, config, __MODULE__)
       end
 
+      @on_load :validate_dependency
       def validate_dependency do
-        Helpers.validate_dependency(@required_deps)
+        Helpers.validate_dependency(@required_deps, __MODULE__)
       end
     end
   end

@@ -7,13 +7,15 @@ defmodule Exchange.Adapters.Helpers do
   @doc """
   Evaluates if the required configuration is defined
 
+
   ## Parameters
     - required_config: list of atoms containing the required configuration
     - config: current configuration
 
   """
-  @spec validate_config([atom], Keyword.t()) :: :ok | no_return
-  def validate_config(required_config, config) do
+
+  @spec validate_config([atom], Keyword.t(), atom) :: :ok | no_return
+  def validate_config(required_config, config, module) do
     missing_keys =
       Enum.reduce(required_config, [], fn key, missing_keys ->
         if config[key] in [nil, ""],
@@ -21,13 +23,18 @@ defmodule Exchange.Adapters.Helpers do
           else: missing_keys
       end)
 
-    raise_on_missing_config(missing_keys, config)
+    raise_on_missing_config(missing_keys, config, module)
   end
 
-  defp raise_on_missing_config([], _config), do: :ok
+  defp raise_on_missing_config([], _config, _module), do: :ok
 
-  defp raise_on_missing_config(key, config) do
-    Logger.error("expected #{inspect(key)} to be set, got: #{inspect(config)}")
+  defp raise_on_missing_config(key, config, module) do
+    Logger.error(
+      "When using #{inspect(module)} are expected #{inspect(key)} to be set, got: #{
+        inspect(config)
+      }"
+    )
+
     raise ArgumentError, "missing configuration"
   end
 
@@ -37,8 +44,8 @@ defmodule Exchange.Adapters.Helpers do
   ## Parameters
     - required_deps: list containing the required dependencies
   """
-  @spec validate_dependency([module | {atom, module}]) :: :ok | no_return
-  def validate_dependency(required_deps) do
+  @spec validate_dependency([module | {atom, module}], module) :: :ok | no_return
+  def validate_dependency(required_deps, module) do
     missing_dependencies =
       Enum.reduce(required_deps, [], fn dep, acc_missing_dependencies ->
         dep_loaded =
@@ -57,14 +64,14 @@ defmodule Exchange.Adapters.Helpers do
         end
       end)
 
-    raise_on_missing_dependency(missing_dependencies)
+    raise_on_missing_dependency(missing_dependencies, module)
   end
 
-  defp raise_on_missing_dependency([]), do: :ok
+  defp raise_on_missing_dependency([], _), do: :ok
 
-  defp raise_on_missing_dependency(keys) do
+  defp raise_on_missing_dependency(keys, module) do
     Logger.error(
-      "Expected module(s) #{inspect(keys)} to be loaded. Add them to the dependencies and run mix deps.get."
+      "Expected module(s) #{inspect(keys)} to be loaded when using #{module}. Add them to the dependencies and run mix deps.get."
     )
 
     raise ArgumentError, "missing dependecies."
