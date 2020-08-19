@@ -23,12 +23,14 @@ defmodule Exchange.Adapters.Flux.Orders do
   @doc """
   Saves an order from the order book on InfluxDB
   """
+  @spec save_order!(order_params :: map) :: any()
   def save_order!(order_params) do
     order_params
     |> convert_into_flux
     |> Flux.write()
   end
 
+  @spec get_live_orders(ticker :: atom()) :: list()
   def get_live_orders(ticker) do
     response =
       ~s(SELECT * FROM orders WHERE size > 0 AND ticker = '#{ticker}')

@@ -1,11 +1,12 @@
 defmodule Exchange.Adapters.Flux do
   @moduledoc """
-  Documentation for a Flux adapter
-  default configuration
-    config :exchange, Exchange.Adapters.Flux.Connection,
-        database: System.get_env("FLUX_DB_NAME") || "dbname",
-        host: System.get_env("FLUX_DB_HOST") || "localhost",
-        port: System.get_env("FLUX_DB_PORT") || 8086,
+  Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
+  This module uses the InfluxDB to write and query the data
+
+        config :exchange, Exchange.Adapters.Flux.Connection,
+          database: System.get_env("FLUX_DB_NAME") || "dbname",
+          host: System.get_env("FLUX_DB_HOST") || "localhost",
+          port: System.get_env("FLUX_DB_PORT") || 8086`
   """
   use Exchange.TimeSeries, required_config: [:database, :host, :port], required_deps: [Instream]
   use Instream.Connection, otp_app: :exchange

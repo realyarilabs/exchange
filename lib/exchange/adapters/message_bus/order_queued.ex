@@ -10,15 +10,16 @@ defmodule Exchange.Adapters.MessageBus.OrderQueued do
     field(:order, Exchange.Order.order(), enforce: true)
   end
 
-  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderQueued.t()
   @doc """
-  Decodes the payload to an OrderQueued struct
+  Decodes the params to an OrderQueued struct
   ## Parameters
-    - payload: map with necessary parameters to populate the struct
+    - params: map with necessary parameters to populate the struct
   """
-  def decode_from_jason(data) do
-    order = Map.get(data, :order)
-    %Exchange.Adapters.MessageBus.OrderQueued{order: Exchange.Order.decode_from_jason(order)}
+  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderQueued.t()
+  def decode_from_jason(params) do
+    order = Map.get(params, :order)
+    order = Exchange.Order.decode_from_jason(order)
+    %Exchange.Adapters.MessageBus.OrderQueued{order: order}
   end
 end
 

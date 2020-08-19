@@ -10,14 +10,14 @@ defmodule Exchange.Adapters.MessageBus.OrderCancelled do
     field(:order, Exchange.Order.order(), enforce: true)
   end
 
-  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderCancelled.t()
   @doc """
-  Decodes the payload to an OrderCancelled struct
+  Decodes the params to an OrderCancelled struct
   ## Parameters
-    - payload: map with necessary parameters to populate the struct
+    - params: map with necessary parameters to populate the struct
   """
-  def decode_from_jason(data) do
-    order = Map.get(data, :order)
+  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderCancelled.t()
+  def decode_from_jason(params) do
+    order = Map.get(params, :order)
     %Exchange.Adapters.MessageBus.OrderCancelled{order: Exchange.Order.decode_from_jason(order)}
   end
 end

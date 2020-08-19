@@ -23,6 +23,7 @@ defmodule Exchange.Adapters.Flux.Prices do
     |> Flux.write()
   end
 
+  @spec delete_all_prices! :: any
   def delete_all_prices! do
     "drop series from prices"
     |> Flux.query(method: :post)

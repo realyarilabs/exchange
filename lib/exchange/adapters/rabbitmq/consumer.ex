@@ -25,10 +25,12 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
   Removes a subscriber of event
   """
   def handle_call({:remove_listener, event, subscriber}, _, %{chan: _, subs: subs} = state) do
-    event_subs = Map.get(subs, event, [])
-    event_subs = List.delete(event_subs, subscriber)
-    subs = Map.put(subs, event, event_subs)
-    state = Map.put(state, :subs, subs)
+    event_subs =
+      Map.get(subs, event, [])
+      |> List.delete(subscriber)
+
+    # subs = Map.put(subs, event, event_subs)
+    state = put_in(state[:subs][event], event_subs)
     {:reply, :ok, state}
   end
 
@@ -41,8 +43,9 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
     state =
       if !Enum.member?(event_subs, subscriber) do
         event_subs = [subscriber | event_subs]
-        subs = Map.put(subs, event, event_subs)
-        Map.put(state, :subs, subs)
+        put_in(state[:subs][event], event_subs)
+        # subs = Map.put(subs, event, event_subs)
+        # Map.put(state, :subs, subs)
       end
 
     {:reply, :ok, state}
@@ -85,7 +88,6 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
 
     json_payload = Map.get(message, :payload)
     payload = Jason.decode!(json_payload, keys: :atoms)
-
     data = event_type.decode_from_jason(payload)
 
     subs
@@ -98,7 +100,8 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
   rescue
     exception ->
       :ok = Basic.reject(channel, tag, requeue: not redelivered)
-      Logger.warn("<#{exception}:Error converting payload")
+      IO.inspect(exception)
+      Logger.warn("Error converting payload")
   end
 
   def handle_info(

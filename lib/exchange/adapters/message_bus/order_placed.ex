@@ -26,33 +26,31 @@ defmodule Exchange.Adapters.MessageBus.OrderPlaced do
     field(:type_code, String.t(), enforce: true)
   end
 
-  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderPlaced.t()
   @doc """
-  Decodes the payload to an OrderPlaced struct
+  Decodes the params to an OrderPlaced struct
   ## Parameters
-    - payload: map with necessary parameters to populate the struct
+    - params: map with necessary parameters to populate the struct
   """
-  def decode_from_jason(data) do
-    order = Map.get(data, :order)
-
+  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderPlaced.t()
+  def decode_from_jason(params) do
     %Exchange.Adapters.MessageBus.OrderPlaced{
-      action_indicator: Map.get(order, :action_indicator),
-      client_trans_ref: Map.get(order, :client_trans_ref),
-      consideration_currency: Map.get(order, :consideration_currency),
-      good_until: Map.get(order, :good_until),
-      last_modified: Map.get(order, :last_modified),
-      limit: Map.get(order, :limit),
-      order_id: Map.get(order, :order_id),
-      order_time: Map.get(order, :order_time),
-      order_value: Map.get(order, :order_value),
-      quantity: Map.get(order, :quantity),
-      quantity_matched: Map.get(order, :quantity_matched),
-      security_id: Map.get(order, :security_id),
-      status_code: Map.get(order, :status_code),
-      total_commission: Map.get(order, :total_commission),
-      total_consideration: Map.get(order, :total_consideration),
-      trade_type: Map.get(order, :trade_type),
-      type_code: Map.get(order, :type_code)
+      action_indicator: Map.get(params, :action_indicator),
+      client_trans_ref: Map.get(params, :client_trans_ref),
+      consideration_currency: Map.get(params, :consideration_currency),
+      good_until: Map.get(params, :good_until),
+      last_modified: Map.get(params, :last_modified),
+      limit: Map.get(params, :limit),
+      order_id: Map.get(params, :order_id),
+      order_time: Map.get(params, :order_time),
+      order_value: Map.get(params, :order_value),
+      quantity: Map.get(params, :quantity),
+      quantity_matched: Map.get(params, :quantity_matched),
+      security_id: Map.get(params, :security_id),
+      status_code: Map.get(params, :status_code),
+      total_commission: Map.get(params, :total_commission),
+      total_consideration: Map.get(params, :total_consideration),
+      trade_type: Map.get(params, :trade_type),
+      type_code: Map.get(params, :type_code)
     }
   end
 end

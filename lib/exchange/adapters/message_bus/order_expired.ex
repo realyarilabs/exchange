@@ -10,8 +10,14 @@ defmodule Exchange.Adapters.MessageBus.OrderExpired do
     field(:order, Exchange.Order.order(), enforce: true)
   end
 
-  def decode_from_jason(data) do
-    order = Map.get(data, :order)
+  @doc """
+  Decodes the params to an OrderExpired struct
+  ## Parameters
+    - params: map with necessary parameters to populate the struct
+  """
+  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.OrderExpired.t()
+  def decode_from_jason(params) do
+    order = Map.get(params, :order)
     %Exchange.Adapters.MessageBus.OrderExpired{order: Exchange.Order.decode_from_jason(order)}
   end
 end

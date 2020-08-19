@@ -28,8 +28,8 @@ defmodule Exchange.Trade do
   def decode_from_jason(trade) do
     %Exchange.Trade{
       trade_id: Map.get(trade, :trade_id),
-      ticker: Map.get(trade, :ticker),
-      currency: Map.get(trade, :currency),
+      ticker: Map.get(trade, :ticker) |> String.to_atom(),
+      currency: Map.get(trade, :currency) |> String.to_atom(),
       buyer_id: Map.get(trade, :buyer_id),
       seller_id: Map.get(trade, :seller_id),
       buy_order_id: Map.get(trade, :buy_order_id),
@@ -38,7 +38,7 @@ defmodule Exchange.Trade do
       size: Map.get(trade, :size),
       buy_init_size: Map.get(trade, :buy_init_size),
       sell_init_size: Map.get(trade, :sell_init_size),
-      type: Map.get(trade, :type),
+      type: Map.get(trade, :type) |> String.to_atom(),
       acknowledged_at: Map.get(trade, :acknowledged_at)
     }
   end

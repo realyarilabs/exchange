@@ -25,6 +25,7 @@ defmodule Exchange.Adapters.Flux.Trades do
     field(:acknowledged_at)
   end
 
+  @spec completed_trades_by_id(ticker :: atom(), trader_id :: String.t()) :: list()
   def completed_trades_by_id(ticker, trader_id) do
     response =
       ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{

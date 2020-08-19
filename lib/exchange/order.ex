@@ -42,18 +42,27 @@ defmodule Exchange.Order do
   """
   @spec decode_from_jason(map) :: Exchange.Order.order()
   def decode_from_jason(order) do
+    ticker = Map.get(order, :ticker)
+
+    ticker =
+      if is_atom(ticker) do
+        ticker
+      else
+        String.to_atom(ticker)
+      end
+
     %Exchange.Order{
       order_id: Map.get(order, :order_id),
       trader_id: Map.get(order, :trader_id),
-      side: String.to_atom(Map.get(order, :side)),
+      side: Map.get(order, :side) |> String.to_atom(),
       price: Map.get(order, :price),
       size: Map.get(order, :size),
       initial_size: Map.get(order, :initial_size),
-      type: String.to_atom(Map.get(order, :type)),
+      type: Map.get(order, :type) |> String.to_atom(),
       exp_time: Map.get(order, :exp_time),
       acknowledged_at: Map.get(order, :acknowledged_at),
       modified_at: Map.get(order, :modified_at),
-      ticker: Map.get(order, :ticker) |> String.to_atom()
+      ticker: ticker
     }
   end
 end
