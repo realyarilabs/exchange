@@ -22,13 +22,13 @@ if Code.ensure_loaded?(Instream) do
     def save_price!(price_params) do
       price_params
       |> convert_into_flux
-      |> Flux.write()
+      |> Flux.Connection.write()
     end
 
     @spec delete_all_prices! :: any
     def delete_all_prices! do
       "drop series from prices"
-      |> Flux.query(method: :post)
+      |> Flux.Connection.query(method: :post)
     end
 
     defp convert_into_flux(price_params) do

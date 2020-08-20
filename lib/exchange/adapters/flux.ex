@@ -10,17 +10,19 @@ defmodule Exchange.Adapters.Flux do
   """
   use Exchange.TimeSeries, required_config: [:database, :host, :port], required_deps: [Instream]
 
-  alias Exchange.Adapters.Flux.{Orders, Trades}
+  if Code.ensure_loaded?(Instream) do
+    alias Exchange.Adapters.Flux.{Orders, Trades}
 
-  def completed_trades(ticker) do
-    Flux.Trades.completed_trades(ticker)
-  end
+    def completed_trades(ticker) do
+      Trades.completed_trades(ticker)
+    end
 
-  def completed_trades_by_id(ticker, trader_id) do
-    Trades.completed_trades_by_id(ticker, trader_id)
-  end
+    def completed_trades_by_id(ticker, trader_id) do
+      Trades.completed_trades_by_id(ticker, trader_id)
+    end
 
-  def get_live_orders(ticker) do
-    Orders.get_live_orders(ticker)
+    def get_live_orders(ticker) do
+      Orders.get_live_orders(ticker)
+    end
   end
 end
