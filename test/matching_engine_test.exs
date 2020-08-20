@@ -642,6 +642,17 @@ defmodule MatchingEngineTest do
       assert total_active == ids
     end
 
+    test "get open order by id" do
+      order_1 = Utils.sample_order(%{size: 2000, price: 3200, side: :buy})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+
+      MatchingEngine.place_limit_order(:KAPPA, order_1)
+
+      {:ok, order} = MatchingEngine.open_order_by_id(:KAPPA, "100")
+
+      assert order == order_1
+    end
+
     test "Multiple order placing" do
       ids = ~w(alchemist0 alchemist0 alchemist1 alchemist2 alchemist3 alchemist4
                 alchemist5 alchemist6 alchemist7 alchemist8)
