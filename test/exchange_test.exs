@@ -18,7 +18,7 @@ defmodule ExchangeTest do
 
   describe "Multi ticker" do
     setup _context do
-      {:ok, %{config: Application.get_env(:exchange, Exchange.Application, [])[:tickers]}}
+      {:ok, %{config: Application.get_env(:exchange, :tickers, [])}}
     end
 
     test "Check if the configurated tickers are up", %{config: config} do
