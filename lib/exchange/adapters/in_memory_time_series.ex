@@ -187,6 +187,11 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     GenServer.call(:in_memory_time_series, {:trades_by_id, ticker, trader_id})
   end
 
+  @spec completed_trades(ticker :: atom) :: [Exchange.Trade]
+  def completed_trades(_ticker) do
+    []
+  end
+
   @spec get_live_orders(ticker :: atom) :: [Exchange.Order]
   def get_live_orders(ticker) do
     {:ok, orders} = GenServer.call(:in_memory_time_series, {:live_orders, ticker})
