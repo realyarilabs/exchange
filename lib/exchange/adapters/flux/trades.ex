@@ -1,10 +1,10 @@
-if Code.ensure_loaded?(Instream) do
+if Code.ensure_loaded?(InstreamConnection) do
   defmodule Exchange.Adapters.Flux.Trades do
     @moduledoc """
     InfluxDB support for Trades
     """
 
-    use Instream.Series
+    use InstreamConnection.Series
     alias Exchange.Adapters.Flux
 
     series do
