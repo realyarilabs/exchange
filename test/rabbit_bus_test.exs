@@ -3,6 +3,8 @@ defmodule RabbitBusTest do
   alias Exchange.Adapters.RabbitBus
 
   setup_all _context do
+    RabbitBus.setup_resources()
+
     Supervisor.start_link(
       [
         RabbitBus.Consumer,
