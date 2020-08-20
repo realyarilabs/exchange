@@ -120,6 +120,19 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:reply, {:ok, in_memory_orders}, state}
   end
 
+  def handle_call({:completed_trades, ticker}, _from, state) do
+    {:ok, trades} = Map.fetch(state, :trades)
+
+    in_memory_trades =
+      trades
+      |> Enum.flat_map(fn {_ts, queue} -> queue end)
+      |> Enum.filter(fn trade ->
+        trade.ticker == ticker
+      end)
+
+    {:reply, {:ok, in_memory_trades}, state}
+  end
+
   @spec save(item :: any, timestamp :: number, state :: map) :: map
   def save(item, timestamp, state_map) do
     current_queue =
@@ -146,7 +159,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :prices, update_prices)
   end
 
-  @spec save_trade(Exchange.Order, map) :: map
+  @spec save_order(Exchange.Order, map) :: map
   def save_order(order, state) do
     ack_time = order.acknowledged_at
     {:ok, orders} = Map.fetch(state, :orders)
@@ -187,8 +200,9 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   @spec completed_trades(ticker :: atom) :: [Exchange.Trade]
-  def completed_trades(_ticker) do
-    []
+  def completed_trades(ticker) do
+    {:ok, trades} = GenServer.call(:in_memory_time_series, {:completed_trades, ticker})
+    trades
   end
 
   @spec get_live_orders(ticker :: atom) :: [Exchange.Order]
