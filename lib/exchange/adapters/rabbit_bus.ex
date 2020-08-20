@@ -1,6 +1,7 @@
 defmodule Exchange.Adapters.RabbitBus do
   @moduledoc """
   Public API to use the adapter of `Exchange.MessageBus`, the RabbitBus.
+  To use this adapter is necessary to add the AMQP to the dependencies.
   """
   use Exchange.MessageBus, required_config: [], required_deps: [amqp: AMQP]
   alias AMQP.{Channel, Connection, Queue}

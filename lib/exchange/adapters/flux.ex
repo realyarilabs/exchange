@@ -2,7 +2,7 @@ defmodule Exchange.Adapters.Flux do
   @moduledoc """
   Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
   This module uses the InfluxDB to write and query the data
-
+  To use this adapter is necessary to add the Instream to the dependencies.
         config :exchange, Exchange.Adapters.Flux.Connection,
           database: System.get_env("FLUX_DB_NAME") || "dbname",
           host: System.get_env("FLUX_DB_HOST") || "localhost",
