@@ -23,8 +23,7 @@ defmodule Exchange.Adapters.TestEventBus do
     Agent.update(__MODULE__, fn _q -> Qex.new() end)
   end
 
-  @events ~w(trade_executed order_queued order_cancelled order_expired
-             transaction_open order_placed trade_processed price_broadcast)a
+  @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
   @doc """
   Checks if the `key` is a valid event, if it is valid return `:ok` otherwise returns `:error`
@@ -66,11 +65,9 @@ defmodule Exchange.Adapters.TestEventBus do
   @spec cast_event(
           :order_cancelled
           | :order_expired
-          | :order_placed
           | :order_queued
           | :price_broadcast
-          | :trade_executed
-          | :trade_processed,
+          | :trade_executed,
           any
         ) :: nil | :ok
   def cast_event(:order_cancelled, payload),
@@ -82,14 +79,8 @@ defmodule Exchange.Adapters.TestEventBus do
   def cast_event(:order_expired, payload),
     do: dispatch_event(:order_expired, payload)
 
-  def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed, payload)
-
   def cast_event(:order_queued, payload),
     do: dispatch_event(:order_queued, payload)
-
-  def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed, payload)
 
   def cast_event(:price_broadcast, payload),
     do: dispatch_event(:price_broadcast, payload)
