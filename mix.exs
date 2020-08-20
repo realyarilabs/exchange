@@ -4,7 +4,7 @@ defmodule Exchange.MixProject do
   def project do
     [
       app: :exchange,
-      version: "0.1.1",
+      version: "0.2.0",
       build_path: "_build",
       config_path: "config/config.exs",
       deps_path: "deps",
@@ -23,6 +23,7 @@ defmodule Exchange.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
+      xref: [exclude: [AMQP]],
       description: description(),
       package: package()
     ]
@@ -48,7 +49,9 @@ defmodule Exchange.MixProject do
       {:ex_doc, "~> 0.22", only: :dev, runtime: false},
       {:excoveralls, "~> 0.10", only: :test},
       {:mox, "~> 0.5.1", only: :test},
-      {:money, "~> 1.7"}
+      {:money, "~> 1.7"},
+      {:instream, github: "mneudert/instream"},
+      {:amqp, "~> 1.0"}
     ]
   end
 

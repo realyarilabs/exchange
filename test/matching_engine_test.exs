@@ -642,6 +642,17 @@ defmodule MatchingEngineTest do
       assert total_active == ids
     end
 
+    test "get open order by id" do
+      order_1 = Utils.sample_order(%{size: 2000, price: 3200, side: :buy})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100"}
+
+      MatchingEngine.place_limit_order(:KAPPA, order_1)
+
+      {:ok, order} = MatchingEngine.open_order_by_id(:KAPPA, "100")
+
+      assert order == order_1
+    end
+
     test "Multiple order placing" do
       ids = ~w(alchemist0 alchemist0 alchemist1 alchemist2 alchemist3 alchemist4
                 alchemist5 alchemist6 alchemist7 alchemist8)
@@ -836,18 +847,18 @@ defmodule MatchingEngineTest do
       order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
       order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
       order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
-      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit)
-      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit)
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
       trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
 
       InMemoryTimeSeries.cast_event(
         :trade_executed,
-        %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_1}
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :trade_executed,
-        %Exchange.Adapters.EventBus.TradeExecuted{trade: trade_2}
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_2}
       )
 
       {_code, ts_trade_1} = InMemoryTimeSeries.completed_trades_by_id(:AGPT, "alchemist0")
@@ -856,6 +867,36 @@ defmodule MatchingEngineTest do
 
       assert ts_trade_1 == [trade_1]
       assert ts_trade_2 == [trade_2]
+    end
+
+    test "get completed trades" do
+      order_1 = Utils.sample_order(%{size: 1200, price: 3000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
+      order_3 = Utils.sample_order(%{size: 500, price: 3000, side: :buy})
+      order_4 = Utils.sample_order(%{size: 700, price: 3000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", ticker: :AGPT}
+      order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
+      order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
+      order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
+      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_1}
+      )
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_2}
+      )
+
+      trades =
+        InMemoryTimeSeries.completed_trades(:AGPT)
+        |> Enum.sort()
+
+      assert trades == Enum.sort([trade_1, trade_2])
     end
 
     test "check if orders are queued" do
@@ -867,12 +908,12 @@ defmodule MatchingEngineTest do
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_2}
       )
 
       ts_ids =
@@ -902,22 +943,22 @@ defmodule MatchingEngineTest do
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_2}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_expired,
-        %Exchange.Adapters.EventBus.OrderExpired{order: order_1}
+        %Exchange.Adapters.MessageBus.OrderExpired{order: order_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_expired,
-        %Exchange.Adapters.EventBus.OrderExpired{order: order_2}
+        %Exchange.Adapters.MessageBus.OrderExpired{order: order_2}
       )
 
       ts_orders =
@@ -957,22 +998,22 @@ defmodule MatchingEngineTest do
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_1}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_queued,
-        %Exchange.Adapters.EventBus.OrderQueued{order: order_2}
+        %Exchange.Adapters.MessageBus.OrderQueued{order: order_2}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_cancelled,
-        %Exchange.Adapters.EventBus.OrderCancelled{order: order_1}
+        %Exchange.Adapters.MessageBus.OrderCancelled{order: order_1}
       )
 
       InMemoryTimeSeries.cast_event(
         :order_cancelled,
-        %Exchange.Adapters.EventBus.OrderCancelled{order: order_2}
+        %Exchange.Adapters.MessageBus.OrderCancelled{order: order_2}
       )
 
       ts_orders =
@@ -1002,19 +1043,19 @@ defmodule MatchingEngineTest do
     end
 
     test "check if prices are broadcasted" do
-      price_broadcast_event_1 = %Exchange.Adapters.EventBus.PriceBroadcast{
+      price_broadcast_event_1 = %Exchange.Adapters.MessageBus.PriceBroadcast{
         ticker: :AGPT,
         ask_min: 1001,
         bid_max: 99_999
       }
 
-      price_broadcast_event_2 = %Exchange.Adapters.EventBus.PriceBroadcast{
+      price_broadcast_event_2 = %Exchange.Adapters.MessageBus.PriceBroadcast{
         ticker: :BTCUS,
         ask_min: 5000,
         bid_max: 70_012
       }
 
-      price_broadcast_event_3 = %Exchange.Adapters.EventBus.PriceBroadcast{
+      price_broadcast_event_3 = %Exchange.Adapters.MessageBus.PriceBroadcast{
         ticker: :AUXLND,
         ask_min: 2000,
         bid_max: 80_000
@@ -1037,7 +1078,7 @@ defmodule MatchingEngineTest do
                  price_broadcast_event_2,
                  price_broadcast_event_3
                ]
-               |> Enum.map(fn %Exchange.Adapters.EventBus.PriceBroadcast{
+               |> Enum.map(fn %Exchange.Adapters.MessageBus.PriceBroadcast{
                                 ask_min: ask_min,
                                 bid_max: bid_max,
                                 ticker: ticker

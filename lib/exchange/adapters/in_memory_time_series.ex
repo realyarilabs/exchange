@@ -4,6 +4,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   This adapter is an approach of an in memory time series database and it keeps state about orders, prices and trades.
   """
   use GenServer
+  use Exchange.TimeSeries, required_config: [], required_deps: []
   require Logger
 
   def start_link(_) do
@@ -22,10 +23,10 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :trade_executed, %Exchange.Adapters.EventBus.TradeExecuted{} = payload},
+        {:cast_event, :trade_executed, %Exchange.Adapters.MessageBus.TradeExecuted{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing trade: #{inspect(payload.trade)}")
+    Logger.info("[InMemoryTimeSeries] Processing trade: #{inspect(payload.trade)}")
 
     state =
       payload.trade
@@ -35,19 +36,19 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_queued, %Exchange.Adapters.EventBus.OrderQueued{} = payload},
+        {:cast_event, :order_queued, %Exchange.Adapters.MessageBus.OrderQueued{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
     state = save_order(payload.order, state)
     {:noreply, state}
   end
 
   def handle_info(
-        {:cast_event, :order_cancelled, %Exchange.Adapters.EventBus.OrderCancelled{} = payload},
+        {:cast_event, :order_cancelled, %Exchange.Adapters.MessageBus.OrderCancelled{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
     order = payload.order
 
     state =
@@ -58,11 +59,11 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :order_expired, %Exchange.Adapters.EventBus.OrderExpired{} = expired_order},
+        {:cast_event, :order_expired, %Exchange.Adapters.MessageBus.OrderExpired{} = payload},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(expired_order.order)}")
-    order = expired_order.order
+    Logger.info("[InMemoryTimeSeries] Processing Order: #{inspect(payload.order)}")
+    order = payload.order
 
     state =
       %{order | size: 0}
@@ -72,10 +73,10 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   def handle_info(
-        {:cast_event, :price_broadcast, %Exchange.Adapters.EventBus.PriceBroadcast{} = price},
+        {:cast_event, :price_broadcast, %Exchange.Adapters.MessageBus.PriceBroadcast{} = price},
         state
       ) do
-    # Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
+    Logger.info("[InMemoryTimeSeries] Processing Price: #{inspect(price)}")
 
     state =
       %{ticker: price.ticker, ask_min: price.ask_min, bid_max: price.bid_max}
@@ -119,6 +120,19 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:reply, {:ok, in_memory_orders}, state}
   end
 
+  def handle_call({:completed_trades, ticker}, _from, state) do
+    {:ok, trades} = Map.fetch(state, :trades)
+
+    in_memory_trades =
+      trades
+      |> Enum.flat_map(fn {_ts, queue} -> queue end)
+      |> Enum.filter(fn trade ->
+        trade.ticker == ticker
+      end)
+
+    {:reply, {:ok, in_memory_trades}, state}
+  end
+
   @spec save(item :: any, timestamp :: number, state :: map) :: map
   def save(item, timestamp, state_map) do
     current_queue =
@@ -145,7 +159,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :prices, update_prices)
   end
 
-  @spec save_trade(Exchange.Order, map) :: map
+  @spec save_order(Exchange.Order, map) :: map
   def save_order(order, state) do
     ack_time = order.acknowledged_at
     {:ok, orders} = Map.fetch(state, :orders)
@@ -161,8 +175,8 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :trades, update_trades)
   end
 
-  @spec cast_event(event :: atom, payload :: Exchange.Adapters.EventBus.*()) ::
-          Exchange.Adapters.EventBus.*()
+  @spec cast_event(event :: atom, payload :: Exchange.Adapters.MessageBus.*()) ::
+          Exchange.Adapters.MessageBus.*()
   def cast_event(event, payload) do
     send(:in_memory_time_series, {:cast_event, event, payload})
   end
@@ -180,11 +194,15 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Application.get_env(:exchange, :message_bus_adapter)
   end
 
-  @behaviour Exchange.TimeSeries
-
   @spec completed_trades_by_id(ticker :: atom, trader_id :: String.t()) :: [Exchange.Trade]
   def completed_trades_by_id(ticker, trader_id) do
     GenServer.call(:in_memory_time_series, {:trades_by_id, ticker, trader_id})
+  end
+
+  @spec completed_trades(ticker :: atom) :: [Exchange.Trade]
+  def completed_trades(ticker) do
+    {:ok, trades} = GenServer.call(:in_memory_time_series, {:completed_trades, ticker})
+    trades
   end
 
   @spec get_live_orders(ticker :: atom) :: [Exchange.Order]

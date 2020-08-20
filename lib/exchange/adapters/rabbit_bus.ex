@@ -1,52 +1,53 @@
-defmodule Exchange.Adapters.EventBus do
+defmodule Exchange.Adapters.RabbitBus do
   @moduledoc """
-  Public API to use the adapter of `Exchange.MessageBus`, the Event Bus.
-  This module uses the Registry to un/register processes under a event and send messages to the registered processes.
+  Public API to use the adapter of `Exchange.MessageBus`, the RabbitBus.
+  To use this adapter is necessary to add the AMQP to the dependencies.
   """
-  alias Exchange.Adapters.MessageBus
+  use Exchange.MessageBus, required_config: [], required_deps: [amqp: AMQP]
+  alias AMQP.{Channel, Connection, Queue}
 
-  use Exchange.MessageBus, required_config: [], required_deps: []
+  alias Exchange.Adapters.MessageBus
+  @exchange "event_exchange"
+  @queue "event_queue"
+  @queue_error "#{@queue}_error"
   @events ~w(trade_executed order_queued order_cancelled order_expired
              transaction_open order_placed trade_processed price_broadcast)a
 
   @doc """
-  Adds the process calling this function to the `Registry` under the given `key`
+  It calls the consumer server and it adds the process calling to the subscribers of the event.
 
   ## Parameters
     - key: Event to register the process
   """
-  @spec add_listener(any) :: :error | :ok
+  @spec add_listener(key :: String.t()) :: :error | :ok
   def add_listener(key) do
     if Enum.member?(@events, key) do
-      {:ok, _} = Registry.register(Exchange.Adapters.EventBus.Registry, key, [])
-      :ok
+      GenServer.call(:rabbitmq_consumer, {:add_listener, key, self()})
     else
       :error
     end
   end
 
   @doc """
-  Removes the process calling this function to the `Registry`
+  It calls the consumer server and it removes the process calling from the subscribers of the event.
 
   ## Parameters
     - key: Event to register the process
   """
-  @spec remove_listener(any) :: :error | :ok
+  @spec remove_listener(key :: String.t()) :: :error | :ok
   def remove_listener(key) do
     if Enum.member?(@events, key) do
-      Registry.unregister(Exchange.Adapters.EventBus.Registry, key)
+      GenServer.call(:rabbitmq_consumer, {:remove_listener, key, self()})
     else
       :error
     end
   end
 
   @doc """
-  Sends a message to all registered processes under the permitted events.
-  The `payload` is sent through the `Registry` module using `dispatch/3`
+  It calls the producer server and sends it the event and the payload to be casted.
 
   ## Parameters
-    - key: Payload's event type
-    - payload: Data to be sent to the processes
+    - key: Event to register the process
   """
   @spec cast_event(
           :order_cancelled
@@ -88,9 +89,31 @@ defmodule Exchange.Adapters.EventBus do
 
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do
-      Registry.dispatch(Exchange.Adapters.EventBus.Registry, key, fn entries ->
-        for {pid, _} <- entries, do: send(pid, {:cast_event, key, payload})
-      end)
+      GenServer.call(:rabbitmq_producer, {:cast, key, payload})
     end
+  end
+
+  @doc """
+  Creates the necessary exchange and queue to this adapter and binds them.
+  """
+  @spec setup_resources() :: :ok
+  def setup_resources do
+    {:ok, conn} = Connection.open()
+    {:ok, chan} = Channel.open(conn)
+    {:ok, _} = Queue.declare(chan, @queue_error, durable: true)
+
+    # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
+    {:ok, _} =
+      Queue.declare(chan, @queue,
+        durable: true,
+        arguments: [
+          {"x-dead-letter-exchange", :longstr, ""},
+          {"x-dead-letter-routing-key", :longstr, @queue_error}
+        ]
+      )
+
+    :ok = AMQP.Exchange.direct(chan, @exchange, durable: true)
+    :ok = Queue.bind(chan, @queue, @exchange)
+    Connection.close(conn)
   end
 end

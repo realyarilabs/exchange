@@ -143,6 +143,14 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), {:open_orders_by_trader, trader_id})
   end
 
+  @doc """
+  Returns the open order from a order_id
+  """
+  @spec open_order_by_id(ticker, String.t()) :: {atom, list()}
+  def open_order_by_id(ticker, order_id) do
+    GenServer.call(via_tuple(ticker), {:open_order_by_id, order_id})
+  end
+
   defp via_tuple(ticker) do
     {:via, Registry, {:matching_engine_registry, ticker}}
   end
@@ -162,7 +170,7 @@ defmodule Exchange.MatchingEngine do
       ask_min: max_price - 1,
       bid_max: min_price + 1,
       max_price: max_price,
-      min_price: min_price || 0
+      min_price: min_price
     }
 
     order_book = order_book_restore!(order_book)
@@ -250,6 +258,11 @@ defmodule Exchange.MatchingEngine do
     open_orders_by_trader = Exchange.OrderBook.open_orders_by_trader(order_book, trader_id)
 
     {:reply, {:ok, open_orders_by_trader}, order_book}
+  end
+
+  def handle_call({:open_order_by_id, order_id}, _from, order_book) do
+    order = Exchange.OrderBook.fetch_order_by_id(order_book, order_id)
+    {:reply, {:ok, order}, order_book}
   end
 
   def handle_call(:spread, _from, order_book) do
