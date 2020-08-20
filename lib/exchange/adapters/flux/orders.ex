@@ -28,14 +28,14 @@ if Code.ensure_loaded?(Instream) do
     def save_order!(order_params) do
       order_params
       |> convert_into_flux
-      |> Flux.write()
+      |> Flux.Connection.write()
     end
 
     @spec get_live_orders(ticker :: atom()) :: list()
     def get_live_orders(ticker) do
       response =
         ~s(SELECT * FROM orders WHERE size > 0 AND ticker = '#{ticker}')
-        |> Flux.query(precision: :nanosecond)
+        |> Flux.Connection.query(precision: :nanosecond)
 
       if response.results == [%{statement_id: 0}] do
         []
@@ -46,7 +46,7 @@ if Code.ensure_loaded?(Instream) do
 
     def delete_all_orders! do
       "drop series from orders"
-      |> Flux.query(method: :post)
+      |> Flux.Connection.query(method: :post)
     end
 
     defp convert_into_flux(order_params) do

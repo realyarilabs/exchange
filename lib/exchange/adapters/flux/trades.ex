@@ -26,11 +26,11 @@ if Code.ensure_loaded?(Instream) do
       field(:acknowledged_at)
     end
 
-    @spec completed_trades_by_id(ticker :: atom(), trader_id :: String.t()) :: list()
-    def completed_trades_by_id(ticker, trader_id) do
+    @spec completed_trades(ticker :: atom()) :: list()
+    def completed_trades(ticker) do
       response =
         ~s(SELECT * FROM trades WHERE ticker = '#{ticker}')
-        |> Flux.query(precision: :nanosecond)
+        |> Flux.Connection.query(precision: :nanosecond)
 
       if response.results == [%{statement_id: 0}] do
         []
@@ -45,7 +45,7 @@ if Code.ensure_loaded?(Instream) do
         ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{
           ticker
         }')
-        |> Flux.query(precision: :nanosecond)
+        |> Flux.Connection.query(precision: :nanosecond)
 
       if response.results == [%{statement_id: 0}] do
         []
@@ -74,7 +74,7 @@ if Code.ensure_loaded?(Instream) do
           },
           tags: %{data.tags | seller_id: t.seller_id, buyer_id: t.buyer_id}
       }
-      |> Flux.write()
+      |> Flux.Connection.write()
     end
   end
 end
