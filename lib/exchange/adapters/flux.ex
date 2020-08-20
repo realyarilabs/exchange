@@ -12,6 +12,10 @@ defmodule Exchange.Adapters.Flux do
 
   alias Exchange.Adapters.Flux.{Orders, Trades}
 
+  def completed_trades(ticker) do
+    Flux.Trades.completed_trades(ticker)
+  end
+
   def completed_trades_by_id(ticker, trader_id) do
     Trades.completed_trades_by_id(ticker, trader_id)
   end

@@ -858,6 +858,36 @@ defmodule MatchingEngineTest do
       assert ts_trade_2 == [trade_2]
     end
 
+    test "get completed trades" do
+      order_1 = Utils.sample_order(%{size: 1200, price: 3000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
+      order_3 = Utils.sample_order(%{size: 500, price: 3000, side: :buy})
+      order_4 = Utils.sample_order(%{size: 700, price: 3000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", ticker: :AGPT}
+      order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
+      order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
+      order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
+      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_1}
+      )
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_2}
+      )
+
+      trades =
+        InMemoryTimeSeries.completed_trades(:AGPT)
+        |> Enum.sort()
+
+      assert trades == Enum.sort([trade_1, trade_2])
+    end
+
     test "check if orders are queued" do
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
