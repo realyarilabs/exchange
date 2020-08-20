@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Instream) do
+if Code.ensure_loaded?(Instream.Connection) do
   defmodule Exchange.Adapters.Flux.Connection do
     @moduledoc """
     Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
