@@ -1,16 +1,18 @@
-defmodule Exchange.Adapters.Flux do
-  @moduledoc """
-  Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
-  This module uses the InfluxDB to write and query the data
-  To use this adapter is necessary to add the Instream to the dependencies.
-        config :exchange, Exchange.Adapters.Flux.Connection,
-          database: System.get_env("FLUX_DB_NAME") || "dbname",
-          host: System.get_env("FLUX_DB_HOST") || "localhost",
-          port: System.get_env("FLUX_DB_PORT") || 8086`
-  """
-  use Exchange.TimeSeries, required_config: [:database, :host, :port], required_deps: [Instream]
+if Code.ensure_loaded?(Instream.Connection) do
+  defmodule Exchange.Adapters.Flux do
+    @moduledoc """
+    Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
+    This module uses the InfluxDB to write and query the data
+    To use this adapter is necessary to add the Instream.Connection to the dependencies.
+          config :exchange, Exchange.Adapters.Flux.Connection,
+            database: System.get_env("FLUX_DB_NAME") || "dbname",
+            host: System.get_env("FLUX_DB_HOST") || "localhost",
+            port: System.get_env("FLUX_DB_PORT") || 8086`
+    """
+    use Exchange.TimeSeries,
+      required_config: [:database, :host, :port],
+      required_deps: [Instream.Connection]
 
-  if Code.ensure_loaded?(Instream) do
     alias Exchange.Adapters.Flux.{Orders, Trades}
 
     def completed_trades(ticker) do
