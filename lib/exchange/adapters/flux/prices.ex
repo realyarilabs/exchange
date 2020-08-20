@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(InstreamConnection) do
+if Code.ensure_loaded?(Instream.Connection) do
   defmodule Exchange.Adapters.Flux.Prices do
     @moduledoc """
     InfluxDB support for Prices
@@ -6,7 +6,7 @@ if Code.ensure_loaded?(InstreamConnection) do
 
     alias Exchange.Adapters.Flux
 
-    use InstreamConnection.Series
+    use Instream.Series
 
     series do
       measurement("prices")

@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(InstreamConnection) do
+if Code.ensure_loaded?(Instream.Connection) do
   defmodule Exchange.Adapters.Flux.Connection do
     @moduledoc """
     Public API to use the adapter of `Exchange.TimeSeries`, the Flux.
@@ -9,6 +9,6 @@ if Code.ensure_loaded?(InstreamConnection) do
             host: System.get_env("FLUX_DB_HOST") || "localhost",
             port: System.get_env("FLUX_DB_PORT") || 8086
     """
-    use InstreamConnection.Connection, otp_app: :exchange
+    use Instream.Connection, otp_app: :exchange
   end
 end

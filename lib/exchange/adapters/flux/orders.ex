@@ -1,9 +1,9 @@
-if Code.ensure_loaded?(InstreamConnection) do
+if Code.ensure_loaded?(Instream.Connection) do
   defmodule Exchange.Adapters.Flux.Orders do
     @moduledoc """
     InfluxDB support for Orders
     """
-    use InstreamConnection.Series
+    use Instream.Series
     alias Exchange.Adapters.Flux
 
     series do
