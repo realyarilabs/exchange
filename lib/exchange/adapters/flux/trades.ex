@@ -29,6 +29,19 @@ if Code.ensure_loaded?(Instream) do
     @spec completed_trades_by_id(ticker :: atom(), trader_id :: String.t()) :: list()
     def completed_trades_by_id(ticker, trader_id) do
       response =
+        ~s(SELECT * FROM trades WHERE ticker = '#{ticker}')
+        |> Flux.query(precision: :nanosecond)
+
+      if response.results == [%{statement_id: 0}] do
+        []
+      else
+        Flux.Trades.from_result(response)
+      end
+    end
+
+    @spec completed_trades_by_id(ticker :: atom(), trader_id :: String.t()) :: list()
+    def completed_trades_by_id(ticker, trader_id) do
+      response =
         ~s(SELECT * FROM trades WHERE buyer_id = '#{trader_id}' or seller_id = '#{trader_id}' and ticker = '#{
           ticker
         }')
