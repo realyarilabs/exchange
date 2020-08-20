@@ -3,6 +3,25 @@ defmodule Exchange.MessageBus do
   Behaviour that a message library adapter must implement
   in order to communicate with the Exchange
   """
+
+  defmacro __using__(opts) do
+    quote bind_quoted: [opts: opts] do
+      @required_config opts[:required_config] || []
+      @required_deps opts[:required_deps] || []
+      @behaviour Exchange.MessageBus
+      alias Exchange.Adapters.Helpers
+
+      def validate_config(config \\ []) do
+        Helpers.validate_config(@required_config, config, __MODULE__)
+      end
+
+      @on_load :validate_dependency
+      def validate_dependency do
+        Helpers.validate_dependency(@required_deps, __MODULE__)
+      end
+    end
+  end
+
   @doc """
   The current process subscribes to event of type key
 

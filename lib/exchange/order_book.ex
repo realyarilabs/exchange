@@ -180,7 +180,7 @@ defmodule Exchange.OrderBook do
         :partial_fill
       end
 
-    new_trade = Exchange.Trade.generate_trade(order, matched_order, type)
+    new_trade = Exchange.Trade.generate_trade(order, matched_order, type, order_book.currency)
     trades = order_book.completed_trades ++ [new_trade]
 
     %{order_book | completed_trades: trades}
@@ -764,10 +764,7 @@ defmodule Exchange.OrderBook do
   @spec open_orders_by_trader(
           order_book :: Exchange.OrderBook.order_book(),
           trader_id :: String.t()
-        ) ::
-          [
-            Exchange.Order.order()
-          ]
+        ) :: [Exchange.Order.order()]
   def open_orders_by_trader(order_book, trader_id) do
     order_book
     |> open_orders()

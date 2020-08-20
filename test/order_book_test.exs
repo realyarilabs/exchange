@@ -193,7 +193,7 @@ defmodule OrderBookTest do
                seller_id: "alchemist5",
                sell_order_id: "1",
                ticker: :AUXLND,
-               currency: :gbp
+               currency: :GBP
              } = trade
 
       assert new_book.ask_min == 4010
@@ -219,7 +219,7 @@ defmodule OrderBookTest do
                buyer_id: "alchemist1",
                sell_order_id: "9",
                ticker: :AUXLND,
-               currency: :gbp
+               currency: :GBP
              } = trade
 
       assert new_book.ask_min == 4010
@@ -327,7 +327,7 @@ defmodule OrderBookTest do
       refute OrderBook.fetch_order_by_id(new_book, "5")
       refute OrderBook.fetch_order_by_id(new_book, "8")
       assert Enum.count(new_book.completed_trades) == 3
-      assert [{"alchemist9", 2000, "9", :gbp, 4010}] == buyer_details
+      assert [{"alchemist9", 2000, "9", :GBP, 4010}] == buyer_details
       assert total_size == buy_order.initial_size
       assert new_book.ask_min == 4020
       assert new_book.bid_max == 4000
@@ -349,7 +349,7 @@ defmodule OrderBookTest do
       refute OrderBook.fetch_order_by_id(new_book, "4")
       refute OrderBook.fetch_order_by_id(new_book, "6")
       assert Enum.count(new_book.completed_trades) == 2
-      assert [{"alchemist9", 750, "9", :gbp, 4000}] == seller_details
+      assert [{"alchemist9", 750, "9", :GBP, 4000}] == seller_details
       assert total_size == sell_order.initial_size
       assert new_book.ask_min == 4010
       assert new_book.bid_max == 3970
