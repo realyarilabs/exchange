@@ -4,7 +4,7 @@ defmodule Exchange.MixProject do
   def project do
     [
       app: :exchange,
-      version: "0.1.0",
+      version: "0.1.1",
       build_path: "_build",
       config_path: "config/config.exs",
       deps_path: "deps",
@@ -15,7 +15,7 @@ defmodule Exchange.MixProject do
       package: package(),
       deps: deps(),
       name: "Exchange",
-      source_url: "https://github.com/realyarilabs/alchemist_exchange",
+      source_url: "https://github.com/realyarilabs/exchange",
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
@@ -61,10 +61,9 @@ defmodule Exchange.MixProject do
 
   defp package do
     [
-      files: ~w(lib test tasks .formatter.exs mix.exs README* readme* LICENSE*
-                license* CHANGELOG* changelog* src),
-      # licenses: ["Apache-2.0"],
-      links: %{"GitHub" => "https://github.com/realyarilabs/alchemist_exchange"}
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/realyarilabs/exchange"}
     ]
   end
 end
