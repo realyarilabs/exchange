@@ -24,7 +24,7 @@ defmodule Exchange.Utils do
   """
   @spec fetch_all_completed_trades(ticker :: atom) :: list
   def fetch_all_completed_trades(ticker) do
-    time_series().completed_trades_by_id(ticker)
+    time_series().completed_trades(ticker)
   end
 
   @doc """
