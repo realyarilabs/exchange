@@ -54,6 +54,20 @@ if Code.ensure_loaded?(Instream.Connection) do
       end
     end
 
+    @spec get_completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) ::
+            Exchange.Trade
+    def get_completed_trade_by_trade_id(ticker, trade_id) do
+      response =
+        ~s(SELECT * FROM trades WHERE trade_id = '#{trade_id}' and ticker = '#{ticker}')
+        |> Flux.Connection.query(precision: :nanosecond)
+
+      if response.results == [%{statement_id: 0}] do
+        []
+      else
+        Flux.Trades.from_result(response)
+      end
+    end
+
     def process_trade!(trade_params) do
       data = %Flux.Trades{}
       t = trade_params
