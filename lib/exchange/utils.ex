@@ -385,9 +385,9 @@ defmodule Exchange.Utils do
       initial_size: size,
       size: size,
       type: type,
-      exp_time: :os.system_time(:millisecond),
+      exp_time: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
       ticker: ticker,
-      acknowledged_at: :os.system_time(:nanosecond)
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     }
   end
 

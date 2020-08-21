@@ -167,7 +167,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
 
   @spec save_price(price :: map, state :: map) :: map
   def save_price(price, state) do
-    current_time = :os.system_time(:nanosecond)
+    current_time = DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     {:ok, prices} = Map.fetch(state, :prices)
     update_prices = save(price, current_time, prices)
     Map.put(state, :prices, update_prices)

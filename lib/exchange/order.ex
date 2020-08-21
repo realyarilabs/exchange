@@ -16,8 +16,8 @@ defmodule Exchange.Order do
             initial_size: 0,
             type: :market,
             exp_time: nil,
-            acknowledged_at: :os.system_time(:nanosecond),
-            modified_at: :os.system_time(:nanosecond),
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
+            modified_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
             ticker: nil
 
   @type price_in_cents :: integer

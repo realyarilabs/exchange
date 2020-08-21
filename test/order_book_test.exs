@@ -62,8 +62,8 @@ defmodule OrderBookTest do
     end
 
     test "orders with expiration are added to expiration_list", %{order_book: ob} do
-      t1 = :os.system_time(:millisecond)
-      t2 = :os.system_time(:millisecond) - 1000
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+      t2 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1000
 
       buy_order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
@@ -86,7 +86,7 @@ defmodule OrderBookTest do
     end
 
     test "orders fullfilled are not added to expiration_list", %{order_book: ob} do
-      t1 = :os.system_time(:millisecond)
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
       buy_order =
         Utils.sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
@@ -95,8 +95,8 @@ defmodule OrderBookTest do
       assert new_book.expiration_list == []
     end
 
-    test "order is automatically  cancelled on expiration time", %{order_book: ob} do
-      t = :os.system_time(:millisecond) - 1
+    test "order is automatically cancelled on expiration time", %{order_book: ob} do
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1
 
       order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
@@ -109,7 +109,7 @@ defmodule OrderBookTest do
     end
 
     test "flushing expired orders from order_book", %{order_book: ob} do
-      t = :os.system_time(:millisecond) - 1
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1
 
       order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})

@@ -361,7 +361,7 @@ defmodule Exchange.MatchingEngine do
     if OrderBook.order_exists?(order_book, order_id) do
       cancelled_order = OrderBook.fetch_order_by_id(order_book, order_id)
 
-      current_time = :os.system_time(:millisecond)
+      current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
       if (is_integer(cancelled_order.exp_time) and
             cancelled_order.exp_time < current_time) or !is_integer(cancelled_order.exp_time) do
