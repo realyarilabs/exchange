@@ -183,7 +183,7 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:millisecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     sell_book =
       [
