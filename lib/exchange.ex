@@ -127,13 +127,24 @@ defmodule Exchange do
   Returns a list of all active orders
 
   ## Parameters
-
-    - order_id: String that represents the id of the order to cancel
     - ticker: Atom that represents on which market the query should be placed
   """
   @spec open_orders(ticker :: atom) :: {atom, list}
   def open_orders(ticker) do
     Exchange.MatchingEngine.open_orders(ticker)
+  end
+
+  @doc """
+  Returns an order by id.
+
+  ## Parameters
+    - ticker: Atom that represents on which market the query should be placed
+    - order_id: String that represents the id of the order to cancel
+  """
+  @spec open_orders_by_id(ticker :: atom, order_id :: String.t()) ::
+          {atom, Exchange.Order.order()}
+  def open_orders_by_id(ticker, order_id) do
+    Exchange.MatchingEngine.open_order_by_id(ticker, order_id)
   end
 
   @doc """
@@ -196,5 +207,17 @@ defmodule Exchange do
   @spec total_sell_orders(ticker :: atom) :: {atom, number}
   def total_sell_orders(ticker) do
     Exchange.MatchingEngine.total_ask_orders(ticker)
+  end
+
+  @doc """
+  Returns all the completed trades
+
+  ## Parameters
+
+    - ticker: Atom that represents on which market the query should made
+  """
+  @spec completed_trades(ticker :: atom) :: {atom, list()}
+  def completed_trades(ticker) do
+    Exchange.Utils.fetch_all_completed_trades(ticker)
   end
 end
