@@ -17,7 +17,7 @@ defmodule Exchange.Validations do
 
     - order_params: Map that represents the parameters on an `Exchange.Order`.
   """
-  @spec cast_order(%{type: :limit | :market | :marketable_limit}) ::
+  @spec cast_order(map) ::
           {:ok, Exchange.Order.order()} | {:error, String.t()}
   def cast_order(%{type: :limit} = order_params) do
     validate(order_params)
