@@ -6,8 +6,7 @@ defmodule Exchange.Adapters.EventBus do
   alias Exchange.Adapters.MessageBus
 
   use Exchange.MessageBus, required_config: [], required_deps: []
-  @events ~w(trade_executed order_queued order_cancelled order_expired
-             transaction_open order_placed trade_processed price_broadcast)a
+  @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
   @doc """
   Adds the process calling this function to the `Registry` under the given `key`
@@ -51,11 +50,9 @@ defmodule Exchange.Adapters.EventBus do
   @spec cast_event(
           :order_cancelled
           | :order_expired
-          | :order_placed
           | :order_queued
           | :price_broadcast
-          | :trade_executed
-          | :trade_processed,
+          | :trade_executed,
           any
         ) :: nil | :ok
   def cast_event(:order_cancelled, payload),
@@ -67,14 +64,8 @@ defmodule Exchange.Adapters.EventBus do
   def cast_event(:order_expired, payload),
     do: dispatch_event(:order_expired, %MessageBus.OrderExpired{order: payload})
 
-  def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed, %MessageBus.OrderPlaced{} = payload)
-
   def cast_event(:order_queued, payload),
     do: dispatch_event(:order_queued, %MessageBus.OrderQueued{order: payload})
-
-  def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed, %MessageBus.TradeProcessed{} = payload)
 
   def cast_event(:price_broadcast, payload) do
     price_broadcast_event = %MessageBus.PriceBroadcast{

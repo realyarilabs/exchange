@@ -72,12 +72,6 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
         :order_expired ->
           Exchange.Adapters.MessageBus.OrderExpired
 
-        :order_placed ->
-          Exchange.Adapters.MessageBus.OrderPlaced
-
-        :trade_processed ->
-          Exchange.Adapters.MessageBus.TradeProcessed
-
         :price_broadcast ->
           Exchange.Adapters.MessageBus.PriceBroadcast
 
