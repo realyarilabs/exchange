@@ -246,7 +246,7 @@ defmodule Exchange.OrderBook do
         price_points_queue
         |> Enum.filter(fn order ->
           if is_integer(order.exp_time) do
-            current_time = :os.system_time(:millisecond)
+            current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
             if order.exp_time < current_time do
               false
@@ -557,7 +557,7 @@ defmodule Exchange.OrderBook do
   @spec check_expired_orders!(order_book :: Exchange.OrderBook.order_book()) ::
           Exchange.OrderBook.order_book()
   def(check_expired_orders!(order_book)) do
-    current_time = :os.system_time(:millisecond)
+    current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
     order_book.expiration_list
     |> Enum.take_while(fn {ts, _id} -> ts < current_time end)

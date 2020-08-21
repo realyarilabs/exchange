@@ -17,7 +17,7 @@ defmodule Exchange.Trade do
             buy_init_size: nil,
             sell_init_size: nil,
             type: :full_fill,
-            acknowledged_at: :os.system_time(:nanosecond)
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
 
   @spec decode_from_jason(map) :: Exchange.Trade
   @doc """
@@ -77,7 +77,7 @@ defmodule Exchange.Trade do
       size: min(order.size, matched_order.size),
       price: matched_order.price,
       type: type,
-      acknowledged_at: :os.system_time(:nanosecond),
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
       ticker: t1,
       currency: currency
     }

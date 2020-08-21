@@ -151,8 +151,8 @@ defmodule MatchingEngineTest do
     end
 
     test "orders with expiration are added to expiration_list" do
-      t1 = :os.system_time(:millisecond)
-      t2 = :os.system_time(:millisecond) - 1000
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+      t2 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1000
 
       buy_order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
@@ -175,7 +175,7 @@ defmodule MatchingEngineTest do
     end
 
     test "orders fullfilled are not added to expiration_list" do
-      t1 = :os.system_time(:millisecond)
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
       buy_order =
         Utils.sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
@@ -186,7 +186,7 @@ defmodule MatchingEngineTest do
     end
 
     test "order is automatically cancelled on expiration time" do
-      t = :os.system_time(:millisecond) - 1
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1
 
       order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
@@ -764,7 +764,7 @@ defmodule MatchingEngineTest do
 
     test "Check if order_expired event is correctly broadcasted" do
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
-      t = :os.system_time(:millisecond) - 2000
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 2000
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t}
 
       MatchingEngine.place_limit_order(:BTCUS, order_1)
@@ -849,7 +849,7 @@ defmodule MatchingEngineTest do
       order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
       trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
       trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
-      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+      trade_1 = %{trade_1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)}
 
       InMemoryTimeSeries.cast_event(
         :trade_executed,
@@ -880,7 +880,7 @@ defmodule MatchingEngineTest do
       order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
       trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
       trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
-      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+      trade_1 = %{trade_1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)}
 
       InMemoryTimeSeries.cast_event(
         :trade_executed,
@@ -935,8 +935,8 @@ defmodule MatchingEngineTest do
     test "check if orders are expired" do
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
-      t1 = :os.system_time(:millisecond) - 2000
-      t2 = :os.system_time(:millisecond) - 2000
+      t1 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 2000
+      t2 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 2000
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t1}
       order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
       ids = ~w(100 9 100 9)
@@ -990,8 +990,8 @@ defmodule MatchingEngineTest do
     test "check if orders are cancelled" do
       order_1 = Utils.sample_order(%{size: 1000, price: 1010, side: :buy})
       order_2 = Utils.sample_order(%{size: 1000, price: 5000, side: :sell})
-      t1 = :os.system_time(:millisecond) - 2000
-      t2 = :os.system_time(:millisecond) - 2000
+      t1 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 2000
+      t2 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 2000
       order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", exp_time: t1}
       order_2 = %Order{order_2 | trader_id: "alchemist0", exp_time: t2}
       ids = ~w(100 9 100 9)
@@ -1099,7 +1099,7 @@ defmodule MatchingEngineTest do
       order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
       trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
       trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
-      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+      trade_1 = %{trade_1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)}
 
       InMemoryTimeSeries.cast_event(
         :trade_executed,

@@ -196,7 +196,7 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     sell_book =
       [
@@ -237,7 +237,7 @@ defmodule Exchange.Utils do
           price: 4020
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     (buy_book ++ sell_book)
     |> Enum.each(fn order ->
@@ -296,7 +296,7 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     sell_book =
       [
@@ -341,7 +341,7 @@ defmodule Exchange.Utils do
           price: 4020
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     order_book = %Exchange.OrderBook{
       name: ticker,
@@ -385,9 +385,9 @@ defmodule Exchange.Utils do
       initial_size: size,
       size: size,
       type: type,
-      exp_time: :os.system_time(:millisecond),
+      exp_time: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
       ticker: ticker,
-      acknowledged_at: :os.system_time(:nanosecond)
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     }
   end
 
