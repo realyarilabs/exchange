@@ -770,7 +770,7 @@ defmodule Exchange.OrderBook do
   end
 
   @doc """
-  Returns the lastest price from a side of the order book
+  Returns the lastest size from a side of the order book
 
   ## Parameters
     - order_book: OrderBook used to search the orders
