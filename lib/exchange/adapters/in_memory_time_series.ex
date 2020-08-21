@@ -159,7 +159,7 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     Map.put(state, :prices, update_prices)
   end
 
-  @spec save_order(Exchange.Order, map) :: map
+  @spec save_order(Exchange.Order.order(), map) :: map
   def save_order(order, state) do
     ack_time = order.acknowledged_at
     {:ok, orders} = Map.fetch(state, :orders)

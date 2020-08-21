@@ -19,7 +19,7 @@ defmodule Exchange.Trade do
             type: :full_fill,
             acknowledged_at: :os.system_time(:nanosecond)
 
-  @spec decode_from_jason(map) :: Exchange.Trade
+  @spec decode_from_jason(map) :: %Exchange.Trade{}
   @doc """
   Decodes the payload to a Trade struct
   ## Parameters
