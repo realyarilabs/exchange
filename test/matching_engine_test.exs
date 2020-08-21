@@ -1087,5 +1087,35 @@ defmodule MatchingEngineTest do
                end)
                |> Enum.sort()
     end
+
+    test "get completed trade by id" do
+      order_1 = Utils.sample_order(%{size: 1200, price: 3000, side: :buy})
+      order_2 = Utils.sample_order(%{size: 1000, price: 2900, side: :sell})
+      order_3 = Utils.sample_order(%{size: 500, price: 3000, side: :buy})
+      order_4 = Utils.sample_order(%{size: 700, price: 3000, side: :sell})
+      order_1 = %Order{order_1 | trader_id: "alchemist0", order_id: "100", ticker: :AGPT}
+      order_2 = %Order{order_2 | trader_id: "alchemist1", order_id: "101", ticker: :AGPT}
+      order_3 = %Order{order_3 | trader_id: "alchemist2", order_id: "102", ticker: :AGPT}
+      order_4 = %Order{order_4 | trader_id: "alchemist3", order_id: "103", ticker: :AGPT}
+      trade_1 = Exchange.Trade.generate_trade(order_1, order_2, :limit, :EUR)
+      trade_2 = Exchange.Trade.generate_trade(order_3, order_4, :limit, :EUR)
+      trade_1 = %{trade_1 | acknowledged_at: :os.system_time(:nanosecond)}
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_1}
+      )
+
+      InMemoryTimeSeries.cast_event(
+        :trade_executed,
+        %Exchange.Adapters.MessageBus.TradeExecuted{trade: trade_2}
+      )
+
+      get_trade_1 = InMemoryTimeSeries.get_completed_trade_by_trade_id(:AGPT, trade_1.trade_id)
+      get_trade_2 = InMemoryTimeSeries.get_completed_trade_by_trade_id(:AGPT, trade_2.trade_id)
+
+      assert get_trade_1 == trade_1
+      assert get_trade_2 == trade_2
+    end
   end
 end

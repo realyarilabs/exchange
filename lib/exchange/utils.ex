@@ -28,6 +28,19 @@ defmodule Exchange.Utils do
   end
 
   @doc """
+  Fetches the completed stored by a `Exchange.TimeSeries` adapter given a ticker and a trade id.
+
+  ## Parameters
+    - ticker: Market where the fetch should be made
+    - trade_id: Id of the requested trade
+  """
+  @spec fetch_completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) ::
+          Exchange.Trade
+  def fetch_completed_trade_by_trade_id(ticker, trade_id) do
+    time_series().get_completed_trade_by_trade_id(ticker, trade_id)
+  end
+
+  @doc """
   Fetches the active orders stored by a `Exchange.TimeSeries` adapter given a ticker
 
   ## Parameters

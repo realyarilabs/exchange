@@ -216,8 +216,21 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should made
   """
-  @spec completed_trades(ticker :: atom) :: {atom, list()}
+  @spec completed_trades(ticker :: atom) :: list
   def completed_trades(ticker) do
     Exchange.Utils.fetch_all_completed_trades(ticker)
+  end
+
+  @doc """
+  Returns the trade with trade_id
+
+  ## Parameters
+
+    - ticker: Atom that represents on which market the query should made
+    - trade_id: Id of the requested trade
+  """
+  @spec completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) :: Exchange.Trade.t()
+  def completed_trade_by_trade_id(ticker, trade_id) do
+    Exchange.Utils.fetch_completed_trade_by_trade_id(ticker, trade_id)
   end
 end

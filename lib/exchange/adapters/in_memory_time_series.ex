@@ -107,6 +107,20 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     {:reply, {:ok, trades_by_id}, state}
   end
 
+  def handle_call({:trade_by_trade_id, ticker, trade_id}, _from, state) do
+    {:ok, trades} = Map.fetch(state, :trades)
+
+    trade =
+      trades
+      |> Enum.flat_map(fn {_ts, queue} -> queue end)
+      |> Enum.filter(fn trade ->
+        trade.trade_id == trade_id and trade.ticker == ticker
+      end)
+      |> List.first()
+
+    {:reply, {:ok, trade}, state}
+  end
+
   def handle_call({:live_orders, ticker}, _from, state) do
     {:ok, orders} = Map.fetch(state, :orders)
 
@@ -209,5 +223,11 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   def get_live_orders(ticker) do
     {:ok, orders} = GenServer.call(:in_memory_time_series, {:live_orders, ticker})
     orders
+  end
+
+  @spec get_completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) :: Exchange.Trade
+  def get_completed_trade_by_trade_id(ticker, trade_id) do
+    {:ok, trade} = GenServer.call(:in_memory_time_series, {:trade_by_trade_id, ticker, trade_id})
+    trade
   end
 end
