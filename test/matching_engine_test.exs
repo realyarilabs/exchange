@@ -674,6 +674,17 @@ defmodule MatchingEngineTest do
       assert Enum.count(active) == 2
       assert total_active == ids
     end
+
+    test "Last price and size" do
+      {:ok, last_buy_price} = MatchingEngine.last_price(:KAPPA, :buy)
+      {:ok, last_buy_size} = MatchingEngine.last_size(:KAPPA, :buy)
+      {:ok, last_sell_price} = MatchingEngine.last_price(:KAPPA, :sell)
+      {:ok, last_sell_size} = MatchingEngine.last_size(:KAPPA, :sell)
+      assert last_buy_price == 3960
+      assert last_buy_size == 150
+      assert last_sell_price == 4020
+      assert last_sell_size == 250
+    end
   end
 
   describe "Message bus" do
