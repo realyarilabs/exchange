@@ -1,7 +1,5 @@
 defmodule Exchange.OrderBook do
   @moduledoc """
-  # Order Book Struct
-
   The Order Book is the Exchange main data structure. It holds the Order Book
   in Memory where the MatchingEngine realizes the matches and register the Trades.
 
@@ -769,5 +767,54 @@ defmodule Exchange.OrderBook do
     order_book
     |> open_orders()
     |> Enum.filter(fn order -> order.trader_id == trader_id end)
+  end
+
+  @doc """
+  Returns the lastest price from a side of the order book
+
+  ## Parameters
+    - order_book: OrderBook used to search the orders
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_size(
+          order_book :: Exchange.OrderBook.order_book(),
+          side :: atom
+        ) :: number
+  def last_size(order_book, side) do
+    order = get_latest_order(order_book, side)
+
+    case order do
+      nil -> 0
+      _ -> order.size
+    end
+  end
+
+  @doc """
+  Returns the lastest price from a side of the order book
+
+  ## Parameters
+    - order_book: OrderBook used to search the orders
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_price(
+          order_book :: Exchange.OrderBook.order_book(),
+          side :: atom
+        ) :: number
+  def last_price(order_book, side) do
+    order = get_latest_order(order_book, side)
+
+    case order do
+      nil -> 0
+      _ -> order.price
+    end
+  end
+
+  defp get_latest_order(order_book, side) do
+    case side do
+      :buy -> order_book.buy
+      :sell -> order_book.sell
+    end
+    |> Enum.flat_map(fn {_k, v} -> v end)
+    |> Enum.max_by(fn order -> order.acknowledged_at end)
   end
 end

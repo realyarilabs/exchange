@@ -624,6 +624,19 @@ defmodule OrderBookTest do
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.total_ask_orders(new_order_book) == 3
     end
+
+    test "Last price and size", %{
+      order_book: order_book
+    } do
+      last_buy_price = OrderBook.last_price(order_book, :buy)
+      last_buy_size = OrderBook.last_size(order_book, :buy)
+      last_sell_price = OrderBook.last_price(order_book, :sell)
+      last_sell_size = OrderBook.last_size(order_book, :sell)
+      assert last_buy_price == 3960
+      assert last_buy_size == 150
+      assert last_sell_price == 4020
+      assert last_sell_size == 250
+    end
   end
 
   describe "empty order book" do

@@ -151,6 +151,22 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), {:open_order_by_id, order_id})
   end
 
+  @doc """
+  Returns the open order from a order_id
+  """
+  @spec last_price(ticker :: atom, side :: atom) :: {atom, number}
+  def last_price(ticker, side) do
+    GenServer.call(via_tuple(ticker), {:last_price, side})
+  end
+
+  @doc """
+  Returns the open order from a order_id
+  """
+  @spec last_size(ticker :: atom, side :: atom) :: {atom, number}
+  def last_size(ticker, side) do
+    GenServer.call(via_tuple(ticker), {:last_size, side})
+  end
+
   defp via_tuple(ticker) do
     {:via, Registry, {:matching_engine_registry, ticker}}
   end
@@ -368,6 +384,16 @@ defmodule Exchange.MatchingEngine do
   def handle_call(:total_ask_orders, _from, order_book) do
     total_ask_orders = Exchange.OrderBook.total_ask_orders(order_book)
     {:reply, {:ok, total_ask_orders}, order_book}
+  end
+
+  def handle_call({:last_price, side}, _from, order_book) do
+    price = Exchange.OrderBook.last_price(order_book, side)
+    {:reply, {:ok, price}, order_book}
+  end
+
+  def handle_call({:last_size, side}, _from, order_book) do
+    size = Exchange.OrderBook.last_size(order_book, side)
+    {:reply, {:ok, size}, order_book}
   end
 
   defp broadcast_trades!(order_book) do

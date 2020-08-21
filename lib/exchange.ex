@@ -160,10 +160,28 @@ defmodule Exchange do
     Exchange.MatchingEngine.open_orders_by_trader(ticker, trader_id)
   end
 
-  def last_price do
+  @doc """
+  Returns the lastest price from a side of an Exchange
+
+  ## Parameters
+    - ticker: Exchange identifier
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_price(ticker :: atom, side :: atom) :: {atom, number}
+  def last_price(ticker, side) do
+    Exchange.MatchingEngine.last_price(ticker, side)
   end
 
-  def last_size do
+  @doc """
+  Returns the lastest size from a side of an Exchange
+
+  ## Parameters
+    - ticker: Exchange identifier
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_size(ticker :: atom, ticker :: atom) :: {atom, number}
+  def last_size(ticker, side) do
+    Exchange.MatchingEngine.last_size(ticker, side)
   end
 
   @doc """
