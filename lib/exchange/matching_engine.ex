@@ -146,7 +146,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the open order from a order_id
   """
-  @spec open_order_by_id(ticker, String.t()) :: {atom, list()}
+  @spec open_order_by_id(ticker, String.t()) :: {atom, Exchange.Order.order()}
   def open_order_by_id(ticker, order_id) do
     GenServer.call(via_tuple(ticker), {:open_order_by_id, order_id})
   end

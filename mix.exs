@@ -4,7 +4,7 @@ defmodule Exchange.MixProject do
   def project do
     [
       app: :exchange,
-      version: "0.2.0",
+      version: "0.2.1",
       build_path: "_build",
       config_path: "config/config.exs",
       deps_path: "deps",
@@ -32,7 +32,7 @@ defmodule Exchange.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:lager, :logger],
       mod: {Exchange.Application, []}
     ]
   end
