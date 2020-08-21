@@ -13,26 +13,18 @@ defmodule Exchange.Utils do
   @spec fetch_completed_trades(ticker :: atom, trader_id :: String.t()) :: list
   def fetch_completed_trades(ticker, trader_id) do
     time_series().completed_trades_by_id(ticker, trader_id)
-    |> Enum.map(fn flux_trade ->
-      trade = %Exchange.Trade{}
+  end
 
-      %{
-        trade
-        | trade_id: flux_trade.fields.trade_id,
-          ticker: String.to_atom(flux_trade.tags.ticker),
-          currency: flux_trade.tags.currency,
-          buyer_id: flux_trade.tags.buyer_id,
-          seller_id: flux_trade.tags.seller_id,
-          buy_order_id: flux_trade.fields.buy_order_id,
-          sell_order_id: flux_trade.fields.sell_order_id,
-          price: flux_trade.fields.price,
-          size: flux_trade.fields.size,
-          buy_init_size: flux_trade.fields.buy_init_size,
-          sell_init_size: flux_trade.fields.sell_init_size,
-          type: flux_trade.fields.type,
-          acknowledged_at: flux_trade.fields.acknowledged_at
-      }
-    end)
+  @doc """
+  Fetches the completed trades stored by a `Exchange.TimeSeries` adapter given a ticker and a id
+
+  ## Parameters
+    - ticker: Market where the fetch should be made
+    - trader_id: The that a given trade must match
+  """
+  @spec fetch_all_completed_trades(ticker :: atom) :: list
+  def fetch_all_completed_trades(ticker) do
+    time_series().completed_trades(ticker)
   end
 
   @doc """
@@ -44,19 +36,6 @@ defmodule Exchange.Utils do
   @spec fetch_live_orders(ticker :: atom) :: list
   def fetch_live_orders(ticker) do
     time_series().get_live_orders(ticker)
-    |> Enum.map(fn o ->
-      %Exchange.Order{
-        order_id: o.fields.order_id,
-        trader_id: o.fields.trader_id,
-        price: o.fields.price,
-        side: String.to_atom(o.tags.side),
-        size: o.fields.size,
-        exp_time: nil,
-        type: String.to_atom(o.fields.type),
-        modified_at: o.fields.modified_at,
-        acknowledged_at: o.timestamp
-      }
-    end)
   end
 
   @doc """
