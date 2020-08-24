@@ -196,7 +196,13 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
+      |> Enum.map(
+        &%{
+          &1
+          | ticker: ticker,
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
+        }
+      )
 
     sell_book =
       [
@@ -237,11 +243,17 @@ defmodule Exchange.Utils do
           price: 4020
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
+      |> Enum.map(
+        &%{
+          &1
+          | ticker: ticker,
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
+        }
+      )
 
     (buy_book ++ sell_book)
     |> Enum.each(fn order ->
-      Exchange.MatchingEngine.place_limit_order(ticker, order)
+      Exchange.MatchingEngine.place_order(ticker, order)
     end)
   end
 

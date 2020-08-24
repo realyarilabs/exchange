@@ -13,6 +13,7 @@ defmodule Exchange.Order do
             side: :buy,
             price: 0,
             size: 0,
+            stop: 0,
             initial_size: 0,
             type: :market,
             exp_time: nil,
@@ -32,7 +33,8 @@ defmodule Exchange.Order do
           initial_size: size_in_grams,
           type: atom,
           ticker: atom,
-          exp_time: integer | atom
+          exp_time: integer | atom,
+          stop: integer
         }
 
   @doc """
@@ -57,6 +59,7 @@ defmodule Exchange.Order do
       side: Map.get(order, :side) |> String.to_atom(),
       price: Map.get(order, :price),
       size: Map.get(order, :size),
+      stop: Map.get(order, :stop),
       initial_size: Map.get(order, :initial_size),
       type: Map.get(order, :type) |> String.to_atom(),
       exp_time: Map.get(order, :exp_time),
@@ -64,6 +67,67 @@ defmodule Exchange.Order do
       modified_at: Map.get(order, :modified_at),
       ticker: ticker
     }
+  end
+
+  def assign_prices(%Exchange.Order{type: :market, side: side} = order, order_book) do
+    if side == :buy do
+      order |> Map.put(:price, order_book.max_price - 1)
+    else
+      order |> Map.put(:price, order_book.min_price + 1)
+    end
+  end
+
+  def assign_prices(%Exchange.Order{type: :marketable_limit, side: side} = order, order_book) do
+    if side == :buy do
+      order |> Map.put(:price, order_book.ask_min)
+    else
+      order |> Map.put(:price, order_book.bid_max)
+    end
+  end
+
+  def assign_prices(
+        %Exchange.Order{type: :stop_loss, side: side, price: price, stop: stop} = order,
+        order_book
+      ) do
+    if side == :buy do
+      case order_book.ask_min >= price * (1 + stop / 100) do
+        true ->
+          order |> Map.put(:price, order_book.max_price - 1)
+
+        _ ->
+          order
+      end
+    else
+      case order_book.bid_max <= price * 1 - stop / 100 do
+        true ->
+          order |> Map.put(:price, order_book.min_price + 1)
+
+        _ ->
+          order
+      end
+    end
+  end
+
+  def assign_prices(order, _order_book) do
+    order
+  end
+
+  def validy_price(%Exchange.Order{type: type} = order, order_book)
+      when type == :limit or type == :stop_loss do
+    cond do
+      order.price < order_book.max_price and order.price > order_book.min_price ->
+        :ok
+
+      order.price > order_book.max_price ->
+        {:error, :max_price_exceeded}
+
+      order.price < order_book.min_price ->
+        {:error, :behind_min_price}
+    end
+  end
+
+  def validy_price(_order, _order_book) do
+    :ok
   end
 end
 
@@ -76,6 +140,7 @@ defimpl Jason.Encoder, for: Exchange.Order do
         :side,
         :price,
         :size,
+        :stop,
         :initial_size,
         :type,
         :exp_time,
