@@ -825,7 +825,7 @@ defmodule Exchange.OrderBook do
     if activated_stop_loss_orders != [] do
       order_book =
         activated_stop_loss_orders
-        |> Enum.map(&(Order.assign_prices(&1, order_book) |> Map.put(:type, :market)))
+        |> Enum.map(&Order.assign_prices(&1, order_book))
         |> Enum.sort(fn a, b -> a.acknowledge_at < b.acknowledge_at end)
         |> Enum.reduce(order_book, fn order, acc ->
           acc

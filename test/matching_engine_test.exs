@@ -496,7 +496,7 @@ defmodule MatchingEngineTest do
 
     test "Place stop loss orders, trigger and complete both to trade" do
       order = Utils.sample_order(%{size: 1000, price: 4008, side: :sell})
-      order = %{order | order_id: "100", type: :stop_loss, stop: 99}
+      order = %{order | order_id: "100", type: :stop_loss, stop: 1}
       _code = MatchingEngine.place_order(:AUXZRC, order)
 
       order = Utils.sample_order(%{size: 1000, price: 3819, side: :buy})
@@ -505,8 +505,8 @@ defmodule MatchingEngineTest do
 
       order = Utils.sample_order(%{size: 1500, price: 0, side: :sell})
       order = %{order | order_id: "102", type: :market}
-
       _code = MatchingEngine.place_order(:AUXZRC, order)
+
       {:ok, ob} = MatchingEngine.order_book_entries(:AUXZRC)
 
       order_1 = OrderBook.fetch_order_by_id(ob, "100")
@@ -517,7 +517,7 @@ defmodule MatchingEngineTest do
 
     test "Place stop loss order with order already at the stop" do
       order = Utils.sample_order(%{size: 1650, price: 5000, side: :sell})
-      order = %{order | order_id: "100", type: :stop_loss, stop: 99}
+      order = %{order | order_id: "100", type: :stop_loss, stop: 1}
       _code = MatchingEngine.place_order(:AUXZRC, order)
       order = Utils.sample_order(%{size: 2250, price: 3000, side: :buy})
       order = %{order | order_id: "101", type: :stop_loss, stop: 1}
