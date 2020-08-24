@@ -805,7 +805,13 @@ defmodule Exchange.OrderBook do
     order.price
   end
 
-  @spec stop_loss_activation(atom | %{buy: map, sell: map}) :: atom | %{buy: map, sell: map}
+  @doc """
+    This function checks if there are any stop loss orders to activate. If yes then they are converted in market orders, removed and placed on the exchange.
+    ## Parameters
+    - order_book: OrderBook to update
+  """
+  @spec stop_loss_activation(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
   def stop_loss_activation(order_book) do
     activated_stop_loss_orders =
       (Map.to_list(order_book.buy) ++ Map.to_list(order_book.sell))

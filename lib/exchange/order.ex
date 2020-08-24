@@ -98,7 +98,7 @@ defmodule Exchange.Order do
           order
       end
     else
-      case order_book.bid_max <= price * 1 - stop / 100 do
+      case order_book.bid_max <= price * (1 - stop / 100) do
         true ->
           order |> Map.put(:price, order_book.min_price + 1)
 
