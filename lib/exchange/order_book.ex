@@ -802,10 +802,40 @@ defmodule Exchange.OrderBook do
         ) :: number
   def last_price(order_book, side) do
     order = get_latest_order(order_book, side)
+    order.price
+  end
 
-    case order do
-      nil -> 0
-      _ -> order.price
+  @doc """
+    This function checks if there are any stop loss orders to activate. If yes then they are converted in market orders, removed and placed on the exchange.
+    ## Parameters
+    - order_book: OrderBook to update
+  """
+  @spec stop_loss_activation(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
+  def stop_loss_activation(order_book) do
+    activated_stop_loss_orders =
+      (Map.to_list(order_book.buy) ++ Map.to_list(order_book.sell))
+      |> Enum.flat_map(fn {_pp, queue} -> queue end)
+      |> Enum.filter(fn order ->
+        order.type == :stop_loss and
+          ((order.price * (1 + order.stop / 100) < order_book.ask_min and order.side == :buy) or
+             (order.price * (1 - order.stop / 100) > order_book.bid_max and order.side == :sell))
+      end)
+
+    if activated_stop_loss_orders != [] do
+      order_book =
+        activated_stop_loss_orders
+        |> Enum.map(&Order.assign_prices(&1, order_book))
+        |> Enum.sort(fn a, b -> a.acknowledged_at < b.acknowledged_at end)
+        |> Enum.reduce(order_book, fn order, acc ->
+          acc
+          |> OrderBook.dequeue_order(order)
+          |> OrderBook.price_time_match(order)
+        end)
+
+      stop_loss_activation(order_book)
+    else
+      order_book
     end
   end
 
@@ -815,6 +845,9 @@ defmodule Exchange.OrderBook do
       :sell -> order_book.sell
     end
     |> Enum.flat_map(fn {_k, v} -> v end)
-    |> Enum.max_by(fn order -> order.acknowledged_at end)
+    |> Enum.max_by(
+      fn order -> order.acknowledged_at end,
+      fn -> %Exchange.Order{} end
+    )
   end
 end
