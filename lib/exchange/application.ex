@@ -71,6 +71,8 @@ defmodule Exchange.Application do
     else
       case message_bus_module do
         Exchange.Adapters.RabbitBus ->
+          message_bus_module.setup_resources()
+
           {:ok,
            [
              Exchange.Adapters.RabbitBus.Consumer,

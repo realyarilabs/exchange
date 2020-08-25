@@ -89,22 +89,33 @@ defmodule Exchange.Adapters.RabbitBus do
   """
   @spec setup_resources() :: :ok
   def setup_resources do
-    {:ok, conn} = Connection.open()
-    {:ok, chan} = Channel.open(conn)
-    {:ok, _} = Queue.declare(chan, @queue_error, durable: true)
+    require Logger
 
-    # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
-    {:ok, _} =
-      Queue.declare(chan, @queue,
-        durable: true,
-        arguments: [
-          {"x-dead-letter-exchange", :longstr, ""},
-          {"x-dead-letter-routing-key", :longstr, @queue_error}
-        ]
-      )
+    case Connection.open() do
+      {:ok, conn} ->
+        {:ok, chan} = AMQP.Channel.open(conn)
 
-    :ok = AMQP.Exchange.direct(chan, @exchange, durable: true)
-    :ok = Queue.bind(chan, @queue, @exchange)
-    Connection.close(conn)
+        {:ok, _} = Queue.declare(chan, @queue_error, durable: true)
+
+        # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
+        {:ok, _} =
+          Queue.declare(chan, @queue,
+            durable: true,
+            arguments: [
+              {"x-dead-letter-exchange", :longstr, ""},
+              {"x-dead-letter-routing-key", :longstr, @queue_error}
+            ]
+          )
+
+        :ok = AMQP.Exchange.direct(chan, @exchange, durable: true)
+        :ok = Queue.bind(chan, @queue, @exchange)
+        Connection.close(conn)
+
+      {:error, _} ->
+        Logger.error("Failed to connect to RabbitMQ. Reconnecting later...")
+        # Retry later
+        Process.sleep(3000)
+        setup_resources()
+    end
   end
 end
