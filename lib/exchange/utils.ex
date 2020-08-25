@@ -121,7 +121,9 @@ defmodule Exchange.Utils do
       side: s,
       initial_size: z,
       size: z,
-      price: p
+      price: p,
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
+      modified_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     }
   end
 

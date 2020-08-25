@@ -303,6 +303,28 @@ defmodule OrderBookTest do
       assert new_order_book.ask_min == 1001
       assert Enum.count(new_order_book.completed_trades) == 4
     end
+
+    test "correct stop loss activation", %{order_book: order_book} do
+      stop_sell_1 = Utils.sample_order(%{size: 800, price: 4012, side: :sell})
+      stop_sell_1 = %{stop_sell_1 | order_id: "100", type: :stop_loss, stop: 1}
+
+      stop_sell_2 = Utils.sample_order(%{size: 1000, price: 4012, side: :sell})
+      stop_sell_2 = %{stop_sell_2 | order_id: "101", type: :stop_loss, stop: 1}
+
+      order = Utils.sample_order(%{size: 750, price: 0, side: :sell})
+      order = %{order | order_id: "102", type: :market}
+      order_book = OrderBook.price_time_match(order_book, stop_sell_1)
+      order_book = OrderBook.price_time_match(order_book, stop_sell_2)
+      order_book = OrderBook.price_time_match(order_book, order)
+      order_book = OrderBook.stop_loss_activation(order_book)
+
+      sell_min = order_book.sell[1001]
+      {:value, sell_order} = Qex.first(sell_min)
+      assert Enum.count(sell_min) == 1
+      assert sell_order.order_id == "101"
+      assert sell_order.size == 900
+      assert sell_order.price == 1001
+    end
   end
 
   describe "multiple trades with order of exact size of more then 2 orders" do

@@ -69,44 +69,56 @@ defmodule Exchange.Order do
     }
   end
 
-  def assign_prices(%Exchange.Order{type: :market, side: side} = order, order_book) do
-    if side == :buy do
-      order |> Map.put(:price, order_book.max_price - 1)
-    else
-      order |> Map.put(:price, order_book.min_price + 1)
-    end
+  @doc """
+  It set the price of an order considering an order book
+
+  ## Parameters
+    order: Order to assign the price
+    order_book: Reference order book
+  """
+  @spec assign_prices(
+          order :: Exchange.Order.order(),
+          order_book :: Exchange.OrderBook.order_book()
+        ) :: Exchange.Order.order()
+  def assign_prices(%Exchange.Order{type: :market, side: :buy} = order, order_book) do
+    order |> Map.put(:price, order_book.max_price - 1)
   end
 
-  def assign_prices(%Exchange.Order{type: :marketable_limit, side: side} = order, order_book) do
-    if side == :buy do
-      order |> Map.put(:price, order_book.ask_min)
-    else
-      order |> Map.put(:price, order_book.bid_max)
+  def assign_prices(%Exchange.Order{type: :market, side: :sell} = order, order_book) do
+    order |> Map.put(:price, order_book.min_price + 1)
+  end
+
+  def assign_prices(%Exchange.Order{type: :marketable_limit, side: :buy} = order, order_book) do
+    order |> Map.put(:price, order_book.ask_min)
+  end
+
+  def assign_prices(%Exchange.Order{type: :marketable_limit, side: :sell} = order, order_book) do
+    order |> Map.put(:price, order_book.bid_max)
+  end
+
+  def assign_prices(
+        %Exchange.Order{type: :stop_loss, side: :buy, price: price, stop: stop} = order,
+        order_book
+      ) do
+    case order_book.ask_min >= price * (1 + stop / 100) do
+      true ->
+        order |> Map.put(:price, order_book.max_price - 1)
+
+      _ ->
+        order
     end
   end
 
   def assign_prices(
-        %Exchange.Order{type: :stop_loss, side: side, price: price, stop: stop} = order,
+        %Exchange.Order{type: :stop_loss, side: :sell, price: price, stop: stop} = order,
         order_book
       ) do
-    if side == :buy do
-      case order_book.ask_min >= price * (1 + stop / 100) do
-        true ->
-          order
-          |> Map.put(:price, order_book.max_price - 1)
+    case order_book.bid_max <= price * (1 - stop / 100) do
+      true ->
+        order |> Map.put(:price, order_book.min_price + 1)
 
-        _ ->
-          order
-      end
-    else
-      case order_book.bid_max <= price * (1 - stop / 100) do
-        true ->
-          order
-          |> Map.put(:price, order_book.min_price + 1)
-
-        _ ->
-          order
-      end
+      _ ->
+        order
     end
   end
 
@@ -114,7 +126,14 @@ defmodule Exchange.Order do
     order
   end
 
-  def validy_price(%Exchange.Order{type: type} = order, order_book)
+  @doc """
+  Function that checks if a order's price is correct for the given order book.
+
+  ## Parameters
+    order: Order to validate the price
+    order_book: Reference order book
+  """
+  def validate_price(%Exchange.Order{type: type} = order, order_book)
       when type == :limit or type == :stop_loss do
     cond do
       order.price < order_book.max_price and order.price > order_book.min_price ->
@@ -128,7 +147,7 @@ defmodule Exchange.Order do
     end
   end
 
-  def validy_price(_order, _order_book) do
+  def validate_price(_order, _order_book) do
     :ok
   end
 end

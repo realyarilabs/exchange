@@ -287,7 +287,7 @@ defmodule Exchange.MatchingEngine do
       {:reply, :error, order_book}
     else
       order = Order.assign_prices(order, order_book)
-      validity = Order.validy_price(order, order_book)
+      validity = Order.validate_price(order, order_book)
 
       case validity do
         :ok ->
@@ -302,8 +302,8 @@ defmodule Exchange.MatchingEngine do
 
           {:reply, :ok, order_book}
 
-        {:error, _cause} ->
-          {:reply, validity, order_book}
+        {:error, cause} ->
+          {:reply, {:error, cause}, order_book}
       end
     end
   end

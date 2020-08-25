@@ -1066,10 +1066,11 @@ defmodule MatchingEngineTest do
         |> Enum.map(fn order ->
           order.order_id
         end)
+        |> Enum.sort()
 
       assert Enum.count(ts_ids) == 4
-      assert ts_ids == ids
-      assert ts_sizes == [1000, 1000, 0, 0]
+      assert ts_ids == Enum.sort(ids)
+      assert ts_sizes == [1000, 0, 1000, 0]
     end
 
     test "check if orders are cancelled" do
@@ -1121,10 +1122,11 @@ defmodule MatchingEngineTest do
         |> Enum.map(fn order ->
           order.order_id
         end)
+        |> Enum.sort()
 
       assert Enum.count(ts_ids) == 4
-      assert ts_ids == ids
-      assert ts_sizes == [1000, 1000, 0, 0]
+      assert ts_ids == Enum.sort(ids)
+      assert ts_sizes == [1000, 0, 1000, 0]
     end
 
     test "check if prices are broadcasted" do
