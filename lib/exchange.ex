@@ -70,7 +70,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the order should be canceled
   """
-  @spec spread(ticker :: atom) :: {atom, number}
+  @spec spread(ticker :: atom) :: {atom, Money}
   def spread(ticker) do
     Exchange.MatchingEngine.spread(ticker)
   end
@@ -82,7 +82,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should be placed
   """
-  @spec highest_bid_price(ticker :: atom) :: {atom, number}
+  @spec highest_bid_price(ticker :: atom) :: {atom, Money}
   def highest_bid_price(ticker) do
     Exchange.MatchingEngine.bid_max(ticker)
   end
@@ -106,7 +106,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should be placed
   """
-  @spec lowest_ask_price(ticker :: atom) :: {atom, number}
+  @spec lowest_ask_price(ticker :: atom) :: {atom, Money}
   def lowest_ask_price(ticker) do
     Exchange.MatchingEngine.ask_min(ticker)
   end
