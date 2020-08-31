@@ -21,38 +21,26 @@ defmodule Exchange.MatchingEngine do
 
   @doc """
   Places an order on the matching engine identified by the ticker.
+  ## Market Order
+    The market order is set with the highest max_price for buying or the min_price for selling
+    If there is sufficient liquidity on the order book the order is fullfilled
+    otherwise the remaining unfulfilled order is put on the orderbook with the max/min price set
+  ## Limit Order
+    Places a limit order on the matching engine identified by the ticker.
+    If there is a match the order is fullfilled otherwise it enters
+    the orderbook queue at the chosen price point
+  ## Marketable Limit Order
+    Places a marketable limit order on the matching engine identified by the ticker.
+    The price of this order's price point is set with the min price (ask_min) if it
+    is a buy order or with the max price(bid_max) if it is a sell order.
+    If there is a match the order is fullfilled otherwise it enters
+    the orderbook queue at the chosen price point
+  ## Stop Loss Order
 
-  The market order is set with the highest max_price for buying or the min_price for selling
-  If there is sufficient liquidity on the order book the order is fullfilled
-  otherwise the remaining unfulfilled order is put on the orderbook with the max/min price set
   """
-  @spec place_market_order(ticker, Order.order()) :: atom
-  def place_market_order(ticker, %Order{type: :market} = order) do
-    GenServer.call(via_tuple(ticker), {:place_market_order, order})
-  end
-
-  @doc """
-  Places a limit order on the matching engine identified by the ticker.
-  If there is a match the order is fullfilled otherwise it enters
-  the orderbook queue at the chosen price point
-  """
-  @spec place_limit_order(ticker, Order.order()) :: atom
-  def place_limit_order(ticker, %Order{type: :limit, price: price, size: size} = order)
-      when price > 0 and size > 0 do
-    GenServer.call(via_tuple(ticker), {:place_limit_order, order})
-  end
-
-  @doc """
-  Places a marketable limit order on the matching engine identified by the ticker.
-  The price of this order's price point is set with the min price (ask_min) if it
-  is a buy order or with the max price(bid_max) if it is a sell order.
-  If there is a match the order is fullfilled otherwise it enters
-  the orderbook queue at the chosen price point
-  """
-  @spec place_marketable_limit_order(ticker, Order.order()) :: atom
-  def place_marketable_limit_order(ticker, %Order{type: :marketable_limit, size: size} = order)
-      when size > 0 do
-    GenServer.call(via_tuple(ticker), {:place_marketable_limit_order, order})
+  @spec place_order(ticker, Order.order()) :: atom
+  def place_order(ticker, order) do
+    GenServer.call(via_tuple(ticker), {:place_order, order})
   end
 
   @doc """
@@ -74,7 +62,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current maximum biding price
   """
-  @spec bid_max(ticker) :: {atom, number}
+  @spec bid_max(ticker) :: {atom, Money}
   def bid_max(ticker) do
     GenServer.call(via_tuple(ticker), :bid_max)
   end
@@ -90,7 +78,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current minimum asking price
   """
-  @spec ask_min(ticker) :: {atom, number}
+  @spec ask_min(ticker) :: {atom, Money}
   def ask_min(ticker) do
     GenServer.call(via_tuple(ticker), :ask_min)
   end
@@ -98,7 +86,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current Spread
   """
-  @spec spread(ticker) :: {atom, number}
+  @spec spread(ticker) :: {atom, Money}
   def spread(ticker) do
     GenServer.call(via_tuple(ticker), :spread)
   end
@@ -151,6 +139,22 @@ defmodule Exchange.MatchingEngine do
     GenServer.call(via_tuple(ticker), {:open_order_by_id, order_id})
   end
 
+  @doc """
+  Returns the open order from a order_id
+  """
+  @spec last_price(ticker :: atom, side :: atom) :: {atom, number}
+  def last_price(ticker, side) do
+    GenServer.call(via_tuple(ticker), {:last_price, side})
+  end
+
+  @doc """
+  Returns the open order from a order_id
+  """
+  @spec last_size(ticker :: atom, side :: atom) :: {atom, number}
+  def last_size(ticker, side) do
+    GenServer.call(via_tuple(ticker), {:last_size, side})
+  end
+
   defp via_tuple(ticker) do
     {:via, Registry, {:matching_engine_registry, ticker}}
   end
@@ -191,6 +195,11 @@ defmodule Exchange.MatchingEngine do
     else
       order_book
     end
+  end
+
+  def handle_info(:check_stop_loss, order_book) do
+    order_book = OrderBook.stop_loss_activation(order_book) |> broadcast_trades!()
+    {:noreply, order_book}
   end
 
   def handle_info(:price_broadcast, order_book) do
@@ -273,67 +282,29 @@ defmodule Exchange.MatchingEngine do
     {:reply, {:ok, spread}, order_book}
   end
 
-  def handle_call({:place_market_order, order}, _from, order_book) do
+  def handle_call({:place_order, %Order{} = order}, _from, order_book) do
     if OrderBook.order_exists?(order_book, order.order_id) do
       {:reply, :error, order_book}
     else
-      order =
-        if order.side == :buy do
-          order |> Map.put(:price, order_book.max_price - 1)
-        else
-          order |> Map.put(:price, order_book.min_price + 1)
-        end
+      order = Order.assign_prices(order, order_book)
+      validity = Order.validate_price(order, order_book)
 
-      message_bus().cast_event(:order_queued, order)
+      case validity do
+        :ok ->
+          message_bus().cast_event(:order_queued, order)
 
-      order_book =
-        order_book
-        |> OrderBook.price_time_match(order)
-        |> broadcast_trades!
+          order_book =
+            order_book
+            |> OrderBook.price_time_match(order)
+            |> broadcast_trades!
 
-      {:reply, :ok, order_book}
-    end
-  end
+          send(self(), :check_stop_loss)
 
-  def handle_call({:place_marketable_limit_order, order}, _from, order_book) do
-    if OrderBook.order_exists?(order_book, order.order_id) do
-      {:reply, :error, order_book}
-    else
-      order =
-        if order.side == :buy do
-          order |> Map.put(:price, order_book.ask_min)
-        else
-          order |> Map.put(:price, order_book.bid_max)
-        end
+          {:reply, :ok, order_book}
 
-      message_bus().cast_event(:order_queued, order)
-
-      order_book =
-        order_book
-        |> OrderBook.price_time_match(order)
-        |> broadcast_trades!
-
-      {:reply, :ok, order_book}
-    end
-  end
-
-  def handle_call({:place_limit_order, order}, _from, order_book) do
-    cond do
-      OrderBook.order_exists?(order_book, order.order_id) ->
-        {:reply, :error, order_book}
-
-      order.price < order_book.max_price and order.price > order_book.min_price ->
-        message_bus().cast_event(:order_queued, order)
-
-        order_book =
-          order_book
-          |> OrderBook.price_time_match(order)
-          |> broadcast_trades!
-
-        {:reply, :ok, order_book}
-
-      true ->
-        {:reply, :error, order_book}
+        {:error, cause} ->
+          {:reply, {:error, cause}, order_book}
+      end
     end
   end
 
@@ -345,7 +316,7 @@ defmodule Exchange.MatchingEngine do
     if OrderBook.order_exists?(order_book, order_id) do
       cancelled_order = OrderBook.fetch_order_by_id(order_book, order_id)
 
-      current_time = :os.system_time(:millisecond)
+      current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
       if (is_integer(cancelled_order.exp_time) and
             cancelled_order.exp_time < current_time) or !is_integer(cancelled_order.exp_time) do
@@ -368,6 +339,16 @@ defmodule Exchange.MatchingEngine do
   def handle_call(:total_ask_orders, _from, order_book) do
     total_ask_orders = Exchange.OrderBook.total_ask_orders(order_book)
     {:reply, {:ok, total_ask_orders}, order_book}
+  end
+
+  def handle_call({:last_price, side}, _from, order_book) do
+    price = Exchange.OrderBook.last_price(order_book, side)
+    {:reply, {:ok, price}, order_book}
+  end
+
+  def handle_call({:last_size, side}, _from, order_book) do
+    size = Exchange.OrderBook.last_size(order_book, side)
+    {:reply, {:ok, size}, order_book}
   end
 
   defp broadcast_trades!(order_book) do

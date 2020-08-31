@@ -62,8 +62,8 @@ defmodule OrderBookTest do
     end
 
     test "orders with expiration are added to expiration_list", %{order_book: ob} do
-      t1 = :os.system_time(:millisecond)
-      t2 = :os.system_time(:millisecond) - 1000
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+      t2 = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1000
 
       buy_order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t1})
@@ -86,7 +86,7 @@ defmodule OrderBookTest do
     end
 
     test "orders fullfilled are not added to expiration_list", %{order_book: ob} do
-      t1 = :os.system_time(:millisecond)
+      t1 = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
       buy_order =
         Utils.sample_expiring_order(%{size: 750, price: 4010, side: :buy, id: "9", exp_time: t1})
@@ -95,8 +95,8 @@ defmodule OrderBookTest do
       assert new_book.expiration_list == []
     end
 
-    test "order is automatically  cancelled on expiration time", %{order_book: ob} do
-      t = :os.system_time(:millisecond) - 1
+    test "order is automatically cancelled on expiration time", %{order_book: ob} do
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1
 
       order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
@@ -109,7 +109,7 @@ defmodule OrderBookTest do
     end
 
     test "flushing expired orders from order_book", %{order_book: ob} do
-      t = :os.system_time(:millisecond) - 1
+      t = (DateTime.utc_now() |> DateTime.to_unix(:millisecond)) - 1
 
       order =
         Utils.sample_expiring_order(%{size: 1000, price: 3999, side: :buy, id: "9", exp_time: t})
@@ -302,6 +302,28 @@ defmodule OrderBookTest do
       assert new_order_book.bid_max == 1001
       assert new_order_book.ask_min == 1001
       assert Enum.count(new_order_book.completed_trades) == 4
+    end
+
+    test "correct stop loss activation", %{order_book: order_book} do
+      stop_sell_1 = Utils.sample_order(%{size: 800, price: 4012, side: :sell})
+      stop_sell_1 = %{stop_sell_1 | order_id: "100", type: :stop_loss, stop: 1}
+
+      stop_sell_2 = Utils.sample_order(%{size: 1000, price: 4012, side: :sell})
+      stop_sell_2 = %{stop_sell_2 | order_id: "101", type: :stop_loss, stop: 1}
+
+      order = Utils.sample_order(%{size: 750, price: 0, side: :sell})
+      order = %{order | order_id: "102", type: :market}
+      order_book = OrderBook.price_time_match(order_book, stop_sell_1)
+      order_book = OrderBook.price_time_match(order_book, stop_sell_2)
+      order_book = OrderBook.price_time_match(order_book, order)
+      order_book = OrderBook.stop_loss_activation(order_book)
+
+      sell_min = order_book.sell[1001]
+      {:value, sell_order} = Qex.first(sell_min)
+      assert Enum.count(sell_min) == 1
+      assert sell_order.order_id == "101"
+      assert sell_order.size == 900
+      assert sell_order.price == 1001
     end
   end
 
@@ -623,6 +645,19 @@ defmodule OrderBookTest do
       new_order_book = OrderBook.price_time_match(order_book, new_order_1)
       new_order_book = OrderBook.price_time_match(new_order_book, new_order_2)
       assert OrderBook.total_ask_orders(new_order_book) == 3
+    end
+
+    test "Last price and size", %{
+      order_book: order_book
+    } do
+      last_buy_price = OrderBook.last_price(order_book, :buy)
+      last_buy_size = OrderBook.last_size(order_book, :buy)
+      last_sell_price = OrderBook.last_price(order_book, :sell)
+      last_sell_size = OrderBook.last_size(order_book, :sell)
+      assert last_buy_price == 3960
+      assert last_buy_size == 150
+      assert last_sell_price == 4020
+      assert last_sell_size == 250
     end
   end
 

@@ -62,7 +62,7 @@ if Code.ensure_loaded?(Instream.Connection) do
               initial_size: order_params.initial_size,
               price: order_params.price,
               type: Atom.to_string(order_params.type),
-              modified_at: :os.system_time(:nanosecond)
+              modified_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
           },
           tags: %{
             data.tags

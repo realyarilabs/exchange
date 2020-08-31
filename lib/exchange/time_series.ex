@@ -36,4 +36,9 @@ defmodule Exchange.TimeSeries do
   It is called when the application starts running allowing the recovery of the previous state when a crash happens.
   """
   @callback get_live_orders(atom) :: [Exchange.Order]
+
+  @doc """
+  Function that fetches a completed trade from a exchange that matches a trade id
+  """
+  @callback get_completed_trade_by_trade_id(atom, String.t()) :: Exchange.Trade
 end

@@ -73,44 +73,6 @@ defmodule RabbitBusTest do
       assert received_order.order == order
     end
 
-    test "Order placed" do
-      alphabet = Enum.to_list(?a..?z) ++ Enum.to_list(?0..?9)
-      length = 12
-
-      order_placed = %Exchange.Adapters.MessageBus.OrderPlaced{
-        action_indicator: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        client_trans_ref: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        consideration_currency: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        good_until: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        last_modified: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        limit: :rand.uniform(10_000),
-        order_id: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        order_time: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        order_value: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        quantity: :rand.uniform(10_000),
-        quantity_matched: :rand.uniform(10_000),
-        security_id: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        status_code: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        total_commission: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        total_consideration: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        trade_type: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>),
-        type_code: for(_ <- 1..length, into: "", do: <<Enum.random(alphabet)>>)
-      }
-
-      RabbitBus.add_listener(:order_placed)
-      RabbitBus.cast_event(:order_placed, order_placed)
-
-      received_order =
-        receive do
-          {:cast_event, :order_placed, value} ->
-            value
-        after
-          1_000 -> nil
-        end
-
-      assert received_order == order_placed
-    end
-
     test "Price broadcast" do
       price_info = %{
         ticker: :AUXLND,

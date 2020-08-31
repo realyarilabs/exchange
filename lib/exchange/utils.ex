@@ -28,6 +28,19 @@ defmodule Exchange.Utils do
   end
 
   @doc """
+  Fetches the completed stored by a `Exchange.TimeSeries` adapter given a ticker and a trade id.
+
+  ## Parameters
+    - ticker: Market where the fetch should be made
+    - trade_id: Id of the requested trade
+  """
+  @spec fetch_completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) ::
+          Exchange.Trade
+  def fetch_completed_trade_by_trade_id(ticker, trade_id) do
+    time_series().get_completed_trade_by_trade_id(ticker, trade_id)
+  end
+
+  @doc """
   Fetches the active orders stored by a `Exchange.TimeSeries` adapter given a ticker
 
   ## Parameters
@@ -108,7 +121,9 @@ defmodule Exchange.Utils do
       side: s,
       initial_size: z,
       size: z,
-      price: p
+      price: p,
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
+      modified_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     }
   end
 
@@ -183,7 +198,13 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(
+        &%{
+          &1
+          | ticker: ticker,
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
+        }
+      )
 
     sell_book =
       [
@@ -224,11 +245,17 @@ defmodule Exchange.Utils do
           price: 4020
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(
+        &%{
+          &1
+          | ticker: ticker,
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
+        }
+      )
 
     (buy_book ++ sell_book)
     |> Enum.each(fn order ->
-      Exchange.MatchingEngine.place_limit_order(ticker, order)
+      Exchange.MatchingEngine.place_order(ticker, order)
     end)
   end
 
@@ -283,7 +310,7 @@ defmodule Exchange.Utils do
           price: 3960
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     sell_book =
       [
@@ -328,7 +355,7 @@ defmodule Exchange.Utils do
           price: 4020
         }
       ]
-      |> Enum.map(&%{&1 | acknowledged_at: :os.system_time(:nanosecond)})
+      |> Enum.map(&%{&1 | acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)})
 
     order_book = %Exchange.OrderBook{
       name: ticker,
@@ -372,9 +399,9 @@ defmodule Exchange.Utils do
       initial_size: size,
       size: size,
       type: type,
-      exp_time: :os.system_time(:millisecond),
+      exp_time: DateTime.utc_now() |> DateTime.to_unix(:millisecond),
       ticker: ticker,
-      acknowledged_at: :os.system_time(:nanosecond)
+      acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond)
     }
   end
 

@@ -9,7 +9,6 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
   require Logger
   alias AMQP.{Basic, Connection}
 
-  @host "amqp://localhost"
   @reconnect_interval 10_000
 
   def start_link(_) do
@@ -72,12 +71,6 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
         :order_expired ->
           Exchange.Adapters.MessageBus.OrderExpired
 
-        :order_placed ->
-          Exchange.Adapters.MessageBus.OrderPlaced
-
-        :trade_processed ->
-          Exchange.Adapters.MessageBus.TradeProcessed
-
         :price_broadcast ->
           Exchange.Adapters.MessageBus.PriceBroadcast
 
@@ -128,7 +121,7 @@ defmodule Exchange.Adapters.RabbitBus.Consumer do
         {:noreply, state}
 
       {:error, _} ->
-        Logger.error("Failed to connect #{@host}. Reconnecting later...")
+        Logger.error("Failed to connect to RabbitMQ. Reconnecting later...")
         # Retry later
         Process.send_after(self(), :connect, @reconnect_interval)
         {:noreply, nil}

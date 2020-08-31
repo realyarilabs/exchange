@@ -10,8 +10,7 @@ defmodule Exchange.Adapters.RabbitBus do
   @exchange "event_exchange"
   @queue "event_queue"
   @queue_error "#{@queue}_error"
-  @events ~w(trade_executed order_queued order_cancelled order_expired
-             transaction_open order_placed trade_processed price_broadcast)a
+  @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
   @doc """
   It calls the consumer server and it adds the process calling to the subscribers of the event.
@@ -52,11 +51,9 @@ defmodule Exchange.Adapters.RabbitBus do
   @spec cast_event(
           :order_cancelled
           | :order_expired
-          | :order_placed
           | :order_queued
           | :price_broadcast
-          | :trade_executed
-          | :trade_processed,
+          | :trade_executed,
           any
         ) :: nil | :ok
   def cast_event(:order_cancelled, payload),
@@ -68,14 +65,8 @@ defmodule Exchange.Adapters.RabbitBus do
   def cast_event(:order_expired, payload),
     do: dispatch_event(:order_expired, %MessageBus.OrderExpired{order: payload})
 
-  def cast_event(:order_placed, payload),
-    do: dispatch_event(:order_placed, %MessageBus.OrderPlaced{} = payload)
-
   def cast_event(:order_queued, payload),
     do: dispatch_event(:order_queued, %MessageBus.OrderQueued{order: payload})
-
-  def cast_event(:trade_processed, payload),
-    do: dispatch_event(:trade_processed, %MessageBus.TradeProcessed{} = payload)
 
   def cast_event(:price_broadcast, payload) do
     price_broadcast_event = %MessageBus.PriceBroadcast{
@@ -98,22 +89,33 @@ defmodule Exchange.Adapters.RabbitBus do
   """
   @spec setup_resources() :: :ok
   def setup_resources do
-    {:ok, conn} = Connection.open()
-    {:ok, chan} = Channel.open(conn)
-    {:ok, _} = Queue.declare(chan, @queue_error, durable: true)
+    require Logger
 
-    # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
-    {:ok, _} =
-      Queue.declare(chan, @queue,
-        durable: true,
-        arguments: [
-          {"x-dead-letter-exchange", :longstr, ""},
-          {"x-dead-letter-routing-key", :longstr, @queue_error}
-        ]
-      )
+    case Connection.open() do
+      {:ok, conn} ->
+        {:ok, chan} = AMQP.Channel.open(conn)
 
-    :ok = AMQP.Exchange.direct(chan, @exchange, durable: true)
-    :ok = Queue.bind(chan, @queue, @exchange)
-    Connection.close(conn)
+        {:ok, _} = Queue.declare(chan, @queue_error, durable: true)
+
+        # Messages that cannot be delivered to any consumer in the main queue will be routed to the error queue
+        {:ok, _} =
+          Queue.declare(chan, @queue,
+            durable: true,
+            arguments: [
+              {"x-dead-letter-exchange", :longstr, ""},
+              {"x-dead-letter-routing-key", :longstr, @queue_error}
+            ]
+          )
+
+        :ok = AMQP.Exchange.direct(chan, @exchange, durable: true)
+        :ok = Queue.bind(chan, @queue, @exchange)
+        Connection.close(conn)
+
+      {:error, _} ->
+        Logger.error("Failed to connect to RabbitMQ. Reconnecting later...")
+        # Retry later
+        Process.sleep(3000)
+        setup_resources()
+    end
   end
 end

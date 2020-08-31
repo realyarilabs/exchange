@@ -1,7 +1,5 @@
 defmodule Exchange.OrderBook do
   @moduledoc """
-  # Order Book Struct
-
   The Order Book is the Exchange main data structure. It holds the Order Book
   in Memory where the MatchingEngine realizes the matches and register the Trades.
 
@@ -246,7 +244,7 @@ defmodule Exchange.OrderBook do
         price_points_queue
         |> Enum.filter(fn order ->
           if is_integer(order.exp_time) do
-            current_time = :os.system_time(:millisecond)
+            current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
             if order.exp_time < current_time do
               false
@@ -557,7 +555,7 @@ defmodule Exchange.OrderBook do
   @spec check_expired_orders!(order_book :: Exchange.OrderBook.order_book()) ::
           Exchange.OrderBook.order_book()
   def(check_expired_orders!(order_book)) do
-    current_time = :os.system_time(:millisecond)
+    current_time = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
 
     order_book.expiration_list
     |> Enum.take_while(fn {ts, _id} -> ts < current_time end)
@@ -769,5 +767,87 @@ defmodule Exchange.OrderBook do
     order_book
     |> open_orders()
     |> Enum.filter(fn order -> order.trader_id == trader_id end)
+  end
+
+  @doc """
+  Returns the lastest size from a side of the order book
+
+  ## Parameters
+    - order_book: OrderBook used to search the orders
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_size(
+          order_book :: Exchange.OrderBook.order_book(),
+          side :: atom
+        ) :: number
+  def last_size(order_book, side) do
+    order = get_latest_order(order_book, side)
+
+    case order do
+      nil -> 0
+      _ -> order.size
+    end
+  end
+
+  @doc """
+  Returns the lastest price from a side of the order book
+
+  ## Parameters
+    - order_book: OrderBook used to search the orders
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_price(
+          order_book :: Exchange.OrderBook.order_book(),
+          side :: atom
+        ) :: number
+  def last_price(order_book, side) do
+    order = get_latest_order(order_book, side)
+    order.price
+  end
+
+  @doc """
+    This function checks if there are any stop loss orders to activate. If yes then they are converted in market orders, removed and placed on the exchange.
+    ## Parameters
+    - order_book: OrderBook to update
+  """
+  @spec stop_loss_activation(order_book :: Exchange.OrderBook.order_book()) ::
+          Exchange.OrderBook.order_book()
+  def stop_loss_activation(order_book) do
+    activated_stop_loss_orders =
+      (Map.to_list(order_book.buy) ++ Map.to_list(order_book.sell))
+      |> Enum.flat_map(fn {_pp, queue} -> queue end)
+      |> Enum.filter(fn order ->
+        order.type == :stop_loss and
+          ((order.price * (1 + order.stop / 100) < order_book.ask_min and order.side == :buy) or
+             (order.price * (1 - order.stop / 100) > order_book.bid_max and order.side == :sell))
+      end)
+
+    if activated_stop_loss_orders != [] do
+      order_book =
+        activated_stop_loss_orders
+        |> Enum.map(&Order.assign_prices(&1, order_book))
+        |> Enum.sort(fn a, b -> a.acknowledged_at < b.acknowledged_at end)
+        |> Enum.reduce(order_book, fn order, acc ->
+          acc
+          |> OrderBook.dequeue_order(order)
+          |> OrderBook.price_time_match(order)
+        end)
+
+      stop_loss_activation(order_book)
+    else
+      order_book
+    end
+  end
+
+  defp get_latest_order(order_book, side) do
+    case side do
+      :buy -> order_book.buy
+      :sell -> order_book.sell
+    end
+    |> Enum.flat_map(fn {_k, v} -> v end)
+    |> Enum.max_by(
+      fn order -> order.acknowledged_at end,
+      fn -> %Exchange.Order{} end
+    )
   end
 end

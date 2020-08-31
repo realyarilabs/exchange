@@ -13,11 +13,12 @@ defmodule Exchange.Order do
             side: :buy,
             price: 0,
             size: 0,
+            stop: 0,
             initial_size: 0,
             type: :market,
             exp_time: nil,
-            acknowledged_at: :os.system_time(:nanosecond),
-            modified_at: :os.system_time(:nanosecond),
+            acknowledged_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
+            modified_at: DateTime.utc_now() |> DateTime.to_unix(:nanosecond),
             ticker: nil
 
   @type price_in_cents :: integer
@@ -32,7 +33,8 @@ defmodule Exchange.Order do
           initial_size: size_in_grams,
           type: atom,
           ticker: atom,
-          exp_time: integer | atom
+          exp_time: integer | atom,
+          stop: integer
         }
 
   @doc """
@@ -57,6 +59,7 @@ defmodule Exchange.Order do
       side: Map.get(order, :side) |> String.to_atom(),
       price: Map.get(order, :price),
       size: Map.get(order, :size),
+      stop: Map.get(order, :stop),
       initial_size: Map.get(order, :initial_size),
       type: Map.get(order, :type) |> String.to_atom(),
       exp_time: Map.get(order, :exp_time),
@@ -64,6 +67,88 @@ defmodule Exchange.Order do
       modified_at: Map.get(order, :modified_at),
       ticker: ticker
     }
+  end
+
+  @doc """
+  It set the price of an order considering an order book
+
+  ## Parameters
+    order: Order to assign the price
+    order_book: Reference order book
+  """
+  @spec assign_prices(
+          order :: Exchange.Order.order(),
+          order_book :: Exchange.OrderBook.order_book()
+        ) :: Exchange.Order.order()
+  def assign_prices(%Exchange.Order{type: :market, side: :buy} = order, order_book) do
+    order |> Map.put(:price, order_book.max_price - 1)
+  end
+
+  def assign_prices(%Exchange.Order{type: :market, side: :sell} = order, order_book) do
+    order |> Map.put(:price, order_book.min_price + 1)
+  end
+
+  def assign_prices(%Exchange.Order{type: :marketable_limit, side: :buy} = order, order_book) do
+    order |> Map.put(:price, order_book.ask_min)
+  end
+
+  def assign_prices(%Exchange.Order{type: :marketable_limit, side: :sell} = order, order_book) do
+    order |> Map.put(:price, order_book.bid_max)
+  end
+
+  def assign_prices(
+        %Exchange.Order{type: :stop_loss, side: :buy, price: price, stop: stop} = order,
+        order_book
+      ) do
+    case order_book.ask_min >= price * (1 + stop / 100) do
+      true ->
+        order |> Map.put(:price, order_book.max_price - 1)
+
+      _ ->
+        order
+    end
+  end
+
+  def assign_prices(
+        %Exchange.Order{type: :stop_loss, side: :sell, price: price, stop: stop} = order,
+        order_book
+      ) do
+    case order_book.bid_max <= price * (1 - stop / 100) do
+      true ->
+        order |> Map.put(:price, order_book.min_price + 1)
+
+      _ ->
+        order
+    end
+  end
+
+  def assign_prices(order, _order_book) do
+    order
+  end
+
+  @doc """
+  Function that checks if a order's price is correct for the given order book.
+
+  ## Parameters
+    order: Order to validate the price
+    order_book: Reference order book
+  """
+  def validate_price(%Exchange.Order{type: type} = order, order_book)
+      when type == :limit or type == :stop_loss do
+    cond do
+      order.price < order_book.max_price and order.price > order_book.min_price ->
+        :ok
+
+      order.price > order_book.max_price ->
+        {:error, :max_price_exceeded}
+
+      order.price < order_book.min_price ->
+        {:error, :behind_min_price}
+    end
+  end
+
+  def validate_price(_order, _order_book) do
+    :ok
   end
 end
 
@@ -76,6 +161,7 @@ defimpl Jason.Encoder, for: Exchange.Order do
         :side,
         :price,
         :size,
+        :stop,
         :initial_size,
         :type,
         :exp_time,

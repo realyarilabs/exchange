@@ -15,7 +15,7 @@ defmodule Exchange.Adapters.MessageBus.TradeExecuted do
   ## Parameters
     - params: map with necessary parameters to populate the struct
   """
-  @spec decode_from_jason(map) :: Exchange.Adapters.MessageBus.TradeExecuted.t()
+  @spec decode_from_jason(map) :: %Exchange.Adapters.MessageBus.TradeExecuted{}
   def decode_from_jason(params) do
     trade = Map.get(params, :trade)
 

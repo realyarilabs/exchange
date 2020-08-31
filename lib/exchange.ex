@@ -13,36 +13,12 @@ defmodule Exchange do
 
   """
   @spec place_order(order_params :: map(), ticker :: atom()) :: atom() | {atom(), String.t()}
-  def place_order(%{type: :limit} = order_params, ticker) do
+  def place_order(order_params, ticker) do
     order_params = Map.put(order_params, :ticker, ticker)
 
     case Exchange.Validations.cast_order(order_params) do
       {:ok, limit_order} ->
-        Exchange.MatchingEngine.place_limit_order(ticker, limit_order)
-
-      {:error, errors} ->
-        {:error, errors}
-    end
-  end
-
-  def place_order(%{type: :market} = order_params, ticker) do
-    order_params = Map.put(order_params, :ticker, ticker)
-
-    case Exchange.Validations.cast_order(order_params) do
-      {:ok, market_order} ->
-        Exchange.MatchingEngine.place_market_order(ticker, market_order)
-
-      {:error, errors} ->
-        {:error, errors}
-    end
-  end
-
-  def place_order(%{type: :marketable_limit} = order_params, ticker) do
-    order_params = Map.put(order_params, :ticker, ticker)
-
-    case Exchange.Validations.cast_order(order_params) do
-      {:ok, marketable_limit_order} ->
-        Exchange.MatchingEngine.place_marketable_limit_order(ticker, marketable_limit_order)
+        Exchange.MatchingEngine.place_order(ticker, limit_order)
 
       {:error, errors} ->
         {:error, errors}
@@ -70,7 +46,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the order should be canceled
   """
-  @spec spread(ticker :: atom) :: {atom, number}
+  @spec spread(ticker :: atom) :: {atom, Money}
   def spread(ticker) do
     Exchange.MatchingEngine.spread(ticker)
   end
@@ -82,7 +58,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should be placed
   """
-  @spec highest_bid_price(ticker :: atom) :: {atom, number}
+  @spec highest_bid_price(ticker :: atom) :: {atom, Money}
   def highest_bid_price(ticker) do
     Exchange.MatchingEngine.bid_max(ticker)
   end
@@ -106,7 +82,7 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should be placed
   """
-  @spec lowest_ask_price(ticker :: atom) :: {atom, number}
+  @spec lowest_ask_price(ticker :: atom) :: {atom, Money}
   def lowest_ask_price(ticker) do
     Exchange.MatchingEngine.ask_min(ticker)
   end
@@ -160,10 +136,28 @@ defmodule Exchange do
     Exchange.MatchingEngine.open_orders_by_trader(ticker, trader_id)
   end
 
-  def last_price do
+  @doc """
+  Returns the lastest price from a side of an Exchange
+
+  ## Parameters
+    - ticker: Exchange identifier
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_price(ticker :: atom, side :: atom) :: {atom, number}
+  def last_price(ticker, side) do
+    Exchange.MatchingEngine.last_price(ticker, side)
   end
 
-  def last_size do
+  @doc """
+  Returns the lastest size from a side of an Exchange
+
+  ## Parameters
+    - ticker: Exchange identifier
+    - side: Atom to decide which side of the book is used
+  """
+  @spec last_size(ticker :: atom, ticker :: atom) :: {atom, number}
+  def last_size(ticker, side) do
+    Exchange.MatchingEngine.last_size(ticker, side)
   end
 
   @doc """
@@ -216,8 +210,21 @@ defmodule Exchange do
 
     - ticker: Atom that represents on which market the query should made
   """
-  @spec completed_trades(ticker :: atom) :: {atom, list()}
+  @spec completed_trades(ticker :: atom) :: list
   def completed_trades(ticker) do
     Exchange.Utils.fetch_all_completed_trades(ticker)
+  end
+
+  @doc """
+  Returns the trade with trade_id
+
+  ## Parameters
+
+    - ticker: Atom that represents on which market the query should made
+    - trade_id: Id of the requested trade
+  """
+  @spec completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) :: Exchange.Trade.t()
+  def completed_trade_by_trade_id(ticker, trade_id) do
+    Exchange.Utils.fetch_completed_trade_by_trade_id(ticker, trade_id)
   end
 end
