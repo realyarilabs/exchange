@@ -62,7 +62,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current maximum biding price
   """
-  @spec bid_max(ticker) :: {atom, number}
+  @spec bid_max(ticker) :: {atom, Money}
   def bid_max(ticker) do
     GenServer.call(via_tuple(ticker), :bid_max)
   end
@@ -78,7 +78,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current minimum asking price
   """
-  @spec ask_min(ticker) :: {atom, number}
+  @spec ask_min(ticker) :: {atom, Money}
   def ask_min(ticker) do
     GenServer.call(via_tuple(ticker), :ask_min)
   end
@@ -86,7 +86,7 @@ defmodule Exchange.MatchingEngine do
   @doc """
   Returns the current Spread
   """
-  @spec spread(ticker) :: {atom, number}
+  @spec spread(ticker) :: {atom, Money}
   def spread(ticker) do
     GenServer.call(via_tuple(ticker), :spread)
   end
