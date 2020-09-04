@@ -4,7 +4,7 @@ defmodule Exchange.Adapters.RabbitBus do
   To use this adapter is necessary to add the AMQP to the dependencies.
   """
   use Exchange.MessageBus, required_config: [], required_deps: [amqp: AMQP]
-  alias AMQP.{Channel, Connection, Queue}
+  alias AMQP.{Connection, Queue}
 
   alias Exchange.Adapters.MessageBus
   @exchange "event_exchange"
