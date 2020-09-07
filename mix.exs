@@ -50,7 +50,7 @@ defmodule Exchange.MixProject do
       {:excoveralls, "~> 0.10", only: :test},
       {:mox, "~> 0.5.1", only: :test},
       {:money, "~> 1.7"},
-      {:instream, "~> 0.22"},
+      {:instream, "~> 1.0"},
       {:amqp, "~> 1.0"}
     ]
   end
