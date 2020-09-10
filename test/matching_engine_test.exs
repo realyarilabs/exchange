@@ -790,7 +790,7 @@ defmodule MatchingEngineTest do
           event == :order_queued
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          payload.order_id
+          payload.order.order_id
         end)
 
       trade_ids =
@@ -799,7 +799,8 @@ defmodule MatchingEngineTest do
           event == :trade_executed
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          {payload.buyer_id, payload.seller_id, payload.buy_order_id, payload.sell_order_id}
+          {payload.trade.buyer_id, payload.trade.seller_id, payload.trade.buy_order_id,
+           payload.trade.sell_order_id}
         end)
 
       [{buyer_id, seller_id, buy_order_id, sell_order_id} | _tail] = trade_ids
@@ -829,7 +830,7 @@ defmodule MatchingEngineTest do
           event == :order_queued
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          payload.order_id
+          payload.order.order_id
         end)
 
       cancel_ids =
@@ -838,7 +839,7 @@ defmodule MatchingEngineTest do
           event == :order_cancelled
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          payload.order_id
+          payload.order.order_id
         end)
 
       assert order_queued_ids == ids
@@ -861,7 +862,7 @@ defmodule MatchingEngineTest do
           event == :order_expired
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          payload.order_id
+          payload.order.order_id
         end)
 
       assert expired_ids == ["100"]
@@ -883,7 +884,7 @@ defmodule MatchingEngineTest do
           event == :order_queued
         end)
         |> Enum.map(fn {_cast_event, _event, payload} ->
-          payload.order_id
+          payload.order.order_id
         end)
 
       assert queue_ids == ids

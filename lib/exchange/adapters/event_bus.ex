@@ -55,27 +55,20 @@ defmodule Exchange.Adapters.EventBus do
           | :trade_executed,
           any
         ) :: nil | :ok
-  def cast_event(:order_cancelled, payload),
-    do: dispatch_event(:order_cancelled, %MessageBus.OrderCancelled{order: payload})
+  def cast_event(:order_cancelled, %MessageBus.OrderCancelled{} = payload),
+    do: dispatch_event(:order_cancelled, payload)
 
-  def cast_event(:trade_executed, payload),
-    do: dispatch_event(:trade_executed, %MessageBus.TradeExecuted{trade: payload})
+  def cast_event(:trade_executed, %MessageBus.TradeExecuted{} = payload),
+    do: dispatch_event(:trade_executed, payload)
 
-  def cast_event(:order_expired, payload),
-    do: dispatch_event(:order_expired, %MessageBus.OrderExpired{order: payload})
+  def cast_event(:order_expired, %MessageBus.OrderExpired{} = payload),
+    do: dispatch_event(:order_expired, payload)
 
-  def cast_event(:order_queued, payload),
-    do: dispatch_event(:order_queued, %MessageBus.OrderQueued{order: payload})
+  def cast_event(:order_queued, %MessageBus.OrderQueued{} = payload),
+    do: dispatch_event(:order_queued, payload)
 
-  def cast_event(:price_broadcast, payload) do
-    price_broadcast_event = %MessageBus.PriceBroadcast{
-      ticker: payload.ticker,
-      ask_min: payload.ask_min,
-      bid_max: payload.bid_max
-    }
-
-    dispatch_event(:price_broadcast, price_broadcast_event)
-  end
+  def cast_event(:price_broadcast, %MessageBus.PriceBroadcast{} = payload),
+    do: dispatch_event(:price_broadcast, payload)
 
   defp dispatch_event(key, payload) do
     if Application.get_env(:event_bus, :environment) != :test do

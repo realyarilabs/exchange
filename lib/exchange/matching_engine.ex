@@ -203,7 +203,7 @@ defmodule Exchange.MatchingEngine do
   end
 
   def handle_info(:price_broadcast, order_book) do
-    price_info = %{
+    price_info = %Exchange.Adapters.MessageBus.PriceBroadcast{
       ticker: order_book.name,
       ask_min: order_book.ask_min,
       bid_max: order_book.bid_max
@@ -221,7 +221,9 @@ defmodule Exchange.MatchingEngine do
       Enum.each(
         order_book.expired_orders,
         fn order ->
-          message_bus().cast_event(:order_expired, order)
+          message_bus().cast_event(:order_expired, %Exchange.Adapters.MessageBus.OrderExpired{
+            order: order
+          })
         end
       )
     end
@@ -291,7 +293,9 @@ defmodule Exchange.MatchingEngine do
 
       case validity do
         :ok ->
-          message_bus().cast_event(:order_queued, order)
+          message_bus().cast_event(:order_queued, %Exchange.Adapters.MessageBus.OrderQueued{
+            order: order
+          })
 
           order_book =
             order_book
@@ -321,7 +325,11 @@ defmodule Exchange.MatchingEngine do
       if (is_integer(cancelled_order.exp_time) and
             cancelled_order.exp_time < current_time) or !is_integer(cancelled_order.exp_time) do
         order_book = OrderBook.dequeue_order_by_id(order_book, order_id)
-        message_bus().cast_event(:order_cancelled, cancelled_order)
+
+        message_bus().cast_event(:order_cancelled, %Exchange.Adapters.MessageBus.OrderCancelled{
+          order: cancelled_order
+        })
+
         {:reply, :ok, order_book}
       else
         {:reply, :error, order_book}
@@ -357,7 +365,9 @@ defmodule Exchange.MatchingEngine do
     if Enum.count(trades) > 0 do
       trades
       |> Enum.each(fn t ->
-        message_bus().cast_event(:trade_executed, t)
+        message_bus().cast_event(:trade_executed, %Exchange.Adapters.MessageBus.TradeExecuted{
+          trade: t
+        })
       end)
 
       OrderBook.flush_trades!(order_book)
