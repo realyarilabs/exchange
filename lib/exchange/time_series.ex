@@ -23,6 +23,12 @@ defmodule Exchange.TimeSeries do
   end
 
   @doc """
+  Callback to initialize the given timeseries adapter
+  and return necessary children.
+  """
+  @callback init :: {:ok, list()}
+
+  @doc """
   Function that fetches the completed trades from a market which a specific user participated.
   """
   @callback completed_trades(atom) :: [Exchange.Trade]

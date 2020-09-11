@@ -13,6 +13,16 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
     )
   end
 
+  def init do
+    children = [
+      Supervisor.Spec.supervisor(Exchange.Adapters.InMemoryTimeSeries, [[]],
+        id: :in_memory_time_series
+      )
+    ]
+
+    {:ok, children}
+  end
+
   def init(state) do
     message_bus().add_listener(:trade_executed)
     message_bus().add_listener(:order_queued)
@@ -205,10 +215,11 @@ defmodule Exchange.Adapters.InMemoryTimeSeries do
   end
 
   defp message_bus do
-    Application.get_env(:exchange, :message_bus_adapter)
+    Application.get_env(:exchange, :message_bus_adapter, Exchange.Adapters.EventBus)
   end
 
   @spec completed_trades_by_id(ticker :: atom, trader_id :: String.t()) :: [Exchange.Trade]
+
   def completed_trades_by_id(ticker, trader_id) do
     GenServer.call(:in_memory_time_series, {:trades_by_id, ticker, trader_id})
   end

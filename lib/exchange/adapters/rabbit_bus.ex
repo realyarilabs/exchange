@@ -12,6 +12,16 @@ defmodule Exchange.Adapters.RabbitBus do
   @queue_error "#{@queue}_error"
   @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
+  def init do
+    setup_resources()
+
+    {:ok,
+     [
+       Exchange.Adapters.RabbitBus.Consumer,
+       Exchange.Adapters.RabbitBus.Producer
+     ]}
+  end
+
   @doc """
   It calls the consumer server and it adds the process calling to the subscribers of the event.
 
@@ -79,7 +89,7 @@ defmodule Exchange.Adapters.RabbitBus do
   end
 
   defp dispatch_event(key, payload) do
-    if Application.get_env(:event_bus, :environment) != :test do
+    if Application.get_env(:event_bus, :environment, :prod) != :test do
       GenServer.call(:rabbitmq_producer, {:cast, key, payload})
     end
   end

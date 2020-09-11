@@ -424,6 +424,6 @@ defmodule Exchange.Utils do
   """
   @spec time_series :: any
   def time_series do
-    Application.get_env(:exchange, :time_series_adapter)
+    Application.get_env(:exchange, :time_series_adapter, Exchange.Adapters.InMemoryTimeSeries)
   end
 end

@@ -8,6 +8,16 @@ defmodule Exchange.Adapters.EventBus do
   use Exchange.MessageBus, required_config: [], required_deps: []
   @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
+  def init do
+    {:ok,
+     [
+       {Registry,
+        keys: :duplicate,
+        name: Exchange.Adapters.EventBus.Registry,
+        partitions: System.schedulers_online()}
+     ]}
+  end
+
   @doc """
   Adds the process calling this function to the `Registry` under the given `key`
 
@@ -71,7 +81,7 @@ defmodule Exchange.Adapters.EventBus do
     do: dispatch_event(:price_broadcast, payload)
 
   defp dispatch_event(key, payload) do
-    if Application.get_env(:event_bus, :environment) != :test do
+    if Application.get_env(:event_bus, :environment, :prod) != :test do
       Registry.dispatch(Exchange.Adapters.EventBus.Registry, key, fn entries ->
         for {pid, _} <- entries, do: send(pid, {:cast_event, key, payload})
       end)

@@ -13,7 +13,15 @@ if Code.ensure_loaded?(Instream.Connection) do
       required_config: [:database, :host, :port],
       required_deps: [Instream.Connection]
 
+    require Logger
     alias Exchange.Adapters.Flux.{Orders, Trades}
+
+    def init do
+      Application.ensure_all_started(:hackney)
+      validate_config(Application.get_env(:exchange, Exchange.Adapters.Flux.Connection))
+      children = [Exchange.Adapters.Flux.Connection, Exchange.Adapters.Flux.EventListener]
+      {:ok, children}
+    end
 
     def completed_trades(ticker) do
       Trades.completed_trades(ticker)
@@ -80,8 +88,6 @@ if Code.ensure_loaded?(Instream.Connection) do
       end)
     end
 
-    @spec get_completed_trade_by_trade_id(ticker :: atom, trade_id :: String.t()) ::
-            Exchange.Trade
     def get_completed_trade_by_trade_id(ticker, trade_id) do
       Trades.get_completed_trade_by_trade_id(ticker, trade_id)
       |> Enum.map(fn flux_trade ->

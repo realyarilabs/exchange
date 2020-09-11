@@ -23,6 +23,12 @@ defmodule Exchange.MessageBus do
   end
 
   @doc """
+  Callback to initialize the given message bus adapter
+  and return necessary children.
+  """
+  @callback init :: {:ok, list()}
+
+  @doc """
   The current process subscribes to event of type key
 
   ## Parameters

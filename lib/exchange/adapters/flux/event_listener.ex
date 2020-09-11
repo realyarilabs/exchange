@@ -63,6 +63,6 @@ defmodule Exchange.Adapters.Flux.EventListener do
   end
 
   defp message_bus do
-    Application.get_env(:exchange, :message_bus_adapter)
+    Application.get_env(:exchange, :message_bus_adapter, Exchange.Adapters.EventBus)
   end
 end

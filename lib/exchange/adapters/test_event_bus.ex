@@ -25,6 +25,10 @@ defmodule Exchange.Adapters.TestEventBus do
 
   @events ~w(trade_executed order_queued order_cancelled order_expired price_broadcast)a
 
+  def init do
+    {:ok, [Supervisor.Spec.supervisor(Exchange.Adapters.TestEventBus, [Qex.new()])]}
+  end
+
   @doc """
   Checks if the `key` is a valid event, if it is valid return `:ok` otherwise returns `:error`
 
@@ -86,7 +90,7 @@ defmodule Exchange.Adapters.TestEventBus do
     do: dispatch_event(:price_broadcast, payload)
 
   defp dispatch_event(key, payload) do
-    if Application.get_env(:exchange, :environment) == :test do
+    if Application.get_env(:exchange, :environment, :prod) == :test do
       append({:cast_event, key, payload})
     end
   end
