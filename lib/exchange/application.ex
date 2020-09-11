@@ -52,7 +52,8 @@ defmodule Exchange.Application do
              Exchange.Adapters.Flux.EventListener
            ]}
 
-        _ ->
+        other ->
+          Application.ensure_all_started(other)
           {:ok, []}
       end
     end
