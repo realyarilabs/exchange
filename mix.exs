@@ -32,7 +32,7 @@ defmodule Exchange.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:lager, :logger],
+      extra_applications: [:logger],
       mod: {Exchange.Application, []}
     ]
   end
@@ -40,18 +40,18 @@ defmodule Exchange.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:benchee, "~> 1.0", only: :dev, optional: true},
+      {:benchee_html, "~> 1.0", only: :dev, optional: true},
+      {:credo, "~> 1.3", only: [:dev, :test], runtime: false, optional: true},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false, optional: true},
+      {:excoveralls, "~> 0.10", only: :test, optional: true},
+      {:mox, "~> 0.5.1", only: :test, optional: true},
+      {:instream, "~> 1.0", optional: true},
+      {:amqp, "~> 1.0", optional: true},
+      {:money, "~> 1.7"},
       {:qex, "~> 0.5"},
       {:elixir_uuid, "~> 1.2"},
-      {:typed_struct, "~> 0.2"},
-      {:benchee, "~> 1.0", only: :dev},
-      {:benchee_html, "~> 1.0", only: :dev},
-      {:credo, "~> 1.3", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.10", only: :test},
-      {:mox, "~> 0.5.1", only: :test},
-      {:money, "~> 1.7"},
-      {:instream, "~> 1.0", optional: true},
-      {:amqp, "~> 1.0"}
+      {:typed_struct, "~> 0.2"}
     ]
   end
 

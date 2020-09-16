@@ -3,6 +3,8 @@ defmodule RabbitBusTest do
   alias Exchange.Adapters.RabbitBus
 
   setup_all _context do
+    Application.ensure_all_started(:lager)
+    Application.ensure_all_started(:amqp)
     RabbitBus.setup_resources()
 
     Supervisor.start_link(
