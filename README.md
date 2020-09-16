@@ -10,7 +10,7 @@ by adding `exchange` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:exchange, "~> 0.2.5"}
+    {:exchange, "~> 0.2.6"}
   ]
 end
 ```
