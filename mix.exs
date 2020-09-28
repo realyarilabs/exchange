@@ -45,7 +45,7 @@ defmodule Exchange.MixProject do
       {:credo, "~> 1.3", only: [:dev, :test], runtime: false, optional: true},
       {:ex_doc, "~> 0.22", only: :dev, runtime: false, optional: true},
       {:excoveralls, "~> 0.10", only: :test, optional: true},
-      {:mox, "~> 0.5.1", only: :test, optional: true},
+      {:mox, "~> 1.0.0", only: :test, optional: true},
       {:instream, "~> 1.0", optional: true},
       {:amqp, "~> 1.0", optional: true},
       {:money, "~> 1.7"},
