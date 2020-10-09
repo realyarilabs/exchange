@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-elixir@v1
         with:
           otp-version: "23.0"
-          elixir-version: "1.10.4"
+          elixir-version: "1.11"
       - run: mix deps.get
       - run: mix credo --strict
       - run: mix format --check-formatted

@@ -408,7 +408,7 @@ defmodule Exchange.OrderBook do
         ) ::
           Exchange.OrderBook.order_book()
   def insert_order_in_queue(order_book, order) do
-    price_point = order.price()
+    price_point = order.price
 
     side_order_book = Map.fetch!(order_book, order.side)
 
@@ -436,7 +436,7 @@ defmodule Exchange.OrderBook do
         ) ::
           Exchange.OrderBook.order_book()
   def update_order(order_book, order) do
-    price_point = order.price()
+    price_point = order.price
 
     side_order_book = Map.fetch!(order_book, order.side)
 

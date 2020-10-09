@@ -21,9 +21,7 @@ if Code.ensure_loaded?(AMQP) do
       {:ok, state}
     end
 
-    @doc """
-    Removes a subscriber of event
-    """
+    # Removes a subscriber of event
     def handle_call({:remove_listener, event, subscriber}, _, %{chan: _, subs: subs} = state) do
       event_subs =
         Map.get(subs, event, [])
@@ -34,9 +32,8 @@ if Code.ensure_loaded?(AMQP) do
       {:reply, :ok, state}
     end
 
-    @doc """
-    Adds a subscriber of event
-    """
+
+    # Adds a subscriber of event
     def handle_call({:add_listener, event, subscriber}, _, %{chan: _, subs: subs} = state) do
       event_subs = Map.get(subs, event, [])
 
