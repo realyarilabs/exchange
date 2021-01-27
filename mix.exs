@@ -47,7 +47,7 @@ defmodule Exchange.MixProject do
       {:excoveralls, "~> 0.10", only: :test, optional: true},
       {:mox, "~> 1.0.0", only: :test, optional: true},
       {:instream, "~> 1.0", optional: true},
-      {:amqp, "~> 1.0", optional: true},
+      {:amqp, "~> 2.0", optional: true},
       {:money, "~> 1.7"},
       {:qex, "~> 0.5"},
       {:elixir_uuid, "~> 1.2"},
